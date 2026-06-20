@@ -189,22 +189,8 @@ test.describe("Auth redirect for logged-in users", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Google OAuth button
+// Google OAuth removed — see commit d91985c
 // ---------------------------------------------------------------------------
-
-test.describe("Google OAuth", () => {
-  test("should display Google sign-in button on login page", async ({ page }) => {
-    await page.goto("/login");
-    const googleButton = page.locator("button:has-text('Sign in with Google')");
-    await expect(googleButton).toBeVisible();
-  });
-
-  test("should display Google sign-up button on register page", async ({ page }) => {
-    await page.goto("/register");
-    const googleButton = page.locator("button:has-text('Sign up with Google')");
-    await expect(googleButton).toBeVisible();
-  });
-});
 
 // ---------------------------------------------------------------------------
 // Form validation
