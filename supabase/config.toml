@@ -1,0 +1,17 @@
+# Supabase Configuration
+# Docs: https://supabase.com/docs/guides/local-development
+
+project_id = "questify"
+
+[db]
+port = 54322
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/dashboard"]
+
+[api]
+port = 54321
+
+[studio]
+port = 54323
