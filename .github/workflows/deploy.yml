@@ -1,4 +1,4 @@
-name: Deploy to Vercel
+name: Deploy to VPS
 
 on:
   push:
@@ -9,24 +9,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.10
         with:
-          node-version: 20
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: "--prod"
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            set -e
+            cd /opt/questify
+            git pull origin master
+            rm -rf .next
+            npm ci --production=false 2>/dev/null || npm install
+            echo "=== Building (this takes 2-5 min on 1GB VPS) ==="
+            npm run build
+            pm2 restart questify --update-env
+            pm2 save
+            echo "=== Deploy complete ==="
+            pm2 status
