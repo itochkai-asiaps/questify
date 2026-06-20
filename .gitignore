@@ -1,0 +1,13 @@
+node_modules/
+.next/
+.env
+.env.local
+.env.*.local
+*.log
+.turbo/
+dist/
+build/
+.vercel
+coverage/
+.nyc_output/
+.omo/evidence/
