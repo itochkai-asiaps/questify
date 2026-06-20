@@ -1,0 +1,213 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { z } from "zod/v4";
+
+import { createClient } from "@/lib/supabase/server";
+import {
+  CreateTaskInputSchema,
+  UpdateTaskInputSchema,
+  TaskPriority,
+} from "@/types/task";
+
+const XP_REWARDS: Record<string, number> = {
+  p1: 50,
+  p2: 30,
+  p3: 15,
+  p4: 5,
+};
+
+export async function createTask(
+  formData: FormData,
+): Promise<{ data?: unknown; error?: string }> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const rawData = {
+    title: formData.get("title") as string,
+    description: formData.get("description") as string | undefined,
+    priority: (formData.get("priority") as string) ?? undefined,
+    due_date: formData.get("due_date") as string | undefined,
+    tags: formData.get("tags") as string | undefined,
+  };
+
+  const parsed = CreateTaskInputSchema.safeParse(rawData);
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0]?.message ?? "Invalid input";
+    return { error: firstError };
+  }
+
+  const { title, description, priority, due_date, tags } = parsed.data;
+  const xp_reward = XP_REWARDS[priority] ?? 15;
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .insert({
+      title,
+      description: description ?? null,
+      priority,
+      due_date: due_date ?? null,
+      tags,
+      xp_reward,
+      user_id: user.id,
+      status: "todo",
+    })
+    .select()
+    .single();
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/dashboard", "layout");
+  revalidatePath("/tasks", "layout");
+  return { data };
+}
+
+export async function updateTask(
+  taskId: string,
+  formData: FormData,
+): Promise<{ data?: unknown; error?: string }> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const rawData: Record<string, unknown> = {};
+  const title = formData.get("title");
+  if (title !== null) rawData.title = title;
+  const description = formData.get("description");
+  if (description !== null) rawData.description = description;
+  const status = formData.get("status");
+  if (status !== null) rawData.status = status;
+  const priority = formData.get("priority");
+  if (priority !== null) rawData.priority = priority;
+  const due_date = formData.get("due_date");
+  if (due_date !== null) rawData.due_date = due_date;
+  const tags = formData.get("tags");
+  if (tags !== null) rawData.tags = tags;
+
+  const parsed = UpdateTaskInputSchema.safeParse(rawData);
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0]?.message ?? "Invalid input";
+    return { error: firstError };
+  }
+
+  const updateData: Record<string, unknown> = { ...parsed.data };
+
+  if (updateData.priority) {
+    updateData.xp_reward = XP_REWARDS[updateData.priority as string] ?? 15;
+  }
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .update(updateData)
+    .eq("id", taskId)
+    .eq("user_id", user.id)
+    .select()
+    .single();
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/dashboard", "layout");
+  revalidatePath("/tasks", "layout");
+  return { data };
+}
+
+export async function deleteTask(
+  taskId: string,
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const { error } = await supabase
+    .from("tasks")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", taskId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/dashboard", "layout");
+  revalidatePath("/tasks", "layout");
+  return { success: true };
+}
+
+export async function getTasks(): Promise<{
+  data?: unknown[];
+  error?: string;
+}> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { data };
+}
+
+export async function getTaskById(
+  taskId: string,
+): Promise<{ data?: unknown; error?: string }> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("id", taskId)
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .single();
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { data };
+}

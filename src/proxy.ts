@@ -1,21 +1,23 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
-const protectedRoutes = [
-  "/dashboard",
-  "/tasks",
-  "/kanban",
-  "/matrix",
-  "/plans",
-  "/profile",
-  "/onboarding",
-];
+const publicPaths = ["/login", "/register", "/auth/callback", "/"];
 
-const publicRoutes = ["/login", "/register", "/", "/auth/callback"];
+function isPublicPath(pathname: string): boolean {
+  return publicPaths.some(
+    (p) => pathname === p || pathname.startsWith("/_next") || pathname.startsWith("/api"),
+  );
+}
 
 export async function proxy(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+  const { pathname } = request.nextUrl;
 
+  // Allow public and static files
+  if (isPublicPath(pathname)) {
+    return NextResponse.next();
+  }
+
+  // Check auth session
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -24,49 +26,27 @@ export async function proxy(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value),
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
-          );
+        setAll() {
+          // Middleware can't set cookies in Next.js 15+ easily;
+          // the session is read-only here.
         },
       },
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getUser();
 
-  const pathname = request.nextUrl.pathname;
-
-  const isProtected = protectedRoutes.some((route) =>
-    pathname.startsWith(route),
-  );
-  const isPublic = publicRoutes.some((route) =>
-    pathname.startsWith(route),
-  );
-
-  if (!user && isProtected) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+  if (!data.user) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  if (user && (pathname === "/login" || pathname === "/register")) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
-  }
-
-  return supabaseResponse;
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

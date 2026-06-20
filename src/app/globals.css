@@ -128,3 +128,61 @@
     @apply font-sans;
   }
 }
+
+/* PWA / mobile-friendly utilities */
+@layer utilities {
+  .tap-target {
+    @apply min-h-12 min-w-12;
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .safe-left {
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+  .safe-right {
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+}
+
+/* Ensure interactive elements have adequate tap targets on mobile */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a,
+  [role="button"],
+  select,
+  summary {
+    min-height: 48px;
+    min-width: 48px;
+  }
+}
+
+/* Prevent text size adjustment on orientation change */
+html {
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Disable double-tap zoom on mobile for better tap responsiveness */
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+/* Prevent pull-to-refresh and overscroll in standalone PWA */
+@media (display-mode: standalone) {
+  html {
+    overscroll-behavior: none;
+  }
+  body {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+}

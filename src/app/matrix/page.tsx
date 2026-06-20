@@ -1,7 +1,295 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  TouchSensor,
+  pointerWithin,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { motion, AnimatePresence } from "framer-motion";
+import { LayoutGrid, Sparkles } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getTasks, updateTask } from "@/lib/actions/tasks";
+import { cn } from "@/lib/utils";
+import { Task, TaskPriority } from "@/types/task";
+
+import { MatrixCard } from "@/components/matrix/matrix-card";
+import { MatrixQuadrant } from "@/components/matrix/matrix-quadrant";
+
+type TasksByPriority = Record<TaskPriority, Task[]>;
+
+const ALL_PRIORITIES: TaskPriority[] = [
+  TaskPriority.P1,
+  TaskPriority.P2,
+  TaskPriority.P3,
+  TaskPriority.P4,
+];
+
+const EMPTY_MATRIX: TasksByPriority = {
+  [TaskPriority.P1]: [],
+  [TaskPriority.P2]: [],
+  [TaskPriority.P3]: [],
+  [TaskPriority.P4]: [],
+};
+
+function groupTasksByPriority(tasks: Task[]): TasksByPriority {
+  const grouped = { ...EMPTY_MATRIX };
+  for (const task of tasks) {
+    const priority = task.priority as TaskPriority;
+    if (priority in grouped) {
+      grouped[priority].push(task);
+    }
+  }
+  return grouped;
+}
+
+const AXIS_LABELS = {
+  yTop: "Important",
+  yBottom: "Not Important",
+  xLeft: "Urgent",
+  xRight: "Not Urgent",
+};
+
 export default function MatrixPage() {
+  const [tasksByPriority, setTasksByPriority] = useState<TasksByPriority>(EMPTY_MATRIX);
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+  );
+
+  const fetchTasks = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    const result = await getTasks();
+    if (result.error) {
+      setError(result.error);
+      setIsLoading(false);
+      return;
+    }
+    const tasks = (result.data ?? []) as Task[];
+    setAllTasks(tasks);
+    setTasksByPriority(groupTasksByPriority(tasks));
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
+
+  const handleAutoDistribute = useCallback(() => {
+    // Re-group existing tasks by their current priority (display filter)
+    setTasksByPriority(groupTasksByPriority(allTasks));
+  }, [allTasks]);
+
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const task = allTasks.find((t) => t.id === event.active.id);
+      setActiveTask(task ?? null);
+    },
+    [allTasks],
+  );
+
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event;
+      setActiveTask(null);
+
+      if (!over) return;
+
+      const taskId = active.id as string;
+      const task = allTasks.find((t) => t.id === taskId);
+      if (!task) return;
+
+      // Determine target priority
+      let newPriority: TaskPriority | null = null;
+
+      if (ALL_PRIORITIES.includes(over.id as TaskPriority)) {
+        // Dropped directly on a quadrant
+        newPriority = over.id as TaskPriority;
+      } else {
+        // Dropped on a card — find which quadrant that card belongs to
+        const overTask = allTasks.find((t) => t.id === over.id);
+        if (overTask) {
+          newPriority = overTask.priority as TaskPriority;
+        }
+      }
+
+      if (!newPriority || newPriority === task.priority) return;
+
+      // Optimistic update
+      const previousState = tasksByPriority;
+      setTasksByPriority((prev) => {
+        const next = { ...prev };
+        next[task.priority] = prev[task.priority].filter((t) => t.id !== taskId);
+        next[newPriority!] = [
+          ...prev[newPriority!],
+          { ...task, priority: newPriority! },
+        ];
+        return next;
+      });
+
+      // Persist
+      const formData = new FormData();
+      formData.set("priority", newPriority);
+      const result = await updateTask(taskId, formData);
+
+      if (result.error) {
+        setTasksByPriority(previousState);
+        setError(result.error);
+        return;
+      }
+
+      setAllTasks((prev) =>
+        prev.map((t) =>
+          t.id === taskId ? { ...t, priority: newPriority! } : t,
+        ),
+      );
+    },
+    [allTasks, tasksByPriority],
+  );
+
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="mb-6 flex items-center gap-3">
+          <Skeleton className="h-8 w-56" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 md:grid-rows-2">
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="flex flex-col gap-3 rounded-xl border border-border p-4"
+            >
+              <Skeleton className="h-5 w-20" />
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const totalTasks = allTasks.length;
+
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold">Matrix</h1>
+      {/* Page header */}
+      <div className="mb-6 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
+            <LayoutGrid className="size-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Eisenhower Matrix
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {totalTasks} {totalTasks === 1 ? "task" : "tasks"} across 4 quadrants
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {error && (
+            <p className="text-sm text-destructive">{error}</p>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleAutoDistribute}
+            className="gap-1.5"
+          >
+            <Sparkles className="size-3.5" />
+            Auto-distribute
+          </Button>
+        </div>
+      </div>
+
+      {/* Matrix grid */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={pointerWithin}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        {/* Axis labels — visible on desktop */}
+        <div className="hidden md:block">
+          {/* Y axis: important / not important */}
+          <div className="relative">
+            <span className="absolute -left-8 top-1/2 -translate-y-[calc(100%+32px)] -rotate-90 text-xs font-medium text-muted-foreground">
+              {AXIS_LABELS.yTop}
+            </span>
+            <span className="absolute -left-8 top-1/2 translate-y-8 -rotate-90 text-xs font-medium text-muted-foreground">
+              {AXIS_LABELS.yBottom}
+            </span>
+          </div>
+          {/* X axis: urgent / not urgent */}
+          <div className="mb-1 flex justify-between px-1">
+            <span className="text-xs font-medium text-muted-foreground">
+              {AXIS_LABELS.xLeft}
+            </span>
+            <span className="text-xs font-medium text-muted-foreground">
+              {AXIS_LABELS.xRight}
+            </span>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 md:grid-rows-2">
+          <AnimatePresence mode="popLayout">
+            {ALL_PRIORITIES.map((priority) => (
+              <motion.div
+                key={priority}
+                layout
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                <MatrixQuadrant
+                  priority={priority}
+                  tasks={tasksByPriority[priority]}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+
+        {/* Drag overlay */}
+        <DragOverlay>
+          {activeTask ? (
+            <div className="w-[284px] rotate-2 opacity-90">
+              <MatrixCard task={activeTask} />
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+
+      {/* Empty state */}
+      {totalTasks === 0 && !isLoading && (
+        <div className="mt-12 flex flex-col items-center justify-center gap-3 text-center">
+          <div className="flex size-16 items-center justify-center rounded-2xl bg-muted">
+            <LayoutGrid className="size-8 text-muted-foreground" />
+          </div>
+          <h2 className="text-lg font-semibold">No tasks yet</h2>
+          <p className="max-w-sm text-sm text-muted-foreground">
+            Create tasks with priorities (P1–P4) to see them in the Eisenhower Matrix. Drag tasks between quadrants to reprioritize.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
