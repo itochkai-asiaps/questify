@@ -548,15 +548,15 @@ function HeartAnimation() {
         >
           <defs>
             <radialGradient id="heartGrad" cx="50%" cy="30%" r="70%">
-            <stop offset="0%" stopColor="#86efac" />
-            <stop offset="50%" stopColor="#22c55e" />
-            <stop offset="100%" stopColor="#15803d" />
+            <stop offset="0%" stopColor="#fca5a5" />
+            <stop offset="50%" stopColor="#ef4444" />
+            <stop offset="100%" stopColor="#b91c1c" />
             </radialGradient>
           </defs>
           <path
             d="M50 85 C30 70, 5 55, 5 35 C5 20, 20 8, 35 12 C42 14, 48 19, 50 25 C52 19, 58 14, 65 12 C80 8, 95 20, 95 35 C95 55, 70 70, 50 85Z"
             fill="url(#heartGrad)"
-            stroke="#166534"
+            stroke="#991b1b"
             strokeWidth="1.5"
           />
         </svg>
