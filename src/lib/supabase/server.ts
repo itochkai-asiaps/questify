@@ -13,9 +13,15 @@ export async function createClient() {
           return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options),
-          );
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options),
+            );
+          } catch {
+            // Cookies can only be set in Server Actions or Route Handlers.
+            // Silently ignore during SSR — auth tokens will refresh on next
+            // client-side navigation or explicit Server Action call.
+          }
         },
       },
     },
