@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +50,7 @@ export default function RegisterPage() {
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 15 }}
               >
-                <CheckCircle2 className="size-16 text-green-500" />
+                <Check className="size-20 text-green-500" />
               </motion.div>
 
               <div className="text-center space-y-2">
