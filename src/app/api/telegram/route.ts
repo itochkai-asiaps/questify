@@ -1,33 +1,65 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createIdeaFromTelegram, getUserIdByTelegramChatId } from "@/lib/actions/ideas";
+import {
+  createIdeaFromTelegram,
+  getUserIdByTelegramChatId,
+  linkTelegramChat,
+} from "@/lib/actions/ideas";
 
-/**
- * POST /api/telegram — Telegram Bot webhook
- * 
- * Receives messages from Telegram users and creates ideas.
- * 
- * Setup:
- * 1. Create bot via @BotFather → get BOT_TOKEN
- * 2. Set webhook: https://api.telegram.org/bot<TOKEN>/setWebhook?url=<YOUR_URL>/api/telegram
- * 3. User links their Telegram: /link command in bot → calls linkTelegramChat
- * 4. Any text message → creates an idea
- * 
- * Security: verify X-Telegram-Bot-Api-Secret-Token header (set in webhook config)
- */
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
+const TG_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
+
+async function sendMessage(chatId: number, text: string) {
+  if (!BOT_TOKEN) return;
+  await fetch(`${TG_API}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
+  }).catch(() => {});
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { message } = body;
 
-    // Only handle text messages
-    if (!message?.text) {
+    if (!message?.text || !message?.chat?.id) {
       return NextResponse.json({ ok: true });
     }
 
     const chatId = message.chat.id;
     const text = message.text as string;
 
-    // Skip bot commands
+    // Commands
+    if (text === "/start") {
+      await sendMessage(
+        chatId,
+        "<b>Questify Ideas Bot</b> 🚀\n\n" +
+        "Send me any text and I'll save it as an idea.\n\n" +
+        "<b>Link your account:</b>\n" +
+        "1. Open Questify → Profile\n" +
+        "2. Copy your User ID\n" +
+        "3. Send <code>/link YOUR_USER_ID</code> here\n\n" +
+        "First line = idea title\n" +
+        "Next lines = description (optional)",
+      );
+      return NextResponse.json({ ok: true });
+    }
+
+    if (text.startsWith("/link ")) {
+      const userId = text.slice(6).trim();
+      if (!userId || userId.length < 10) {
+        await sendMessage(chatId, "❌ Invalid User ID. Copy it from Questify → Profile.");
+        return NextResponse.json({ ok: true });
+      }
+      const result = await linkTelegramChat(userId, chatId);
+      if (result.error) {
+        await sendMessage(chatId, "❌ Failed to link: " + result.error);
+      } else {
+        await sendMessage(chatId, "✅ Account linked! Send me your ideas now.");
+      }
+      return NextResponse.json({ ok: true });
+    }
+
     if (text.startsWith("/")) {
       return NextResponse.json({ ok: true });
     }
@@ -36,8 +68,12 @@ export async function POST(request: NextRequest) {
     const userId = await getUserIdByTelegramChatId(chatId);
 
     if (!userId) {
-      // User not linked — send instructions
-      // For MVP: store the message anyway in a pending queue? No — require linking.
+      await sendMessage(
+        chatId,
+        "⚠️ Your Telegram is not linked yet.\n\n" +
+        "1. Open Questify → Profile → copy your User ID\n" +
+        "2. Send <code>/link YOUR_USER_ID</code>",
+      );
       return NextResponse.json({ ok: true });
     }
 
@@ -45,7 +81,9 @@ export async function POST(request: NextRequest) {
     const result = await createIdeaFromTelegram(userId, text);
 
     if (result.error) {
-      console.error("Failed to create idea from Telegram:", result.error);
+      await sendMessage(chatId, "❌ Failed to save idea. Try again.");
+    } else {
+      await sendMessage(chatId, "💡 Idea saved!");
     }
 
     return NextResponse.json({ ok: true });

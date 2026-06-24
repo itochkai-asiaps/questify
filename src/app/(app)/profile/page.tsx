@@ -21,6 +21,8 @@ import {
   Target,
   BookOpen,
   RefreshCw,
+  Copy,
+  Check,
 } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -650,6 +652,34 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
+      {/* Telegram Link */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <svg className="size-4 text-muted-foreground" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.46-1.901-.903-1.056-.692-1.653-1.123-2.678-1.799-1.185-.781-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.015-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.441-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.14.119.098.152.228.168.32.016.093.037.304.019.472z"/>
+            </svg>
+            Telegram Bot
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-lg border border-border p-4 space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Send ideas from Telegram to Questify:
+            </p>
+            <ol className="text-sm text-muted-foreground list-decimal list-inside space-y-1">
+              <li>Open <b>@questify_ideas_bot</b> in Telegram</li>
+              <li>Send <code className="bg-muted px-1 rounded text-xs">/start</code></li>
+              <li>Copy your User ID below and send <code className="bg-muted px-1 rounded text-xs">/link YOUR_ID</code></li>
+            </ol>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg border border-border p-3 bg-muted/50">
+            <code className="text-sm font-mono select-all flex-1 truncate">{user?.id ?? "Loading..."}</code>
+            <CopyButton text={user?.id ?? ""} />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Settings Section */}
       <Card>
         <CardHeader>
@@ -676,5 +706,31 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(async () => {
+    if (!text) return;
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [text]);
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="shrink-0 rounded-md p-1.5 hover:bg-accent transition-colors"
+      aria-label="Copy User ID"
+    >
+      {copied ? (
+        <Check className="size-4 text-green-500" />
+      ) : (
+        <Copy className="size-4 text-muted-foreground" />
+      )}
+    </button>
   );
 }
