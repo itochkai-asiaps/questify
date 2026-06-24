@@ -8,7 +8,7 @@
  * which creates an idea via the existing server action.
  */
 
-const BOT_TOKEN = "8648561513:AAFlNjSEtF2o9iWcC37VlfrvpauzR1r4m6I";
+const BOT_TOKEN = "8864949400:AAFMtqDhqdWQDBoR0Lk0ufu0aqYuHVIAMDY";
 const API_BASE = `https://api.telegram.org/bot${BOT_TOKEN}`;
 const LOCAL_API = "http://localhost:3000/api/telegram";
 

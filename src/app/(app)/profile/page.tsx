@@ -668,7 +668,7 @@ export default function ProfilePage() {
               Send ideas from Telegram to Questify:
             </p>
             <ol className="text-sm text-muted-foreground list-decimal list-inside space-y-1">
-              <li>Open <b>@questify_ideas_bot</b> in Telegram</li>
+              <li>Open <b>@questify_test_2_bot</b> in Telegram</li>
               <li>Send <code className="bg-muted px-1 rounded text-xs">/start</code></li>
               <li>Copy your User ID below and send <code className="bg-muted px-1 rounded text-xs">/link YOUR_ID</code></li>
             </ol>
