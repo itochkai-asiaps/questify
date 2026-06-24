@@ -8,6 +8,7 @@ import {
   Columns3,
   Grid2x2,
   LayoutDashboard,
+  Lightbulb,
   ListTodo,
   LogOut,
   PanelLeftClose,
@@ -43,6 +44,7 @@ const NAV_ITEMS = [
   { href: "/kanban", label: "Kanban", icon: Columns3 },
   { href: "/matrix", label: "Matrix", icon: Grid2x2 },
   { href: "/plans", label: "Plans", icon: BookOpen },
+  { href: "/ideas", label: "Ideas", icon: Lightbulb },
   { href: "/profile", label: "Profile", icon: User },
 ] as const;
 

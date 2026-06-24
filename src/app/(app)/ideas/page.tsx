@@ -1,0 +1,245 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Lightbulb, Loader2, Plus, Trash2 } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/hooks/useAuth";
+import { createIdea, deleteIdea, getIdeas } from "@/lib/actions/ideas";
+
+type Idea = {
+  id: string;
+  title: string;
+  description: string | null;
+  source: "web" | "telegram";
+  created_at: string;
+};
+
+const sourceBadge = (source: string) =>
+  source === "telegram"
+    ? { label: "Telegram", variant: "secondary" as const }
+    : { label: "Web", variant: "outline" as const };
+
+export default function IdeasPage() {
+  const { user, isLoading: authLoading } = useAuth();
+  const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const loadIdeas = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const result = await getIdeas();
+    if (result.error) {
+      setError(result.error);
+    } else {
+      setIdeas((result.data ?? []) as Idea[]);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) return;
+    loadIdeas();
+  }, [user, authLoading, loadIdeas]);
+
+  const handleSubmit = useCallback(
+    async (formData: FormData) => {
+      setIsSubmitting(true);
+      await createIdea(formData);
+      setIsSubmitting(false);
+      loadIdeas();
+    },
+    [loadIdeas],
+  );
+
+  const handleDelete = useCallback(
+    async (id: string) => {
+      setDeletingId(id);
+      await deleteIdea(id);
+      setDeletingId(null);
+      loadIdeas();
+    },
+    [loadIdeas],
+  );
+
+  if (authLoading || !user) return null;
+
+  return (
+    <div className="container mx-auto max-w-3xl p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold font-heading tracking-tight">Ideas</h1>
+          <p className="text-muted-foreground mt-1">
+            Quick capture. Decompose later into plans and tasks.
+          </p>
+        </div>
+
+        <Dialog>
+          <DialogTrigger
+            render={
+              <Button>
+                <Plus className="size-4" />
+                New Idea
+              </Button>
+            }
+          />
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>New Idea</DialogTitle>
+              <DialogDescription>
+                Capture a thought quickly. You can decompose it into a plan later.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form
+              action={handleSubmit}
+              className="space-y-4"
+            >
+              <div className="space-y-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  name="title"
+                  placeholder="What's your idea?"
+                  required
+                  maxLength={500}
+                  autoFocus
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description (optional)</Label>
+                <Input
+                  id="description"
+                  name="description"
+                  placeholder="Add some details..."
+                  maxLength={5000}
+                />
+              </div>
+
+              <DialogFooter>
+                <DialogClose
+                  render={
+                    <Button variant="outline" disabled={isSubmitting} />
+                  }
+                >
+                  Cancel
+                </DialogClose>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Idea"
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Content */}
+      {loading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-20 w-full rounded-xl" />
+          ))}
+        </div>
+      ) : error ? (
+        <Card className="border-destructive/50">
+          <CardContent className="flex flex-col items-center gap-4 py-8">
+            <p className="text-destructive">{error}</p>
+            <Button variant="outline" onClick={loadIdeas}>
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      ) : ideas.length === 0 ? (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center gap-4 py-12">
+            <Lightbulb className="size-12 text-muted-foreground/40" />
+            <div className="text-center space-y-1">
+              <p className="text-lg font-medium">No ideas yet</p>
+              <p className="text-sm text-muted-foreground">
+                Capture your thoughts before they disappear. Use the button above or send them via Telegram bot.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <AnimatePresence mode="popLayout">
+          <div className="space-y-3">
+            {ideas.map((idea) => (
+              <motion.div
+                key={idea.id}
+                layout
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, x: -50 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Card className="group hover:ring-1 hover:ring-primary/20 transition-shadow">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <CardTitle className="text-base">{idea.title}</CardTitle>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge variant={sourceBadge(idea.source).variant}>
+                          {sourceBadge(idea.source).label}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => handleDelete(idea.id)}
+                          disabled={deletingId === idea.id}
+                          aria-label="Delete idea"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          {deletingId === idea.id ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  {idea.description && (
+                    <CardContent className="pt-0">
+                      <p className="text-sm text-muted-foreground line-clamp-3 whitespace-pre-wrap">
+                        {idea.description}
+                      </p>
+                    </CardContent>
+                  )}
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </AnimatePresence>
+      )}
+    </div>
+  );
+}

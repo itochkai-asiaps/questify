@@ -114,10 +114,35 @@ CREATE TABLE IF NOT EXISTS plan_items (
 
 CREATE INDEX idx_plan_items_plan_id ON plan_items(plan_id);
 
+-- Ideas (inbox for quick capture, telegram bot)
+CREATE TABLE IF NOT EXISTS ideas (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL CHECK (char_length(title) BETWEEN 1 AND 500),
+  description TEXT CHECK (char_length(description) <= 5000),
+  source TEXT NOT NULL DEFAULT 'web' CHECK (source IN ('web', 'telegram')),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX idx_ideas_user_id ON ideas(user_id);
+CREATE INDEX idx_ideas_created_at ON ideas(created_at DESC);
+
+-- Telegram Chat ↔ User mapping
+CREATE TABLE IF NOT EXISTS telegram_chats (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
+  chat_id BIGINT NOT NULL UNIQUE,
+  linked_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX idx_telegram_chats_chat_id ON telegram_chats(chat_id);
+
 -- ============================================================
 -- ROW LEVEL SECURITY
 -- ============================================================
 
+ALTER TABLE ideas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subtasks ENABLE ROW LEVEL SECURITY;
@@ -156,6 +181,10 @@ CREATE POLICY "Users see own achievements" ON user_achievements
 
 -- User Stats: users see own
 CREATE POLICY "Users see own stats" ON user_stats
+  FOR ALL USING (auth.uid() = user_id);
+
+-- Ideas: users see own
+CREATE POLICY "Users see own ideas" ON ideas
   FOR ALL USING (auth.uid() = user_id);
 
 -- Plans: users see own plans
