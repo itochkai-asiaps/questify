@@ -48,6 +48,8 @@ const NAV_ITEMS = [
   { href: "/profile", label: "Profile", icon: User },
 ] as const;
 
+const isStaging = process.env.NEXT_PUBLIC_APP_ENV === "staging";
+
 // ---------------------------------------------------------------------------
 // User initial helper
 // ---------------------------------------------------------------------------
@@ -156,7 +158,7 @@ export default function AppSidebar() {
               collapsed ? "lg:hidden lg:opacity-0" : "lg:opacity-100",
             )}
           >
-            Questify
+            Questify{isStaging ? " STG" : ""}
           </span>
         </Link>
         <Button
