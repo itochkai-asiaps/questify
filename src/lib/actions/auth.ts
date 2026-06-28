@@ -68,7 +68,7 @@ export async function signIn(
 
   const { email, password } = parsed.data;
 
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data: authData, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -77,7 +77,21 @@ export async function signIn(
     return { error: error.message };
   }
 
+  const user = authData.user;
+
   revalidatePath("/", "layout");
+
+  // Check if user has completed onboarding (avatar_url is only set during onboarding)
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("avatar_url")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.avatar_url) {
+    redirect("/dashboard");
+  }
+
   redirect("/onboarding");
 }
 

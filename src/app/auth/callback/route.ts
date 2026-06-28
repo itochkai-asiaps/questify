@@ -8,9 +8,18 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
-    if (!error) {
+    if (!error && data.user) {
+      // Check if onboarding was completed (avatar_url is only set during onboarding)
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("id", data.user.id)
+        .single();
+
+      const next = profile?.avatar_url ? "/dashboard" : (searchParams.get("next") ?? "/onboarding");
+
       const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocalEnv = process.env.NODE_ENV === "development";
       if (isLocalEnv) {

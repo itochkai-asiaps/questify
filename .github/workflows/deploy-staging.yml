@@ -1,0 +1,48 @@
+name: Deploy Staging to VPS
+
+on:
+  push:
+    branches: [staging]
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy Staging via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.STAGING_SSH_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.STAGING_SSH_PORT || 22 }}
+           script: |
+            set -e
+            cd /opt/questify-staging
+
+            # Prevent concurrent builds
+            if [ -f /tmp/questify-build.lock ]; then
+              echo "Another build in progress — waiting 30s..."
+              sleep 30
+              if [ -f /tmp/questify-build.lock ]; then
+                echo "Build still locked — aborting. Push again."
+                exit 1
+              fi
+            fi
+            touch /tmp/questify-build.lock
+            trap "rm -f /tmp/questify-build.lock" EXIT
+
+            git pull origin staging
+            rm -rf .next node_modules/.cache
+            npm install
+            echo "=== Building staging ==="
+            npm run build
+            # Update Nginx config from repo
+            cp -f deploy/nginx-questify-staging.conf /etc/nginx/sites-available/questify-staging
+            ln -sf /etc/nginx/sites-available/questify-staging /etc/nginx/sites-enabled/questify-staging
+            nginx -t && systemctl reload nginx || true
+            pm2 delete questify-staging 2>/dev/null || true
+            pm2 start npm --name questify-staging -- start
+            pm2 save
+            echo "=== Staging deploy complete ==="
+            pm2 status
