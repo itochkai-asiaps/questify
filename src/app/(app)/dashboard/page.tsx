@@ -548,9 +548,9 @@ function HeartAnimation() {
         >
           <defs>
             <radialGradient id="heartGrad" cx="50%" cy="30%" r="70%">
-            <stop offset="0%" stopColor="#fca5a5" />
-            <stop offset="50%" stopColor="#ef4444" />
-            <stop offset="100%" stopColor="#b91c1c" />
+              <stop offset="0%" stopColor="#fde047" />
+              <stop offset="50%" stopColor="#eab308" />
+              <stop offset="100%" stopColor="#a16207" />
             </radialGradient>
           </defs>
           <path
