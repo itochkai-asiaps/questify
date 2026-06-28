@@ -19,23 +19,15 @@ jobs:
           script: |
             set -e
             cd /opt/questify
-             # Prevent concurrent builds
-            if [ -f /tmp/questify-build.lock ]; then
-              echo "Another build in progress — waiting 30s..."
-              sleep 30
-              if [ -f /tmp/questify-build.lock ]; then
-                echo "Build still locked — aborting. Push again."
-                exit 1
-              fi
-            fi
-            touch /tmp/questify-build.lock
-            trap "rm -f /tmp/questify-build.lock" EXIT
-
             git pull origin master
-            rm -rf .next node_modules/.cache
+            rm -rf .next
             npm ci --production=false 2>/dev/null || npm install
             echo "=== Building (this takes 2-5 min on 1GB VPS) ==="
             npm run build
+            # Update Nginx config from repo
+            cp -f deploy/nginx-questify.conf /etc/nginx/sites-available/questify
+            ln -sf /etc/nginx/sites-available/questify /etc/nginx/sites-enabled/questify
+            nginx -t && systemctl reload nginx || true
             pm2 restart questify --update-env
             pm2 save
             echo "=== Deploy complete ==="
