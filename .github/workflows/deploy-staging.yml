@@ -24,6 +24,10 @@ jobs:
             npm install
             echo "=== Building staging ==="
             npm run build
+            # Update Nginx config from repo
+            cp -f deploy/nginx-questify-staging.conf /etc/nginx/sites-available/questify-staging
+            ln -sf /etc/nginx/sites-available/questify-staging /etc/nginx/sites-enabled/questify-staging
+            nginx -t && systemctl reload nginx || true
             pm2 delete questify-staging 2>/dev/null || true
             pm2 start npm --name questify-staging -- start
             pm2 save
