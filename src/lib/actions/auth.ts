@@ -81,14 +81,14 @@ export async function signIn(
 
   revalidatePath("/", "layout");
 
-  // Check if user has completed onboarding
+  // Check if user has completed onboarding (avatar_url is only set during onboarding)
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name")
+    .select("avatar_url")
     .eq("id", user.id)
     .single();
 
-  if (profile?.display_name) {
+  if (profile?.avatar_url) {
     redirect("/dashboard");
   }
 
