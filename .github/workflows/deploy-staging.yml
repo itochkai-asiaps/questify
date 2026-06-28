@@ -21,6 +21,7 @@ jobs:
             cd /opt/questify-staging
             git pull origin staging
             rm -rf .next
+            cp -f .env.staging .env.local
             npm install
             echo "=== Stopping prod temporarily to free RAM ==="
             pm2 stop questify
