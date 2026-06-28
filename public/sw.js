@@ -1,4 +1,4 @@
-const CACHE_NAME = "questify-v1";
+const CACHE_NAME = "questify-v2";
 const SHELL_URLS = ["/", "/dashboard", "/tasks", "/plans"];
 
 // Install: cache the app shell and skip waiting
@@ -12,52 +12,37 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// Activate: claim clients and clean old caches
+// Activate: claim clients and clean ALL old caches
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       await self.clients.claim();
       const keys = await caches.keys();
-      await Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) return caches.delete(key);
-        }),
-      );
+      await Promise.all(keys.map((key) => caches.delete(key)));
+      // Re-cache shell after clearing
+      const cache = await caches.open(CACHE_NAME);
+      await cache.addAll(SHELL_URLS);
     })(),
   );
 });
 
-// Fetch: network-first for navigation/API, cache-first for static assets
+// Fetch: network-first always — Next.js chunks are content-hashed,
+// so each deploy has unique filenames. Caching old JS = broken app.
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET and non-http(s) requests
   if (request.method !== "GET") return;
   if (!url.protocol.startsWith("http")) return;
 
-  // Cache-first for static assets (images, fonts, scripts, styles)
-  if (
-    url.pathname.match(
-      /\.(png|jpg|jpeg|gif|svg|ico|webp|woff2?|ttf|css|js)(\?.*)?$/,
-    )
-  ) {
+  // Cache-first for static images/fonts only (never change)
+  if (url.pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|webp|woff2?|ttf)(\?.*)?$/)) {
     event.respondWith(cacheFirst(request));
     return;
   }
 
-  // Network-first for navigation and API calls
-  if (
-    request.mode === "navigate" ||
-    url.pathname.startsWith("/api/") ||
-    url.pathname.startsWith("/auth/")
-  ) {
-    event.respondWith(networkFirst(request));
-    return;
-  }
-
-  // Cache-first for everything else (shell pages)
-  event.respondWith(cacheFirst(request));
+  // Network-first for everything else (JS, CSS, navigation, API)
+  event.respondWith(networkFirst(request));
 });
 
 async function cacheFirst(request) {
