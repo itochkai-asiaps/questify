@@ -12,24 +12,20 @@ jobs:
       - name: Deploy Staging via SSH
         uses: appleboy/ssh-action@v0.1.10
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
+          host: ${{ secrets.STAGING_SSH_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.STAGING_SSH_PORT || 22 }}
           script: |
             set -e
             cd /opt/questify-staging
             git pull origin staging
             rm -rf .next
-            echo 'NEXT_PUBLIC_APP_ENV=staging' >> .env.staging
-            cp -f .env.staging .env.local
             npm install
-            echo "=== Stopping prod temporarily to free RAM ==="
-            pm2 stop questify
-            NEXT_PUBLIC_APP_ENV=staging npm run build
-            pm2 start questify
+            echo "=== Building staging ==="
+            npm run build
             pm2 delete questify-staging 2>/dev/null || true
-            NEXT_PUBLIC_APP_ENV=staging PORT=3001 pm2 start node_modules/.bin/next --name questify-staging -- start
+            pm2 start npm --name questify-staging -- start
             pm2 save
             echo "=== Staging deploy complete ==="
             pm2 status
