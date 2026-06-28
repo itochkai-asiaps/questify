@@ -24,10 +24,10 @@ jobs:
             npm install
             echo "=== Stopping prod temporarily to free RAM ==="
             pm2 stop questify
-            npm run build
+            NEXT_PUBLIC_APP_ENV=staging npm run build
             pm2 start questify
             pm2 delete questify-staging 2>/dev/null || true
-            PORT=3001 pm2 start node_modules/.bin/next --name questify-staging -- start
+            NEXT_PUBLIC_APP_ENV=staging PORT=3001 pm2 start node_modules/.bin/next --name questify-staging -- start
             pm2 save
             echo "=== Staging deploy complete ==="
             pm2 status
