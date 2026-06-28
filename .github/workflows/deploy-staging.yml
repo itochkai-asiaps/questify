@@ -21,6 +21,7 @@ jobs:
             cd /opt/questify-staging
             git pull origin staging
             rm -rf .next
+            echo 'NEXT_PUBLIC_APP_ENV=staging' >> .env.staging
             cp -f .env.staging .env.local
             npm install
             echo "=== Stopping prod temporarily to free RAM ==="
