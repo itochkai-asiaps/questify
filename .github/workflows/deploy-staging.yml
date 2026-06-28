@@ -16,7 +16,7 @@ jobs:
           username: ${{ secrets.STAGING_SSH_USER }}
           key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
           port: ${{ secrets.STAGING_SSH_PORT || 22 }}
-           script: |
+          script: |
             set -e
             cd /opt/questify-staging
 
