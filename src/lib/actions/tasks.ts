@@ -8,7 +8,9 @@ import {
   CreateTaskInputSchema,
   UpdateTaskInputSchema,
   TaskPriority,
+  TaskStatus,
 } from "@/types/task";
+import { completeTask, checkAndAwardAchievements } from "@/lib/gamification/engine";
 
 const XP_REWARDS: Record<string, number> = {
   p1: 50,
@@ -85,6 +87,14 @@ export async function updateTask(
     return { error: "Not authenticated" };
   }
 
+  // Fetch current task to detect status transition to "done"
+  const { data: currentTask } = await supabase
+    .from("tasks")
+    .select("status, priority")
+    .eq("id", taskId)
+    .eq("user_id", user.id)
+    .single();
+
   const rawData: Record<string, unknown> = {};
   const title = formData.get("title");
   if (title !== null) rawData.title = title;
@@ -121,6 +131,19 @@ export async function updateTask(
 
   if (error) {
     return { error: error.message };
+  }
+
+  // Award XP if task was just marked as done
+  const wasJustCompleted =
+    currentTask?.status !== "done" && parsed.data.status === TaskStatus.Done;
+  if (wasJustCompleted) {
+    const taskPriority = (currentTask?.priority ?? "p3") as TaskPriority;
+    try {
+      await completeTask(user.id, taskPriority);
+      await checkAndAwardAchievements(user.id);
+    } catch {
+      // Gamification failure should not block the task update
+    }
   }
 
   revalidatePath("/dashboard", "layout");

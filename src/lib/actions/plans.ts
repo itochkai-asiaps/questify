@@ -8,6 +8,8 @@ import {
   CreatePlanInputSchema,
   UpdatePlanInputSchema,
 } from "@/types/plan";
+import { awardXp, checkAndAwardAchievements } from "@/lib/gamification/engine";
+import { XP_REWARDS } from "@/lib/gamification/levels";
 
 const addPlanItemSchema = z.object({
   title: z.string().min(1, "Title is required").max(500),
@@ -333,6 +335,30 @@ export async function togglePlanItem(
 
   if (error) {
     return { error: error.message };
+  }
+
+  // Award XP when item transitions from incomplete → complete
+  if (!current.completed) {
+    try {
+      await awardXp(user.id, XP_REWARDS.planStep);
+
+      // Check if all items in this plan are now completed
+      const { data: remaining } = await supabase
+        .from("plan_items")
+        .select("id")
+        .eq("plan_id", current.plan_id)
+        .eq("completed", false);
+
+      if (remaining && remaining.length === 0) {
+        await awardXp(user.id, XP_REWARDS.planCompleted);
+        // Increment plans_completed on user_stats
+        await supabase.rpc("increment_plans_completed", { p_user_id: user.id }).maybeSingle();
+      }
+
+      await checkAndAwardAchievements(user.id);
+    } catch {
+      // Gamification failure should not block the toggle
+    }
   }
 
   revalidatePath("/plans");
