@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   animate,
@@ -462,6 +462,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const lastFetchedUserId = useRef<string | null>(null);
 
   const fetchProfile = useCallback(async () => {
     if (!user) return;
@@ -521,9 +522,12 @@ export default function ProfilePage() {
     }
   }, [user, authLoading, router]);
 
-  // Fetch data
+  // Fetch data — skip if session just refreshed (same user)
   useEffect(() => {
     if (user && !authLoading) {
+      // Only re-fetch when user ID actually changes, not on tab-focus session refresh
+      if (lastFetchedUserId.current === user.id && stats !== null) return;
+      lastFetchedUserId.current = user.id;
       fetchProfile();
     }
   }, [user, authLoading, fetchProfile]);
