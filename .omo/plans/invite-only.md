@@ -87,3 +87,20 @@ CREATE POLICY "Anyone can read invite by token" ON invites FOR SELECT USING (tru
 ---
 
 _Приоритет: средний. Блок: новый. Не блокирует B/C/D._
+
+## Фаза 2 — Управление из Telegram бота
+
+Добавить в вебхук бота команду `/approve` — админ получает уведомление о запросе в Telegram и может сразу ответить командой, не заходя в веб-интерфейс.
+
+### Поток:
+1. Пользователь оставляет запрос на лендинге
+2. Бот присылает админу: «New request: user@example.com — reply /approve <id>»
+3. Админ отвечает: `/approve req_abc123`
+4. Бот: генерирует инвайт, меняет статус запроса на approved
+5. Бот отвечает админу готовой ссылкой: `questify.app/register?invite=abc123`
+6. Админ пересылает ссылку пользователю
+
+### Что добавить:
+- `requestInvite()` → отправляет сообщение в Telegram админу с ID запроса
+- Команда `/approve <request_id>` в `route.ts` — вызывает `generateInvite(requestId)`
+- Связь: в `invite_requests` добавить поле `telegram_chat_id` (если пользователь привязан к боту, можно отправить ссылку напрямую ему)
