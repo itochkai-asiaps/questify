@@ -39,7 +39,11 @@ const EMPTY_BOARD: TasksByStatus = {
 
 function groupTasksByStatus(tasks: Task[]): TasksByStatus {
   const grouped = { ...EMPTY_BOARD };
+  const seen = new Set<string>();
   for (const task of tasks) {
+    // Deduplicate: if same task ID appears twice (stale cache race), keep first
+    if (seen.has(task.id)) continue;
+    seen.add(task.id);
     const status = task.status as TaskStatus;
     if (status in grouped) {
       grouped[status].push(task);
@@ -70,8 +74,15 @@ export default function KanbanPage() {
       return;
     }
     const tasks = (result.data ?? []) as Task[];
-    setAllTasks(tasks);
-    setTasksByStatus(groupTasksByStatus(tasks));
+    // Deduplicate by ID (defensive against stale cache)
+    const seen = new Set<string>();
+    const unique = tasks.filter((t) => {
+      if (seen.has(t.id)) return false;
+      seen.add(t.id);
+      return true;
+    });
+    setAllTasks(unique);
+    setTasksByStatus(groupTasksByStatus(unique));
     setIsLoading(false);
   }, []);
 

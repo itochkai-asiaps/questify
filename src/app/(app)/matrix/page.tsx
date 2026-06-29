@@ -42,7 +42,10 @@ const EMPTY_MATRIX: TasksByPriority = {
 
 function groupTasksByPriority(tasks: Task[]): TasksByPriority {
   const grouped = { ...EMPTY_MATRIX };
+  const seen = new Set<string>();
   for (const task of tasks) {
+    if (seen.has(task.id)) continue;
+    seen.add(task.id);
     const priority = task.priority as TaskPriority;
     if (priority in grouped) {
       grouped[priority].push(task);
@@ -81,8 +84,14 @@ export default function MatrixPage() {
       return;
     }
     const tasks = (result.data ?? []) as Task[];
-    setAllTasks(tasks);
-    setTasksByPriority(groupTasksByPriority(tasks));
+    const seen = new Set<string>();
+    const unique = tasks.filter((t) => {
+      if (seen.has(t.id)) return false;
+      seen.add(t.id);
+      return true;
+    });
+    setAllTasks(unique);
+    setTasksByPriority(groupTasksByPriority(unique));
     setIsLoading(false);
   }, []);
 
