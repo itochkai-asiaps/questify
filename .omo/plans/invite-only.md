@@ -46,9 +46,9 @@ CREATE INDEX idx_invites_token ON invites(token);
 ### 2. Серверные экшены
 Файл: `src/lib/actions/invites.ts`
 - `requestInvite(email)` — сохраняет запрос (публичный), с защитой:
-  - **Rate limit**: проверка — есть ли уже pending-запрос от этого email за последние 24h
+  - **Rate limit**: не более 5 pending-запросов от одного email за 24h
   - **Email format**: Zod-валидация
-  - **Cooldown**: если запрос уже существует → вернуть «Request already submitted»
+  - **Cooldown**: если лимит превышен → вернуть «Too many requests. Please wait 24h.»
 - `getRequests()` — список запросов для админа
 - `generateInvite(requestId)` — создаёт инвайт + меняет статус запроса на approved
 - `validateInvite(token)` — проверяет токен
