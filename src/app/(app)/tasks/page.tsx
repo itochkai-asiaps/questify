@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import TaskCard from "@/components/tasks/task-card";
-import { getTasks } from "@/lib/actions/tasks";
+import { getTasks, createTask } from "@/lib/actions/tasks";
 import type { Task } from "@/types/task";
 import { TaskPriority, TaskStatus } from "@/types/task";
 
@@ -55,6 +55,10 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loadState, setLoadState] = useState<LoadingState>("idle");
   const [error, setError] = useState<string | null>(null);
+
+  // Quick create
+  const [quickTitle, setQuickTitle] = useState("");
+  const [quickAdding, setQuickAdding] = useState(false);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -97,6 +101,24 @@ export default function TasksPage() {
   const handleTaskDelete = useCallback(() => {
     fetchTasks();
   }, [fetchTasks]);
+
+  const handleQuickCreate = useCallback(async () => {
+    const title = quickTitle.trim();
+    if (!title || quickAdding) return;
+
+    setQuickAdding(true);
+    const formData = new FormData();
+    formData.set("title", title);
+    const result = await createTask(formData);
+
+    if (result.error) {
+      setError(result.error);
+    } else {
+      setQuickTitle("");
+      await fetchTasks();
+    }
+    setQuickAdding(false);
+  }, [quickTitle, quickAdding, fetchTasks]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6">
@@ -177,6 +199,41 @@ export default function TasksPage() {
           </Button>
         )}
       </motion.div>
+
+      {/* Quick create */}
+      {loadState === "loaded" && (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+          className="flex items-center gap-2"
+        >
+          <div className="relative flex-1">
+            <Plus className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Quick add task by name..."
+              value={quickTitle}
+              onChange={(e) => setQuickTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleQuickCreate();
+                }
+              }}
+              disabled={quickAdding}
+              className="pl-8"
+            />
+          </div>
+          <Button
+            size="icon"
+            onClick={handleQuickCreate}
+            disabled={!quickTitle.trim() || quickAdding}
+            className="shrink-0"
+          >
+            <Plus className="size-4" />
+          </Button>
+        </motion.div>
+      )}
 
       {/* Task grid */}
       <AnimatePresence mode="wait">
