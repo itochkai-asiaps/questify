@@ -12,7 +12,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { LayoutGrid, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -267,22 +267,20 @@ export default function MatrixPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 md:grid-rows-2">
-          <AnimatePresence mode="popLayout">
-            {ALL_PRIORITIES.map((priority) => (
-              <motion.div
-                key={priority}
-                layout
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25 }}
-              >
-                <MatrixQuadrant
-                  priority={priority}
-                  tasks={tasksByPriority[priority]}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          {ALL_PRIORITIES.map((priority) => (
+            <motion.div
+              key={priority}
+              layout
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              <MatrixQuadrant
+                priority={priority}
+                tasks={tasksByPriority[priority]}
+              />
+            </motion.div>
+          ))}
         </div>
 
         {/* Drag overlay */}

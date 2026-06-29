@@ -12,7 +12,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { ClipboardList, Loader2 } from "lucide-react";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -225,22 +225,20 @@ export default function KanbanPage() {
         onDragEnd={handleDragEnd}
       >
         <div className="flex gap-4 overflow-x-auto pb-4 md:grid md:grid-cols-3 md:overflow-visible">
-          <AnimatePresence mode="popLayout">
-            {ALL_STATUSES.map((status) => (
-              <motion.div
-                key={status}
-                layout
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25 }}
-              >
-                <KanbanColumn
-                  status={status}
-                  tasks={tasksByStatus[status]}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          {ALL_STATUSES.map((status) => (
+            <motion.div
+              key={status}
+              layout
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              <KanbanColumn
+                status={status}
+                tasks={tasksByStatus[status]}
+              />
+            </motion.div>
+          ))}
         </div>
 
         {/* Drag overlay */}
