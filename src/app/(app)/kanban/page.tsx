@@ -112,13 +112,22 @@ export default function KanbanPage() {
         }
       }
 
-      if (!newStatus || newStatus === task.status) return;
+      if (!newStatus) return;
 
-      // Optimistic update
-      const previousState = tasksByStatus;
+      // Preserve original status for rollback
+      const originalStatus = task.status;
+
+      // Optimistic update — scan ALL columns to find and remove the task
+      // (task.status from closure can be stale after rapid drags)
       setTasksByStatus((prev) => {
+        // Already at target — nothing to do
+        if (prev[newStatus!].some((t) => t.id === taskId)) return prev;
+
         const next = { ...prev };
-        next[task.status] = prev[task.status].filter((t) => t.id !== taskId);
+        // Remove from whatever column it's currently in
+        for (const status of Object.keys(prev) as TaskStatus[]) {
+          next[status] = prev[status].filter((t) => t.id !== taskId);
+        }
         next[newStatus!] = [
           ...prev[newStatus!],
           { ...task, status: newStatus! },
@@ -132,8 +141,15 @@ export default function KanbanPage() {
       const result = await updateTask(taskId, formData);
 
       if (result.error) {
-        // Revert on failure
-        setTasksByStatus(previousState);
+        // Revert: move task back to original status
+        setTasksByStatus((prev) => {
+          const next = { ...prev };
+          for (const status of Object.keys(prev) as TaskStatus[]) {
+            next[status] = prev[status].filter((t) => t.id !== taskId);
+          }
+          next[originalStatus] = [...prev[originalStatus], { ...task, status: originalStatus }];
+          return next;
+        });
         setError(result.error);
         return;
       }

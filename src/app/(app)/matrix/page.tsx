@@ -127,13 +127,22 @@ export default function MatrixPage() {
         }
       }
 
-      if (!newPriority || newPriority === task.priority) return;
+      if (!newPriority) return;
 
-      // Optimistic update
-      const previousState = tasksByPriority;
+      // Preserve original priority for rollback
+      const originalPriority = task.priority;
+
+      // Optimistic update — scan ALL quadrants to find and remove the task
+      // (task.priority from closure can be stale after rapid drags)
       setTasksByPriority((prev) => {
+        // Already at target — nothing to do
+        if (prev[newPriority!].some((t) => t.id === taskId)) return prev;
+
         const next = { ...prev };
-        next[task.priority] = prev[task.priority].filter((t) => t.id !== taskId);
+        // Remove from whatever quadrant it's currently in
+        for (const priority of Object.keys(prev) as TaskPriority[]) {
+          next[priority] = prev[priority].filter((t) => t.id !== taskId);
+        }
         next[newPriority!] = [
           ...prev[newPriority!],
           { ...task, priority: newPriority! },
@@ -147,7 +156,15 @@ export default function MatrixPage() {
       const result = await updateTask(taskId, formData);
 
       if (result.error) {
-        setTasksByPriority(previousState);
+        // Revert: move task back to original quadrant
+        setTasksByPriority((prev) => {
+          const next = { ...prev };
+          for (const priority of Object.keys(prev) as TaskPriority[]) {
+            next[priority] = prev[priority].filter((t) => t.id !== taskId);
+          }
+          next[originalPriority] = [...prev[originalPriority], { ...task, priority: originalPriority }];
+          return next;
+        });
         setError(result.error);
         return;
       }
