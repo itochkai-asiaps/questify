@@ -69,3 +69,21 @@ export function getStreakMultiplier(streak: number): number {
   if (streak > 7) return STREAK_MULTIPLIERS.week;
   return STREAK_MULTIPLIERS.normal;
 }
+
+/**
+ * Returns base XP reward for a given task priority.
+ */
+export function xpForPriority(priority: string): number {
+  switch (priority) {
+    case "p1":
+      return XP_REWARDS.p1;
+    case "p2":
+      return XP_REWARDS.p2;
+    case "p3":
+      return XP_REWARDS.p3;
+    case "p4":
+      return XP_REWARDS.p4;
+    default:
+      return XP_REWARDS.p3;
+  }
+}

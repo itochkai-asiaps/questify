@@ -7,6 +7,7 @@ import {
   getStreakMultiplier,
   getLevel,
   xpForLevel,
+  xpForPriority,
 } from "./levels";
 
 // ---------------------------------------------------------------------------
@@ -118,18 +119,7 @@ const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
 // Helpers
 // ---------------------------------------------------------------------------
 
-export function xpForPriority(priority: TaskPriority): number {
-  switch (priority) {
-    case TaskPriority.P1:
-      return XP_REWARDS.p1;
-    case TaskPriority.P2:
-      return XP_REWARDS.p2;
-    case TaskPriority.P3:
-      return XP_REWARDS.p3;
-    case TaskPriority.P4:
-      return XP_REWARDS.p4;
-  }
-}
+// (xpForPriority is in levels.ts)
 
 // ---------------------------------------------------------------------------
 // awardXp

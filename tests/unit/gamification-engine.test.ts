@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { xpForPriority } from "@/lib/gamification/engine";
 import {
   getLevel,
   getStreakMultiplier,
   XP_REWARDS,
+  xpForPriority,
 } from "@/lib/gamification/levels";
 import { TaskPriority } from "@/types/task";
 
