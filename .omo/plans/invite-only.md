@@ -46,7 +46,9 @@ CREATE INDEX idx_invites_token ON invites(token);
 ### 2. Серверные экшены
 Файл: `src/lib/actions/invites.ts`
 - `requestInvite(email)` — сохраняет запрос (публичный), с защитой:
-  - **Rate limit**: не более 5 pending-запросов от одного email за 24h
+  - **Rate limit per email**: не более 5 pending-запросов от одного email за 24h
+  - **Rate limit global**: не более 10 новых запросов в минуту (COUNT по `invite_requests` за последнюю минуту)
+  - **Nginx rate limit**: `limit_req` zone на форме запроса — 5 r/s, burst 10 (на уровне VPS)
   - **Email format**: Zod-валидация
   - **Cooldown**: если лимит превышен → вернуть «Too many requests. Please wait 24h.»
 - `getRequests()` — список запросов для админа
@@ -94,6 +96,12 @@ CREATE INDEX idx_invites_token ON invites(token);
 ---
 
 _Приоритет: средний. Блок: новый. Не блокирует B/C/D._
+
+**Защита от DDoS (три слоя):**
+1. **Per-email**: 5 запросов / 24h с одного email
+2. **Global**: 10 запросов / минуту всего (защита от скриптов с перебором email)
+3. **Nginx**: `limit_req` на уровне reverse proxy (5 r/s, burst 10)
+4. **Будущее**: Cloudflare Turnstile (бесплатный невидимый CAPTCHA) — если атаки продолжатся
 
 ## Фаза 2 — Управление из Telegram бота
 
