@@ -37,11 +37,18 @@ CREATE POLICY "Authenticated can read requests" ON invite_requests FOR SELECT TO
 CREATE POLICY "Anyone can insert requests" ON invite_requests FOR INSERT WITH CHECK (true);
 CREATE POLICY "Creator can manage invites" ON invites FOR ALL USING (created_by = auth.uid());
 CREATE POLICY "Anyone can read invite by token" ON invites FOR SELECT USING (true);
+
+-- Indexes for rate limiting & lookup
+CREATE INDEX idx_invite_requests_email ON invite_requests(email, status);
+CREATE INDEX idx_invites_token ON invites(token);
 ```
 
 ### 2. Серверные экшены
 Файл: `src/lib/actions/invites.ts`
-- `requestInvite(email)` — сохраняет запрос (публичный)
+- `requestInvite(email)` — сохраняет запрос (публичный), с защитой:
+  - **Rate limit**: проверка — есть ли уже pending-запрос от этого email за последние 24h
+  - **Email format**: Zod-валидация
+  - **Cooldown**: если запрос уже существует → вернуть «Request already submitted»
 - `getRequests()` — список запросов для админа
 - `generateInvite(requestId)` — создаёт инвайт + меняет статус запроса на approved
 - `validateInvite(token)` — проверяет токен
