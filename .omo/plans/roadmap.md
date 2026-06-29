@@ -8,10 +8,10 @@
 - [x] **A5.** Убрать онбординг
 - [x] **A6.** Тёмная тема (светлая / тёмная / системная, по умолчанию системная)
 
-## Блок B — Оживить геймификацию (★★☆)
-- [ ] **B1.** Подключить `completeTask` в `updateTask` (задачи дают XP при выполнении)
-- [ ] **B2.** XP за выполнение элементов плана (`togglePlanItem` → `awardXp`)
-- [ ] **B3.** Оживить ачивки: сид в БД, подключить `checkAndAwardAchievements`, отображать
+## Блок B — Оживить геймификацию (★★☆) ✅ DONE
+- [x] **B1.** Подключить `completeTask` в `updateTask` (задачи дают XP при выполнении)
+- [x] **B2.** XP за выполнение элементов плана (`togglePlanItem` → `awardXp`)
+- [x] **B3.** Оживить ачивки: сид в БД, подключить `checkAndAwardAchievements`, отображать
 
 ## Блок C — Связать сущности (★★☆)
 - [ ] **C1.** Идея → конвертировать в задачу
@@ -37,6 +37,11 @@
 - [ ] **G4.** Уведомление админа в Telegram о новых запросах
 - [ ] **G5.** DDoS-защита: per-email (5/24h), global (10/min), Nginx limit_req
 - [ ] **G6.** Фаза 2: команда `/approve` из Telegram бота
+
+## Блок H — Автоматизация миграций БД (★★☆)
+- [ ] **H1.** GitHub Secret с `SUPABASE_ACCESS_TOKEN` (Personal Access Token из Supabase)
+- [ ] **H2.** Шаг `supabase db push` в CI/CD (deploy-staging.yml и deploy.yml)
+- [ ] **H3.** Альтернатива: `psql` на VPS с connection string из GitHub Secrets
 
 ---
 
