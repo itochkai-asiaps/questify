@@ -674,12 +674,12 @@ export default function ProfilePage() {
             <ol className="text-sm text-muted-foreground list-decimal list-inside space-y-1">
               <li>Open <b>@questify_test_2_bot</b> in Telegram</li>
               <li>Send <code className="bg-muted px-1 rounded text-xs">/start</code></li>
-              <li>Copy your User ID below and send <code className="bg-muted px-1 rounded text-xs">/link YOUR_ID</code></li>
+              <li>Copy the command below and paste it in the bot</li>
             </ol>
           </div>
           <div className="flex items-center gap-2 rounded-lg border border-border p-3 bg-muted/50">
-            <code className="text-sm font-mono select-all flex-1 truncate">{user?.id ?? "Loading..."}</code>
-            <CopyButton text={user?.id ?? ""} />
+            <code className="text-sm font-mono select-all flex-1 truncate">/link {user?.id ?? "Loading..."}</code>
+            <CopyButton text={`/link ${user?.id ?? ""}`} />
           </div>
         </CardContent>
       </Card>
