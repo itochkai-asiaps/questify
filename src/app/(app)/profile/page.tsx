@@ -16,6 +16,7 @@ import {
   Pencil,
   Sun,
   Moon,
+  Monitor,
   CheckCircle2,
   TrendingUp,
   Target,
@@ -26,6 +27,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -90,34 +92,6 @@ function AnimatedNumber({ value }: { value: number }) {
 }
 
 // ---------------------------------------------------------------------------
-// Theme Toggle
-// ---------------------------------------------------------------------------
-
-function useTheme() {
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)",
-    ).matches;
-    const dark = stored === "dark" || (!stored && prefersDark);
-    setIsDark(dark);
-    document.documentElement.classList.toggle("dark", dark);
-  }, []);
-
-  const toggle = useCallback(() => {
-    setIsDark((prev) => {
-      const next = !prev;
-      localStorage.setItem("theme", next ? "dark" : "light");
-      document.documentElement.classList.toggle("dark", next);
-      return next;
-    });
-  }, []);
-
-  return { isDark, toggle };
-}
-
 // ---------------------------------------------------------------------------
 // Avatar Initial Color
 // ---------------------------------------------------------------------------
@@ -451,7 +425,7 @@ function AchievementCard({ ach, index }: { ach: AchievementWithStatus; index: nu
 export default function ProfilePage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
-  const { isDark, toggle: toggleTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
 
   const [displayName, setDisplayName] = useState("");
   const [stats, setStats] = useState<UserStatsRow | null>(null);
@@ -585,10 +559,19 @@ export default function ProfilePage() {
             <Button
               variant="outline"
               size="icon-sm"
-              onClick={toggleTheme}
-              aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+              onClick={() => {
+                const next = theme === "system" ? "light" : theme === "light" ? "dark" : "system";
+                setTheme(next);
+              }}
+              aria-label={`Theme: ${theme}`}
             >
-              {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+              {theme === "system" ? (
+                <Monitor className="size-4" />
+              ) : resolvedTheme === "dark" ? (
+                <Moon className="size-4" />
+              ) : (
+                <Sun className="size-4" />
+              )}
             </Button>
             <Button
               variant="outline"
@@ -692,20 +675,25 @@ export default function ProfilePage() {
             Settings
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between rounded-lg border border-border p-4">
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                Notification preferences
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Coming soon — you&apos;ll be able to customize push and email
-                notifications.
-              </p>
+        <CardContent className="space-y-4">
+          <div className="rounded-lg border border-border p-4">
+            <p className="text-sm font-medium text-foreground mb-3">Theme</p>
+            <div className="flex gap-2">
+              {([["system", "System", Monitor], ["light", "Light", Sun], ["dark", "Dark", Moon]] as const).map(
+                ([value, label, Icon]) => (
+                  <Button
+                    key={value}
+                    variant={theme === value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setTheme(value)}
+                    className="flex-1 gap-1.5"
+                  >
+                    <Icon className="size-3.5" />
+                    {label}
+                  </Button>
+                ),
+              )}
             </div>
-            <Badge variant="secondary" className="shrink-0">
-              Soon
-            </Badge>
           </div>
         </CardContent>
       </Card>

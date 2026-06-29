@@ -39,7 +39,7 @@ async function registerAs(page: Page, email: string, password: string) {
 // ---------------------------------------------------------------------------
 
 test.describe("Registration", () => {
-  test("should register a new user and redirect to onboarding", async ({ page }) => {
+  test("should register a new user and redirect to dashboard", async ({ page }) => {
     const email = uniqueEmail();
 
     await page.goto("/register");

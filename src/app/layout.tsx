@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import PwaRegister from "@/components/pwa-register";
 import StagingBanner from "@/components/staging-banner";
@@ -39,6 +40,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <head>
         <meta name="theme-color" content={isStaging ? "#eab308" : "#6366f1"} />
@@ -46,10 +48,12 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.webmanifest" />
       </head>
       <body className="min-h-full flex flex-col">
-        <StagingBanner />
-        {children}
-        <Toaster />
-        <PwaRegister />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <StagingBanner />
+          {children}
+          <Toaster />
+          <PwaRegister />
+        </ThemeProvider>
       </body>
     </html>
   );

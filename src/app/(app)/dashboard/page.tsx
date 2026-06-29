@@ -534,6 +534,13 @@ function LatestAchievements({
 // ---------------------------------------------------------------------------
 
 function HeartAnimation() {
+  const isProd = process.env.NEXT_PUBLIC_APP_ENV === "production";
+  // Prod: red gradient; default/staging: yellow
+  const stop1 = isProd ? "#ef4444" : "#fde047";
+  const stop2 = isProd ? "#dc2626" : "#eab308";
+  const stop3 = isProd ? "#991b1b" : "#a16207";
+  const stroke = isProd ? "#7f1d1d" : "#991b1b";
+
   return (
     <div className="flex items-center justify-center py-10">
       <motion.div
@@ -548,15 +555,15 @@ function HeartAnimation() {
         >
           <defs>
             <radialGradient id="heartGrad" cx="50%" cy="30%" r="70%">
-              <stop offset="0%" stopColor="#fde047" />
-              <stop offset="50%" stopColor="#eab308" />
-              <stop offset="100%" stopColor="#a16207" />
+              <stop offset="0%" stopColor={stop1} />
+              <stop offset="50%" stopColor={stop2} />
+              <stop offset="100%" stopColor={stop3} />
             </radialGradient>
           </defs>
           <path
             d="M50 85 C30 70, 5 55, 5 35 C5 20, 20 8, 35 12 C42 14, 48 19, 50 25 C52 19, 58 14, 65 12 C80 8, 95 20, 95 35 C95 55, 70 70, 50 85Z"
             fill="url(#heartGrad)"
-            stroke="#991b1b"
+            stroke={stroke}
             strokeWidth="1.5"
           />
         </svg>
@@ -608,16 +615,11 @@ export default function DashboardPage() {
     }
   }, [user]);
 
-  // Auth guard + onboarding check
+  // Auth guard
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
       router.replace("/login");
-      return;
-    }
-    const completed = localStorage.getItem("onboarding_completed");
-    if (completed !== "true") {
-      router.replace("/onboarding");
     }
   }, [user, authLoading, router]);
 

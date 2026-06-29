@@ -64,6 +64,7 @@ export default function MatrixPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [showDistributeInfo, setShowDistributeInfo] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -90,9 +91,8 @@ export default function MatrixPage() {
   }, [fetchTasks]);
 
   const handleAutoDistribute = useCallback(() => {
-    // Re-group existing tasks by their current priority (display filter)
-    setTasksByPriority(groupTasksByPriority(allTasks));
-  }, [allTasks]);
+    setShowDistributeInfo((v) => !v);
+  }, []);
 
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
@@ -235,6 +235,12 @@ export default function MatrixPage() {
             Auto-distribute
           </Button>
         </div>
+        {showDistributeInfo && (
+          <p className="text-sm text-muted-foreground rounded-lg border border-border bg-muted/30 p-3">
+            Auto-distribute will automatically prioritize your tasks across the Eisenhower Matrix
+            based on urgency and importance. Coming in a future update.
+          </p>
+        )}
       </div>
 
       {/* Matrix grid */}

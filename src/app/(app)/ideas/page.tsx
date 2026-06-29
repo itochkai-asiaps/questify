@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Lightbulb, Loader2, Plus, Trash2 } from "lucide-react";
 
@@ -44,6 +44,13 @@ export default function IdeasPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Quick create
+  const [quickTitle, setQuickTitle] = useState("");
+  const [quickAdding, setQuickAdding] = useState(false);
+  const [quickError, setQuickError] = useState<string | null>(null);
+  const quickTitleRef = useRef(quickTitle);
+  quickTitleRef.current = quickTitle;
+
   const loadIdeas = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -81,6 +88,28 @@ export default function IdeasPage() {
     },
     [loadIdeas],
   );
+
+  const handleQuickCreate = useCallback(async () => {
+    const title = quickTitleRef.current.trim();
+    if (!title || quickAdding) return;
+
+    setQuickAdding(true);
+    setQuickError(null);
+    const formData = new FormData();
+    formData.set("title", title);
+    formData.set("source", "web");
+    const result = await createIdea(formData);
+
+    if (result.error) {
+      setQuickError(result.error);
+    } else {
+      setQuickTitle("");
+      if (result.data) {
+        setIdeas((prev) => [result.data as Idea, ...prev]);
+      }
+    }
+    setQuickAdding(false);
+  }, [quickAdding]);
 
   if (authLoading || !user) return null;
 
@@ -161,6 +190,41 @@ export default function IdeasPage() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Quick create */}
+      {!loading && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Plus className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Quick add idea by name..."
+                value={quickTitle}
+                onChange={(e) => setQuickTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleQuickCreate();
+                  }
+                }}
+                disabled={quickAdding}
+                className="pl-8"
+              />
+            </div>
+            <Button
+              size="icon"
+              onClick={handleQuickCreate}
+              disabled={!quickTitle.trim() || quickAdding}
+              className="shrink-0"
+            >
+              <Plus className="size-4" />
+            </Button>
+          </div>
+          {quickError && (
+            <p className="text-xs text-destructive">{quickError}</p>
+          )}
+        </div>
+      )}
 
       {/* Content */}
       {loading ? (

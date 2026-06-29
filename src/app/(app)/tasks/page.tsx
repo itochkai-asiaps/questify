@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -59,6 +59,9 @@ export default function TasksPage() {
   // Quick create
   const [quickTitle, setQuickTitle] = useState("");
   const [quickAdding, setQuickAdding] = useState(false);
+  const [quickError, setQuickError] = useState<string | null>(null);
+  const quickTitleRef = useRef(quickTitle);
+  quickTitleRef.current = quickTitle;
 
   // Filters
   const [search, setSearch] = useState("");
@@ -103,22 +106,26 @@ export default function TasksPage() {
   }, [fetchTasks]);
 
   const handleQuickCreate = useCallback(async () => {
-    const title = quickTitle.trim();
+    const title = quickTitleRef.current.trim();
     if (!title || quickAdding) return;
 
     setQuickAdding(true);
+    setQuickError(null);
     const formData = new FormData();
     formData.set("title", title);
     const result = await createTask(formData);
 
     if (result.error) {
-      setError(result.error);
+      setQuickError(result.error);
     } else {
       setQuickTitle("");
-      await fetchTasks();
+      // Optimistic: add the new task directly without full refetch
+      if (result.data) {
+        setTasks((prev) => [result.data as Task, ...prev]);
+      }
     }
     setQuickAdding(false);
-  }, [quickTitle, quickAdding, fetchTasks]);
+  }, [quickAdding]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6">
@@ -206,32 +213,37 @@ export default function TasksPage() {
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08 }}
-          className="flex items-center gap-2"
+          className="space-y-2"
         >
-          <div className="relative flex-1">
-            <Plus className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Quick add task by name..."
-              value={quickTitle}
-              onChange={(e) => setQuickTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleQuickCreate();
-                }
-              }}
-              disabled={quickAdding}
-              className="pl-8"
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Plus className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Quick add task by name..."
+                value={quickTitle}
+                onChange={(e) => setQuickTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleQuickCreate();
+                  }
+                }}
+                disabled={quickAdding}
+                className="pl-8"
+              />
+            </div>
+            <Button
+              size="icon"
+              onClick={handleQuickCreate}
+              disabled={!quickTitle.trim() || quickAdding}
+              className="shrink-0"
+            >
+              <Plus className="size-4" />
+            </Button>
           </div>
-          <Button
-            size="icon"
-            onClick={handleQuickCreate}
-            disabled={!quickTitle.trim() || quickAdding}
-            className="shrink-0"
-          >
-            <Plus className="size-4" />
-          </Button>
+          {quickError && (
+            <p className="text-xs text-destructive">{quickError}</p>
+          )}
         </motion.div>
       )}
 
