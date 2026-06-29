@@ -38,10 +38,15 @@
 - [ ] **G5.** DDoS-защита: per-email (5/24h), global (10/min), Nginx limit_req
 - [ ] **G6.** Фаза 2: команда `/approve` из Telegram бота
 
-## Блок H — Автоматизация миграций БД (★★☆)
-- [ ] **H1.** GitHub Secret с `SUPABASE_ACCESS_TOKEN` (Personal Access Token из Supabase)
-- [ ] **H2.** Шаг `supabase db push` в CI/CD (deploy-staging.yml и deploy.yml)
-- [ ] **H3.** Альтернатива: `psql` на VPS с connection string из GitHub Secrets
+## Блок H — Инфраструктура (★★☆)
+- [ ] **H1.** GitHub Secret с `SUPABASE_ACCESS_TOKEN`
+- [ ] **H2.** Автоматические миграции при деплое (`supabase db push` в CI/CD)
+- [ ] **H3.** Резерв: `psql` на VPS с connection string из Secrets
+- [ ] **H4.** Резервное копирование БД — нужно продумать:
+  - **Supabase:** встроенные бэкапы (есть на Pro-плане, нет на Free)
+  - **Внешний pg_dump:** крон на VPS, ежедневный дамп в S3/Google Drive
+  - **Supabase CLI:** `supabase db dump` по расписанию через GitHub Actions
+  - Выбрать подход после обсуждения
 
 ---
 
