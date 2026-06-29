@@ -118,7 +118,7 @@ const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
 // Helpers
 // ---------------------------------------------------------------------------
 
-function xpForPriority(priority: TaskPriority): number {
+export function xpForPriority(priority: TaskPriority): number {
   switch (priority) {
     case TaskPriority.P1:
       return XP_REWARDS.p1;
