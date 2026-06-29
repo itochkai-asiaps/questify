@@ -94,7 +94,6 @@ export default function RegisterPage() {
                   placeholder="At least 8 characters"
                   required
                   autoComplete="new-password"
-                  minLength={8}
                 />
               </div>
               <div className="space-y-2">

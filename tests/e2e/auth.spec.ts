@@ -132,13 +132,9 @@ test.describe("Protected routes", () => {
       await page.goto(path);
       await page.waitForLoadState("networkidle");
 
-      // The app does not have middleware, so unprotected pages render
-      // without redirect. We verify the page loads (no crash) and that
-      // the URL is the requested path (no redirect to login).
-      // This documents current behavior — if middleware is added later,
-      // this test will fail and need updating.
+      // Unauthenticated access to protected routes redirects to /login
       const currentUrl = page.url();
-      expect(currentUrl).toContain(path);
+      expect(currentUrl).toContain("/login");
     });
   }
 });
@@ -151,18 +147,18 @@ test.describe("Public routes", () => {
   test("should load /login without redirect", async ({ page }) => {
     await page.goto("/login");
     await expect(page).toHaveURL(/\/login$/);
-    await expect(page.locator("text=Sign In")).toBeVisible();
+    await expect(page.locator("text=Sign In").first()).toBeVisible();
   });
 
   test("should load /register without redirect", async ({ page }) => {
     await page.goto("/register");
     await expect(page).toHaveURL(/\/register$/);
-    await expect(page.locator("text=Create Account")).toBeVisible();
+    await expect(page.locator("text=Create Account").first()).toBeVisible();
   });
 
   test("should load / without redirect", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("text=Questify")).toBeVisible();
+    await expect(page.locator("text=Questify").first()).toBeVisible();
   });
 });
 
@@ -178,13 +174,13 @@ test.describe("Auth redirect for logged-in users", () => {
     // without error instead.
     await page.goto("/login");
     await expect(page).toHaveURL(/\/login$/);
-    await expect(page.locator("text=Sign In")).toBeVisible();
+    await expect(page.locator("text=Sign In").first()).toBeVisible();
   });
 
   test("should redirect authenticated users from /register to /dashboard", async ({ page }) => {
     await page.goto("/register");
     await expect(page).toHaveURL(/\/register$/);
-    await expect(page.locator("text=Create Account")).toBeVisible();
+    await expect(page.locator("text=Create Account").first()).toBeVisible();
   });
 });
 
