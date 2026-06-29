@@ -14,9 +14,6 @@ import {
   Lock,
   Settings,
   Pencil,
-  Sun,
-  Moon,
-  Monitor,
   CheckCircle2,
   TrendingUp,
   Target,
@@ -34,6 +31,13 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -425,7 +429,7 @@ function AchievementCard({ ach, index }: { ach: AchievementWithStatus; index: nu
 export default function ProfilePage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   const [displayName, setDisplayName] = useState("");
   const [stats, setStats] = useState<UserStatsRow | null>(null);
@@ -558,23 +562,6 @@ export default function ProfilePage() {
           <div className="flex items-center gap-2 sm:ml-auto">
             <Button
               variant="outline"
-              size="icon-sm"
-              onClick={() => {
-                const next = theme === "system" ? "light" : theme === "light" ? "dark" : "system";
-                setTheme(next);
-              }}
-              aria-label={`Theme: ${theme}`}
-            >
-              {theme === "system" ? (
-                <Monitor className="size-4" />
-              ) : resolvedTheme === "dark" ? (
-                <Moon className="size-4" />
-              ) : (
-                <Sun className="size-4" />
-              )}
-            </Button>
-            <Button
-              variant="outline"
               onClick={() => setEditOpen(true)}
             >
               <Pencil className="mr-2 size-4" />
@@ -678,22 +665,16 @@ export default function ProfilePage() {
         <CardContent className="space-y-4">
           <div className="rounded-lg border border-border p-4">
             <p className="text-sm font-medium text-foreground mb-3">Theme</p>
-            <div className="flex gap-2">
-              {([["system", "System", Monitor], ["light", "Light", Sun], ["dark", "Dark", Moon]] as const).map(
-                ([value, label, Icon]) => (
-                  <Button
-                    key={value}
-                    variant={theme === value ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setTheme(value)}
-                    className="flex-1 gap-1.5"
-                  >
-                    <Icon className="size-3.5" />
-                    {label}
-                  </Button>
-                ),
-              )}
-            </div>
+            <Select value={theme} onValueChange={setTheme}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="system">System</SelectItem>
+                <SelectItem value="light">Light</SelectItem>
+                <SelectItem value="dark">Dark</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
