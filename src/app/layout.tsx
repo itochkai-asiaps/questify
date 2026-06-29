@@ -44,7 +44,7 @@ export default function RootLayout({
     >
       <head>
         <meta name="theme-color" content={isStaging ? "#eab308" : "#6366f1"} />
-        <link rel="icon" href={isStaging ? "/favicon-staging.svg" : "/favicon.ico"} />
+        <link rel="icon" href={isStaging ? "/favicon-staging.svg" : "/favicon.svg"} />
         <link rel="manifest" href="/manifest.webmanifest" />
       </head>
       <body className="min-h-full flex flex-col">
