@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -576,6 +576,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const lastFetchedUserId = useRef<string | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -620,9 +621,12 @@ export default function DashboardPage() {
     }
   }, [user, authLoading, router]);
 
-  // Fetch data when user is ready
+  // Fetch data when user is ready — skip if session just refreshed (same user)
   useEffect(() => {
     if (user && !authLoading) {
+      // Only re-fetch when user ID actually changes, not on tab-focus session refresh
+      if (lastFetchedUserId.current === user.id && data !== null) return;
+      lastFetchedUserId.current = user.id;
       fetchData();
     }
   }, [user, authLoading, fetchData]);
