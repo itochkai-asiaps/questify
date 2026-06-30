@@ -35,7 +35,7 @@ type Idea = {
 
 const TYPE_BADGE: Record<string, { label: string; variant: "secondary" | "outline" | "destructive"; className: string }> = {
   idea: { label: "Idea", variant: "outline", className: "" },
-  problem: { label: "Problem", variant: "secondary", className: "bg-orange-500/10 text-orange-600 border-orange-500/20 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20" },
+  problem: { label: "Problem", variant: "secondary", className: "bg-orange-500/10 text-orange-600 border-orange-500/20 dark:bg-purple-500/25 dark:text-purple-200 dark:border-purple-400/30" },
 };
 
 const sourceBadge = (source: string) =>
@@ -329,7 +329,7 @@ export default function IdeasPage() {
               >
                 <Card className={cn(
                   "group hover:ring-1 hover:ring-primary/20 transition-shadow",
-                  idea.type === "problem" && "border-orange-500/20 bg-orange-500/5 dark:border-purple-500/20 dark:bg-purple-500/5"
+                  idea.type === "problem" && "border-orange-500/20 bg-orange-500/5 dark:border-purple-400/30 dark:bg-purple-500/15"
                 )}>
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between gap-3">
