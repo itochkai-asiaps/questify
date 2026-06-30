@@ -138,15 +138,11 @@ function ProfileSkeleton() {
               <div className="space-y-1">
                 <Skeleton className="h-4 w-16" />
                 <Skeleton className="h-3 w-12" />
-          </div>
-          {process.env.NEXT_PUBLIC_APP_VERSION && (
-            <p className="text-center text-[11px] text-muted-foreground mt-4">
-              v{process.env.NEXT_PUBLIC_APP_VERSION}
-            </p>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       {/* Achievements skeleton */}
       <Card>
@@ -672,6 +668,9 @@ export default function ProfilePage() {
               <option value="dark">Dark</option>
             </select>
           </div>
+          <p className="text-center text-[11px] text-muted-foreground mt-4 select-all cursor-pointer">
+            {process.env.NEXT_PUBLIC_APP_VERSION || "v0.2"}
+          </p>
         </CardContent>
       </Card>
     </div>
