@@ -36,6 +36,7 @@ jobs:
             rm -rf .next node_modules/.cache
             npm install
             echo "=== Building staging ==="
+            export NEXT_PUBLIC_APP_VERSION=$(git rev-parse --short HEAD)
             npm run build
             # Update Nginx config from repo
             cp -f deploy/nginx-questify-staging.conf /etc/nginx/sites-available/questify-staging
