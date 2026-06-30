@@ -661,7 +661,7 @@ export default function ProfilePage() {
             <select
               value={theme}
               onChange={(e) => setTheme(e.target.value)}
-              className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-background dark:text-foreground"
             >
               <option value="system">System</option>
               <option value="light">Light</option>
