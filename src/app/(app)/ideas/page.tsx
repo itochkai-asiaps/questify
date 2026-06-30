@@ -155,6 +155,45 @@ export default function IdeasPage() {
               className="space-y-4"
             >
               <div className="space-y-2">
+                <Label>Type</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "flex-1 gap-1.5",
+                      "focus:ring-2 focus:ring-ring"
+                    )}
+                    onClick={(e) => {
+                      const form = (e.target as HTMLElement).closest("form");
+                      const hidden = form?.querySelector<HTMLInputElement>('input[name="type"]');
+                      if (hidden) { hidden.value = "idea"; }
+                    }}
+                  >
+                    <Lightbulb className="size-3.5" /> Idea
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "flex-1 gap-1.5",
+                      "bg-orange-500/10 text-orange-600 border-orange-500/20 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20"
+                    )}
+                    onClick={(e) => {
+                      const form = (e.target as HTMLElement).closest("form");
+                      const hidden = form?.querySelector<HTMLInputElement>('input[name="type"]');
+                      if (hidden) { hidden.value = "problem"; }
+                    }}
+                  >
+                    <AlertTriangle className="size-3.5" /> Problem
+                  </Button>
+                </div>
+                <input type="hidden" name="type" value="idea" />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="title">Title</Label>
                 <Input
                   id="title"
@@ -299,6 +338,30 @@ export default function IdeasPage() {
                         <Badge variant={sourceBadge(idea.source).variant}>
                           {sourceBadge(idea.source).label}
                         </Badge>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={async () => {
+                            const result = await toggleIdeaType(idea.id);
+                            if (!result.error) {
+                              setIdeas((prev) =>
+                                prev.map((i) =>
+                                  i.id === idea.id
+                                    ? { ...i, type: i.type === "idea" ? "problem" : "idea" as "idea" | "problem" }
+                                    : i,
+                                ),
+                              );
+                            }
+                          }}
+                          aria-label="Toggle type"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          {idea.type === "idea" ? (
+                            <AlertTriangle className="size-3.5 text-orange-500" />
+                          ) : (
+                            <Lightbulb className="size-3.5 text-yellow-500" />
+                          )}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon-sm"
