@@ -35,7 +35,7 @@ type Idea = {
 
 const TYPE_BADGE: Record<string, { label: string; variant: "secondary" | "outline" | "destructive"; className: string }> = {
   idea: { label: "Idea", variant: "outline", className: "" },
-  problem: { label: "Problem", variant: "secondary", className: "bg-orange-500/10 text-orange-600 border-orange-500/20 dark:bg-purple-500/25 dark:text-purple-200 dark:border-purple-400/30" },
+  problem: { label: "Problem", variant: "secondary", className: "bg-orange-500/10 text-orange-700 border-orange-500/20 dark:bg-purple-500/25 dark:text-purple-200 dark:border-purple-400/30" },
 };
 
 const sourceBadge = (source: string) =>
