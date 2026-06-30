@@ -327,7 +327,10 @@ export default function IdeasPage() {
                 exit={{ opacity: 0, x: -50 }}
                 transition={{ duration: 0.2 }}
               >
-                <Card className="group hover:ring-1 hover:ring-primary/20 transition-shadow">
+                <Card className={cn(
+                  "group hover:ring-1 hover:ring-primary/20 transition-shadow",
+                  idea.type === "problem" && "border-orange-500/20 bg-orange-500/5 dark:border-purple-500/20 dark:bg-purple-500/5"
+                )}>
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between gap-3">
                       <CardTitle className="text-base">{idea.title}</CardTitle>
