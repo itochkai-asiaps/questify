@@ -146,8 +146,7 @@ function ProfileSkeleton() {
           )}
         </CardContent>
       </Card>
-        ))}
-      </div>
+    </div>
 
       {/* Achievements skeleton */}
       <Card>
