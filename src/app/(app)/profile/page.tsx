@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { getAchievements } from "@/lib/gamification/engine";
+import { seedRoadmap } from "@/lib/actions/seed";
 import {
   type AchievementWithStatus,
   type UserStatsRow,
@@ -433,6 +434,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const [seedResult, setSeedResult] = useState<string | null>(null);
   const lastFetchedUserId = useRef<string | null>(null);
 
   const fetchProfile = useCallback(async () => {
@@ -667,6 +670,30 @@ export default function ProfilePage() {
               <option value="light">Light</option>
               <option value="dark">Dark</option>
             </select>
+          </div>
+          <div className="rounded-lg border border-border p-4 space-y-3">
+            <div>
+              <p className="text-sm font-medium text-foreground">Seed Roadmap</p>
+              <p className="text-xs text-muted-foreground">
+                Creates all roadmap items as tasks with correct statuses.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                setSeeding(true);
+                const { count, error } = await seedRoadmap();
+                setSeeding(false);
+                setSeedResult(error ? `Error: ${error}` : `${count} tasks created`);
+              }}
+              disabled={seeding}
+            >
+              {seeding ? "Seeding..." : "Seed Tasks"}
+            </Button>
+            {seedResult && (
+              <p className="text-xs text-muted-foreground">{seedResult}</p>
+            )}
           </div>
           <p className="text-center text-[11px] text-muted-foreground mt-4 select-all cursor-pointer">
             {process.env.NEXT_PUBLIC_APP_VERSION || "v0.2"}
