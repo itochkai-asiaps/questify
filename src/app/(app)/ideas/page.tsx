@@ -28,7 +28,13 @@ type Idea = {
   title: string;
   description: string | null;
   source: "web" | "telegram";
+  type: "idea" | "problem";
   created_at: string;
+};
+
+const TYPE_BADGE: Record<string, { label: string; variant: "secondary" | "outline" | "destructive"; className: string }> = {
+  idea: { label: "Idea", variant: "outline", className: "" },
+  problem: { label: "Problem", variant: "secondary", className: "bg-orange-500/10 text-orange-600 border-orange-500/20 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20" },
 };
 
 const sourceBadge = (source: string) =>
@@ -271,6 +277,9 @@ export default function IdeasPage() {
                     <div className="flex items-start justify-between gap-3">
                       <CardTitle className="text-base">{idea.title}</CardTitle>
                       <div className="flex items-center gap-2 shrink-0">
+                        <Badge variant={TYPE_BADGE[idea.type].variant} className={TYPE_BADGE[idea.type].className}>
+                          {TYPE_BADGE[idea.type].label}
+                        </Badge>
                         <Badge variant={sourceBadge(idea.source).variant}>
                           {sourceBadge(idea.source).label}
                         </Badge>

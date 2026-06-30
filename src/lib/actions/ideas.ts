@@ -9,6 +9,7 @@ const createIdeaSchema = z.object({
   title: z.string().min(1, "Title is required").max(500),
   description: z.string().max(5000).optional(),
   source: z.enum(["web", "telegram"]).default("web"),
+  type: z.enum(["idea", "problem"]).default("idea"),
 });
 
 export async function createIdea(
@@ -28,6 +29,7 @@ export async function createIdea(
     title: formData.get("title") as string,
     description: formData.get("description") as string | undefined,
     source: (formData.get("source") as string) || "web",
+    type: (formData.get("type") as string) || "idea",
   };
 
   const parsed = createIdeaSchema.safeParse(rawData);
@@ -36,7 +38,7 @@ export async function createIdea(
     return { error: firstError };
   }
 
-  const { title, description, source } = parsed.data;
+  const { title, description, source, type } = parsed.data;
 
   const { data, error } = await supabase
     .from("ideas")
@@ -45,6 +47,7 @@ export async function createIdea(
       title,
       description: description || null,
       source,
+      type,
     })
     .select()
     .single();
@@ -99,7 +102,8 @@ export async function getIdeas(): Promise<{ data?: unknown[]; error?: string }> 
     .from("ideas")
     .select("*")
     .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .order("type", { ascending: true }); // problems before ideas
 
   if (error) {
     return { error: error.message };
@@ -118,17 +122,29 @@ export async function createIdeaFromTelegram(
 ): Promise<{ data?: unknown; error?: string }> {
   const supabase = await createClient();
 
-  const lines = text.trim().split("\n");
-  const title = lines[0].slice(0, 500);
+  // Detect type from prefix: problem:/пр:/проблема: (case-insensitive)
+  const problemPrefix = /^(problem|пр|проблема)\s*:\s*/i;
+  let type: "idea" | "problem" = "idea";
+  let title = text.trim();
+
+  const match = title.match(problemPrefix);
+  if (match) {
+    type = "problem";
+    title = title.slice(match[0].length).trim();
+  }
+
+  const lines = title.split("\n");
+  const titleLine = lines[0].slice(0, 500);
   const description = lines.slice(1).join("\n").slice(0, 5000) || null;
 
   const { data, error } = await supabase
     .from("ideas")
     .insert({
       user_id: userId,
-      title,
+      title: titleLine,
       description,
       source: "telegram",
+      type,
     })
     .select()
     .single();

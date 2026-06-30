@@ -93,21 +93,33 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Save idea ──
-    const lines = text.trim().split("\n");
-    const title = lines[0].slice(0, 500);
+    // Detect type from prefix: problem:/пр:/проблема: (case-insensitive)
+    const problemPrefix = /^(problem|пр|проблема)\s*:\s*/i;
+    let type = "idea";
+    let title = text.trim();
+
+    const prefixMatch = title.match(problemPrefix);
+    if (prefixMatch) {
+      type = "problem";
+      title = title.slice(prefixMatch[0].length).trim();
+    }
+
+    const lines = title.split("\n");
+    const titleLine = lines[0].slice(0, 500);
     const desc = lines.slice(1).join("\n").slice(0, 5000) || null;
 
     const { error } = await getAdmin().from("ideas").insert({
       user_id: link.user_id,
-      title,
+      title: titleLine,
       description: desc,
       source: "telegram",
+      type,
     });
 
     if (error) {
       await sendMessage(chatId, "❌ Failed: " + error.message);
     } else {
-      await sendMessage(chatId, "💡 Idea saved!");
+      await sendMessage(chatId, type === "problem" ? "⚠️ Problem saved!" : "💡 Idea saved!");
     }
 
     return NextResponse.json({ ok: true });
