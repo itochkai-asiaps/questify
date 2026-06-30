@@ -27,7 +27,7 @@ export async function createIdea(
 
   const rawData = {
     title: formData.get("title") as string,
-    description: formData.get("description") as string | undefined,
+    description: (formData.get("description") as string) || undefined,
     source: (formData.get("source") as string) || "web",
     type: (formData.get("type") as string) || "idea",
   };
@@ -49,6 +49,48 @@ export async function createIdea(
       source,
       type,
     })
+    .select()
+    .single();
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/ideas", "layout");
+  return { data };
+}
+
+export async function toggleIdeaType(
+  ideaId: string,
+): Promise<{ data?: unknown; error?: string }> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  // Get current type
+  const { data: idea, error: fetchError } = await supabase
+    .from("ideas")
+    .select("type")
+    .eq("id", ideaId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (fetchError || !idea) {
+    return { error: fetchError?.message ?? "Idea not found" };
+  }
+
+  const newType = idea.type === "idea" ? "problem" : "idea";
+
+  const { data, error } = await supabase
+    .from("ideas")
+    .update({ type: newType })
+    .eq("id", ideaId)
     .select()
     .single();
 

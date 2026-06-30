@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Lightbulb, Loader2, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Lightbulb, Loader2, Plus, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -21,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
-import { createIdea, deleteIdea, getIdeas } from "@/lib/actions/ideas";
+import { createIdea, deleteIdea, getIdeas, toggleIdeaType } from "@/lib/actions/ideas";
 
 type Idea = {
   id: string;
@@ -52,6 +53,7 @@ export default function IdeasPage() {
 
   // Quick create
   const [quickTitle, setQuickTitle] = useState("");
+  const [quickType, setQuickType] = useState<"idea" | "problem">("idea");
   const [quickAdding, setQuickAdding] = useState(false);
   const [quickError, setQuickError] = useState<string | null>(null);
   const quickTitleRef = useRef(quickTitle);
@@ -104,6 +106,7 @@ export default function IdeasPage() {
     const formData = new FormData();
     formData.set("title", title);
     formData.set("source", "web");
+    formData.set("type", quickType);
     const result = await createIdea(formData);
 
     if (result.error) {
@@ -218,12 +221,25 @@ export default function IdeasPage() {
               />
             </div>
             <Button
-              size="icon"
-              onClick={handleQuickCreate}
+              variant={quickType === "idea" ? "default" : "outline"}
+              size="icon-sm"
+              onClick={() => { setQuickType("idea"); handleQuickCreate(); }}
               disabled={!quickTitle.trim() || quickAdding}
-              className="shrink-0"
+              className="shrink-0 gap-1"
             >
-              <Plus className="size-4" />
+              <Plus className="size-3.5" />
+            </Button>
+            <Button
+              variant={quickType === "problem" ? "default" : "outline"}
+              size="icon-sm"
+              onClick={() => { setQuickType("problem"); handleQuickCreate(); }}
+              disabled={!quickTitle.trim() || quickAdding}
+              className={cn(
+                "shrink-0 gap-1",
+                quickType === "problem" && "bg-orange-500/10 text-orange-600 border-orange-500/20 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20"
+              )}
+            >
+              <AlertTriangle className="size-3.5" />
             </Button>
           </div>
           {quickError && (

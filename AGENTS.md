@@ -1,5 +1,122 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
+# Questify — проектные правила
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+## OVERVIEW
+
+**Questify** — gamified task tracker. Next.js 16 app с Supabase-бэкендом.  
+Геймификация: XP, уровни, ежедневные стрики, достижения.  
+Kanban-доска, Eisenhower Matrix, планы с чеклистами.
+
+**Статус**: 🔥 Активная разработка. Блок C (connect entities).  
+**Репозиторий**: `github.com/itochkai-asiaps/questify`  
+**Бранч разработки**: `staging`
+
+## STACK
+
+| Слой | Технология | Версия |
+|---|---|---|
+| Фреймворк | Next.js (App Router) | 16.2.9 |
+| UI | React + Tailwind CSS + shadcn/ui | 19.2.4 / 4 / base-nova |
+| Анимации | Framer Motion | 12 |
+| Стейт | Zustand | 5 |
+| Drag & Drop | @dnd-kit | 6 / 10 |
+| Бэкенд | Next.js Server Actions | — |
+| База данных | Supabase (PostgreSQL) | — |
+| Аутентификация | Supabase Auth (email + Google OAuth) | — |
+| Валидация | Zod | 4 |
+| Тесты | Vitest (unit) + Playwright (e2e) | 4 / 1.61 |
+| Линтер | ESLint 9 + next-config | — |
+| Деплой | VPS (nginx + pm2 + Let's Encrypt) | — |
+
+## COMMANDS
+
+```bash
+# Разработка
+npm run dev              # Запуск dev-сервера (Turbopack)
+
+# Тестирование
+npm test                 # Vitest unit-тесты (48/48 ✅)
+npm run test:e2e         # Playwright e2e-тесты (18/18 ✅)
+npm run test:watch       # Vitest в watch-режиме
+
+# Качество кода
+npm run lint             # ESLint
+npm run type-check       # TypeScript проверка типов (tsc --noEmit)
+
+# Сборка
+npm run build            # Production сборка
+
+# База данных
+npm run db:push          # Применить миграции (локально)
+npm run db:push:staging  # Применить миграции (staging Supabase)
+npm run db:push:prod     # Применить миграции (production Supabase)
+```
+
+## STRUCTURE
+
+```
+questify/
+├── src/
+│   ├── app/              # Next.js App Router (страницы, layout, Server Actions)
+│   ├── components/       # React-компоненты (ui/, features/)
+│   ├── hooks/            # Кастомные хуки
+│   ├── lib/              # Утилиты: supabase client, levels.ts, utils
+│   ├── types/            # TypeScript-типы
+│   └── proxy.ts          # API-прокси
+├── supabase/
+│   └── migrations/       # SQL-миграции (3 миграции)
+├── tests/                # Playwright e2e-тесты
+├── .github/workflows/    # CI/CD: ci.yml, deploy-staging.yml, deploy.yml
+├── deploy/               # Скрипты деплоя на VPS
+├── .omo/                 # Рабочие артефакты: планы, драфты, codegraph
+├── public/               # Статика: favicon, PWA-манифест
+└── scripts/              # Вспомогательные скрипты
+```
+
+## CONVENTIONS
+
+### Next.js
+- **Только App Router**. Никаких `pages/`. Все роуты — через `src/app/`.
+- **Server Actions** для мутаций. Никаких API Routes (`route.ts`) без крайней необходимости.
+- **Серверные компоненты по умолчанию**. `'use client'` — только когда реально нужен браузерный API.
+- **Loading + Error states** всегда. Каждая страница должна обрабатывать загрузку и ошибки.
+
+### Supabase
+- **RLS на всех таблицах**. Без исключений. Миграции через Supabase CLI.
+- **Server-side auth**. Supabase client создаётся через `@supabase/ssr`, не через клиентский SDK.
+- **Миграции атомарные**. Одна миграция = одно изменение схемы. Не смешивать.
+
+### Стили
+- **Tailwind utility-first**. Никаких CSS modules, никаких inline styles кроме динамических значений.
+- **shadcn/ui компоненты** — основа UI. Кастомизация через CSS-переменные, не через пропсы.
+- **Мобильные first**. Все компоненты должны работать на mobile (max-width: 768px).
+
+### Типы
+- **Zod на границах**. Все Server Actions парсят вход через Zod-схему.
+- **Строгие типы**. `any`, `as`, `@ts-ignore` — запрещены глобальным AGENTS.md.
+- **Типы в `src/types/`**. Общие интерфейсы — там, а не в компонентах.
+
+### Git
+- Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`.
+- Ветки: `staging` → PR → `master`. Feature-бранчи от `staging`.
+- **Рабочий процесс**: `.omo/` → план → реализация → тесты → коммит — см. workflow в `.omo/`.
+
+## ANTI-PATTERNS (что НЕЛЬЗЯ в этом проекте)
+
+- ❌ **Pages Router** (`pages/` директория). Только App Router.
+- ❌ **API Routes** (`route.ts`). Используй Server Actions.
+- ❌ **Prisma ORM**. Используем нативный Supabase JS-клиент.
+- ❌ **CSS Modules** или styled-components. Только Tailwind utility-классы.
+- ❌ **Client-side Supabase** для запросов. Только серверный `createClient()`.
+- ❌ **`useEffect` для data fetching**. Данные загружаются в серверных компонентах.
+- ❌ **`any` / `as` / `@ts-ignore`**. Нарушает правило #6 глобального AGENTS.md.
+- ❌ **Прямые манипуляции с DOM**. Используй React-рефы или Framer Motion.
+
+## DEPLOYMENT
+
+| Среда | URL | Ветка | Деплой |
+|---|---|---|---|
+| Staging | `staging.questify.itochka.xyz` | `staging` | Автоматический (push) |
+| Production | `questify.itochka.xyz` | `master` | Ручной (approval) |
+
+Инфраструктура: VPS → nginx reverse proxy → pm2 → Next.js. SSL через Let's Encrypt.  
+CI/CD: GitHub Actions (`.github/workflows/`).
