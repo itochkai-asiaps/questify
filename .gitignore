@@ -38,6 +38,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# handoff (local only, contains private data)
+HANDOFF.md
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
