@@ -260,28 +260,22 @@ export default function MatrixPage() {
         onDragEnd={handleDragEnd}
       >
         {/* Axis labels — visible on desktop */}
-        <div className="hidden md:block">
-          {/* Y axis: important / not important */}
-          <div className="relative">
-            <span className="absolute -left-8 top-1/2 -translate-y-[calc(100%+32px)] -rotate-90 text-xs font-medium text-muted-foreground">
-              {AXIS_LABELS.yTop}
-            </span>
-            <span className="absolute -left-8 top-1/2 translate-y-8 -rotate-90 text-xs font-medium text-muted-foreground">
-              {AXIS_LABELS.yBottom}
-            </span>
+        <div className="hidden md:grid md:grid-cols-[auto_1fr_1fr] md:grid-rows-[auto_1fr_1fr] gap-x-1">
+          {/* Corner — empty */}
+          <div />
+          {/* X axis labels */}
+          <div className="flex justify-center pb-1">
+            <span className="text-xs font-medium text-muted-foreground">{AXIS_LABELS.xLeft}</span>
           </div>
-          {/* X axis: urgent / not urgent */}
-          <div className="mb-1 flex justify-between px-1">
-            <span className="text-xs font-medium text-muted-foreground">
-              {AXIS_LABELS.xLeft}
-            </span>
-            <span className="text-xs font-medium text-muted-foreground">
-              {AXIS_LABELS.xRight}
-            </span>
+          <div className="flex justify-center pb-1">
+            <span className="text-xs font-medium text-muted-foreground">{AXIS_LABELS.xRight}</span>
           </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 md:grid-rows-2">
+          {/* Y axis + matrix grid */}
+          <div className="flex flex-col justify-between py-2 pr-1">
+            <span className="text-xs font-medium text-muted-foreground">{AXIS_LABELS.yTop}</span>
+            <span className="text-xs font-medium text-muted-foreground">{AXIS_LABELS.yBottom}</span>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 md:grid-rows-2 md:col-span-2">
           {ALL_PRIORITIES.map((priority) => (
             <motion.div
               key={priority}
@@ -296,6 +290,7 @@ export default function MatrixPage() {
               />
             </motion.div>
           ))}
+        </div>
         </div>
 
         {/* Drag overlay */}
