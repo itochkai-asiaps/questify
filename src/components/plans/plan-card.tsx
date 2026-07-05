@@ -38,7 +38,7 @@ export function PlanCard({ plan, onSelect, onDelete }: PlanCardProps) {
       exit={{ opacity: 0, scale: 0.95 }}
       whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.2 }}
-      className="group relative cursor-pointer"
+      className="group relative cursor-pointer h-full"
       onClick={() => onSelect(id)}
     >
       {/* Left accent bar */}
@@ -47,7 +47,7 @@ export function PlanCard({ plan, onSelect, onDelete }: PlanCardProps) {
         style={{ backgroundColor: color }}
       />
 
-      <Card className="pl-4">
+      <Card className="pl-4 h-full">
         <CardHeader className="gap-1.5 pb-2">
           <div className="flex items-start justify-between gap-2">
             <CardTitle className="line-clamp-1 text-base">{title}</CardTitle>
