@@ -699,22 +699,8 @@ export default function DashboardPage() {
       {/* Today's Tasks */}
       <TodaysTasks tasks={tasks} />
 
-      {/* Heart + Staging Icon */}
-      <div className="flex items-center justify-center gap-6 py-10">
-        {process.env.NEXT_PUBLIC_APP_ENV === "staging" && (
-          <motion.div
-            initial={{ opacity: 0, rotate: -10 }}
-            animate={{ opacity: 1, rotate: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
-            <svg className="size-24 sm:size-28" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="16" cy="16" r="15" fill="#ea580c" stroke="#fde047" strokeWidth="2" />
-              <polygon points="10,8 10,24 24,16" fill="#ffffff" />
-            </svg>
-          </motion.div>
-        )}
-        <HeartAnimation />
-      </div>
+      {/* Heart Animation */}
+      <HeartAnimation />
 
       {/* Sections BELOW the heart */}
       {/* Latest Achievements */}

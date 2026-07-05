@@ -259,38 +259,36 @@ export default function MatrixPage() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        {/* Axis labels — visible on desktop */}
+        {/* Axis labels + Matrix grid */}
         <div className="hidden md:grid md:grid-cols-[auto_1fr_1fr] md:grid-rows-[auto_1fr_1fr] gap-x-1">
-          {/* Corner — empty */}
+          {/* Corner */}
           <div />
-          {/* X axis labels */}
-          <div className="flex justify-center pb-1">
-            <span className="text-xs font-medium text-muted-foreground">{AXIS_LABELS.xLeft}</span>
+          {/* X axis: Urgent / Not Urgent */}
+          <div className="flex justify-center"><span className="text-xs font-medium text-muted-foreground">{AXIS_LABELS.xLeft}</span></div>
+          <div className="flex justify-center"><span className="text-xs font-medium text-muted-foreground">{AXIS_LABELS.xRight}</span></div>
+          {/* Y axis: Important / Not Important */}
+          <div className="grid grid-rows-2 py-1 pr-1">
+            <span className="text-xs font-medium text-muted-foreground flex items-start pt-1">{AXIS_LABELS.yTop}</span>
+            <span className="text-xs font-medium text-muted-foreground flex items-start pt-1">{AXIS_LABELS.yBottom}</span>
           </div>
-          <div className="flex justify-center pb-1">
-            <span className="text-xs font-medium text-muted-foreground">{AXIS_LABELS.xRight}</span>
-          </div>
-          {/* Y axis + matrix grid */}
-          <div className="grid grid-rows-2 py-2 pr-1">
-            <span className="text-xs font-medium text-muted-foreground pt-2">{AXIS_LABELS.yTop}</span>
-            <span className="text-xs font-medium text-muted-foreground pt-2">{AXIS_LABELS.yBottom}</span>
-          </div>
+          {/* Quadrants — fill remaining space */}
           <div className="grid gap-4 md:grid-cols-2 md:grid-rows-2 md:col-span-2">
-          {ALL_PRIORITIES.map((priority) => (
-            <motion.div
-              key={priority}
-              layout
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25 }}
-            >
-              <MatrixQuadrant
-                priority={priority}
-                tasks={tasksByPriority[priority]}
-              />
-            </motion.div>
-          ))}
-        </div>
+            {ALL_PRIORITIES.map((priority) => (
+              <motion.div
+                key={priority}
+                layout
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+                className="min-h-0"
+              >
+                <MatrixQuadrant
+                  priority={priority}
+                  tasks={tasksByPriority[priority]}
+                />
+              </motion.div>
+            ))}
+          </div>
         </div>
 
         {/* Drag overlay */}
