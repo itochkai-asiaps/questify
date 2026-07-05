@@ -34,10 +34,10 @@ export async function createTask(
 
   const rawData = {
     title: formData.get("title") as string,
-    description: formData.get("description") as string | undefined,
+    description: (formData.get("description") as string) || undefined,
     priority: (formData.get("priority") as string) ?? undefined,
-    due_date: formData.get("due_date") as string | undefined,
-    tags: formData.get("tags") as string | undefined,
+    due_date: (formData.get("due_date") as string) || undefined,
+    tags: (formData.get("tags") as string) || undefined,
   };
 
   const parsed = CreateTaskInputSchema.safeParse(rawData);
