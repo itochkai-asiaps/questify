@@ -6,6 +6,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
   ClipboardList,
+  Eye,
+  EyeOff,
   Plus,
   RefreshCw,
   Search,
@@ -67,6 +69,7 @@ export default function TasksPage() {
   const [search, setSearch] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [showCompleted, setShowCompleted] = useState(false);
 
   const fetchTasks = useCallback(async () => {
     setLoadState("loading");
@@ -97,6 +100,7 @@ export default function TasksPage() {
       }
       if (priorityFilter && task.priority !== priorityFilter) return false;
       if (statusFilter && task.status !== statusFilter) return false;
+      if (!showCompleted && task.status === "done") return false;
       return true;
     });
   }, [tasks, search, priorityFilter, statusFilter]);
@@ -148,6 +152,15 @@ export default function TasksPage() {
         <Button render={<Link href="/tasks/new" />}>
           <Plus className="size-4" />
           New Task
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowCompleted((v) => !v)}
+          className="gap-1.5"
+        >
+          {showCompleted ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+          {showCompleted ? "Hide completed" : "Show completed"}
         </Button>
       </motion.div>
 

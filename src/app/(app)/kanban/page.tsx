@@ -13,7 +13,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { motion } from "framer-motion";
-import { ClipboardList, Loader2, Plus, Pencil, Trash2, Check, X } from "lucide-react";
+import { ClipboardList, Loader2, Plus, Pencil, Trash2, Check, X, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +62,7 @@ export default function KanbanPage() {
   const [editingColId, setEditingColId] = useState<string | null>(null);
   const [editColTitle, setEditColTitle] = useState("");
   const editInputRef = useRef<HTMLInputElement>(null);
+  const [showCompleted, setShowCompleted] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -173,6 +174,15 @@ export default function KanbanPage() {
   );
 
   // ─── Render ───
+  const displayTasks = useMemo(() => {
+    if (showCompleted) return tasksByColumn;
+    const filtered: TasksByColumn = {};
+    for (const [colId, tasks] of Object.entries(tasksByColumn)) {
+      const visible = tasks.filter((t) => t.status !== "done");
+      if (visible.length > 0) filtered[colId] = visible;
+    }
+    return filtered;
+  }, [tasksByColumn, showCompleted]);
   const totalTasks = allTasks.length;
 
   if (isLoading) {
@@ -255,7 +265,7 @@ export default function KanbanPage() {
                       {col.title}
                     </h2>
                     <span className="text-xs text-muted-foreground tabular-nums mr-2">
-                      {(tasksByColumn[col.id] ?? []).length}
+                      {(displayTasks[col.id] ?? []).length}
                     </span>
                     {columns.length > 1 && (
                       <Button
@@ -274,7 +284,7 @@ export default function KanbanPage() {
               {/* Column content */}
               <KanbanColumn
                 status={col.title as never}
-                tasks={tasksByColumn[col.id] ?? []}
+                tasks={displayTasks[col.id] ?? []}
               />
             </div>
           ))}
@@ -297,8 +307,17 @@ export default function KanbanPage() {
                   />
                   <Button size="icon-xs" variant="ghost" onClick={handleAddColumn}><Check className="size-3" /></Button>
                   <Button size="icon-xs" variant="ghost" onClick={() => setAddingColumn(false)}><X className="size-3" /></Button>
-                </div>
-              </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowCompleted((v) => !v)}
+            className="gap-1.5"
+          >
+            {showCompleted ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+            {showCompleted ? "Hide completed" : "Show completed"}
+          </Button>
+        </div>
             ) : (
               <Button
                 variant="ghost"

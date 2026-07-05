@@ -13,7 +13,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { motion } from "framer-motion";
-import { LayoutGrid, Sparkles } from "lucide-react";
+import { LayoutGrid, Sparkles, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -68,6 +68,7 @@ export default function MatrixPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [showDistributeInfo, setShowDistributeInfo] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -212,6 +213,15 @@ export default function MatrixPage() {
 
   const totalTasks = allTasks.length;
 
+  const displayByPriority = useMemo(() => {
+    if (showCompleted) return tasksByPriority;
+    const filtered: TasksByPriority = { ...EMPTY_MATRIX };
+    for (const [prio, tasks] of Object.entries(tasksByPriority)) {
+      filtered[prio as TaskPriority] = (tasks as Task[]).filter((t) => t.status !== "done");
+    }
+    return filtered;
+  }, [tasksByPriority, showCompleted]);
+
   return (
     <div className="container mx-auto p-6">
       {/* Page header */}
@@ -242,6 +252,15 @@ export default function MatrixPage() {
           >
             <Sparkles className="size-3.5" />
             Auto-distribute
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowCompleted((v) => !v)}
+            className="gap-1.5"
+          >
+            {showCompleted ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+            {showCompleted ? "Hide completed" : "Show completed"}
           </Button>
         </div>
         {showDistributeInfo && (
@@ -284,7 +303,7 @@ export default function MatrixPage() {
               >
                 <MatrixQuadrant
                   priority={priority}
-                  tasks={tasksByPriority[priority]}
+                  tasks={displayByPriority[priority]}
                 />
               </motion.div>
             ))}
