@@ -7,43 +7,24 @@ import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Task, TaskStatus } from "@/types/task";
+import { Task } from "@/types/task";
 
 import { KanbanCard } from "./kanban-card";
 
-const COLUMN_CONFIG: Record<
-  TaskStatus,
-  { title: string; color: string; bgHover: string }
-> = {
-  [TaskStatus.Todo]: {
-    title: "To Do",
-    color: "border-l-blue-500",
-    bgHover: "hover:bg-blue-500/5",
-  },
-  [TaskStatus.InProgress]: {
-    title: "In Progress",
-    color: "border-l-amber-500",
-    bgHover: "hover:bg-amber-500/5",
-  },
-  [TaskStatus.Done]: {
-    title: "Done",
-    color: "border-l-emerald-500",
-    bgHover: "hover:bg-emerald-500/5",
-  },
-};
+const DEFAULT_CONFIG = { color: "border-l-muted", bgHover: "" };
 
 interface KanbanColumnProps {
-  status: TaskStatus;
+  id: string;
+  title: string;
   tasks: Task[];
 }
 
-export function KanbanColumn({ status, tasks }: KanbanColumnProps) {
+export function KanbanColumn({ id, title, tasks }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
-    id: status,
-    data: { type: "column", status },
+    id,
+    data: { type: "column", title },
   });
 
-  const config = COLUMN_CONFIG[status];
   const taskIds = tasks.map((t) => t.id);
 
   return (
@@ -56,19 +37,19 @@ export function KanbanColumn({ status, tasks }: KanbanColumnProps) {
       <div
         className={cn(
           "flex items-center justify-between border-b border-border px-4 py-3",
-          config.color,
+          DEFAULT_CONFIG.color,
           "border-l-4",
         )}
       >
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold">{config.title}</h3>
+          <h3 className="text-sm font-semibold">{title}</h3>
           <span className="inline-flex size-5 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-muted-foreground">
             {tasks.length}
           </span>
         </div>
 
         <Link href="/tasks/new">
-          <Button variant="ghost" size="icon-xs" aria-label={`Add task to ${config.title}`}>
+          <Button variant="ghost" size="icon-xs" aria-label={`Add task to ${title}`}>
             <Plus className="size-3.5" />
           </Button>
         </Link>

@@ -283,7 +283,8 @@ export default function KanbanPage() {
 
               {/* Column content */}
               <KanbanColumn
-                status={col.title as never}
+                id={col.id}
+                title={col.title}
                 tasks={displayTasks[col.id] ?? []}
               />
             </div>
