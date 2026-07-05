@@ -271,9 +271,9 @@ export default function MatrixPage() {
             <span className="text-xs font-medium text-muted-foreground">{AXIS_LABELS.xRight}</span>
           </div>
           {/* Y axis + matrix grid */}
-          <div className="flex flex-col justify-between py-2 pr-1">
-            <span className="text-xs font-medium text-muted-foreground">{AXIS_LABELS.yTop}</span>
-            <span className="text-xs font-medium text-muted-foreground">{AXIS_LABELS.yBottom}</span>
+          <div className="grid grid-rows-2 py-2 pr-1">
+            <span className="text-xs font-medium text-muted-foreground pt-2">{AXIS_LABELS.yTop}</span>
+            <span className="text-xs font-medium text-muted-foreground pt-2">{AXIS_LABELS.yBottom}</span>
           </div>
           <div className="grid gap-4 md:grid-cols-2 md:grid-rows-2 md:col-span-2">
           {ALL_PRIORITIES.map((priority) => (
