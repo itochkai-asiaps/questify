@@ -21,7 +21,9 @@ import {
   togglePlanItem,
   updatePlan,
 } from "@/lib/actions/plans";
+import { convertPlanItemToTask } from "@/lib/actions/conversions";
 import type { Plan, PlanItem } from "@/types/plan";
+import { toast } from "sonner";
 
 const checklistItemVariants = {
   initial: { opacity: 0, x: -12 },
@@ -345,6 +347,23 @@ export default function PlanDetailPage() {
                 >
                   {item.title}
                 </span>
+
+                {/* Convert to task (incomplete items only) */}
+                {!item.completed && (
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    className="opacity-0 group-hover:opacity-100 text-[10px] font-bold"
+                    onClick={async () => {
+                      const r = await convertPlanItemToTask(item.id);
+                      if (r.error) toast.error(r.error);
+                      else { toast.success("Converted to Task"); setItems((p) => p.filter((i) => i.id !== item.id)); }
+                    }}
+                    aria-label="Convert to task"
+                  >
+                    →T
+                  </Button>
+                )}
 
                 {/* Delete button */}
                 <Button

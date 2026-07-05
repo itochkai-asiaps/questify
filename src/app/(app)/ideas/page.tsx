@@ -23,6 +23,8 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { createIdea, deleteIdea, getIdeas, toggleIdeaType } from "@/lib/actions/ideas";
+import { convertIdeaToTask, convertIdeaToPlan } from "@/lib/actions/conversions";
+import { toast } from "sonner";
 
 type Idea = {
   id: string;
@@ -341,6 +343,32 @@ export default function IdeasPage() {
                         <Badge variant={sourceBadge(idea.source).variant}>
                           {sourceBadge(idea.source).label}
                         </Badge>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={async () => {
+                            const r = await convertIdeaToTask(idea.id);
+                            if (r.error) toast.error(r.error);
+                            else { toast.success("Converted to Task"); setIdeas((p) => p.filter((i) => i.id !== idea.id)); }
+                          }}
+                          aria-label="Convert to task"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold px-1"
+                        >
+                          →T
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={async () => {
+                            const r = await convertIdeaToPlan(idea.id);
+                            if (r.error) toast.error(r.error);
+                            else { toast.success("Converted to Plan"); setIdeas((p) => p.filter((i) => i.id !== idea.id)); }
+                          }}
+                          aria-label="Convert to plan"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold px-1"
+                        >
+                          →P
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon-sm"
