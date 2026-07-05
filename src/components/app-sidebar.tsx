@@ -42,9 +42,9 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/ideas", label: "Ideas", icon: Lightbulb },
   { href: "/tasks", label: "Tasks", icon: ListTodo },
+  { href: "/plans", label: "Plans", icon: BookOpen },
   { href: "/kanban", label: "Kanban", icon: Columns3 },
   { href: "/matrix", label: "Matrix", icon: Grid2x2 },
-  { href: "/plans", label: "Plans", icon: BookOpen },
   { href: "/profile", label: "Profile", icon: User },
 ] as const;
 
