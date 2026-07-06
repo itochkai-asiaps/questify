@@ -77,17 +77,23 @@ function formatDueDate(
 interface TaskCardProps {
   task: Task;
   onDelete?: () => void;
+  onSelect?: (id: string) => void;
+  isSelected?: boolean;
 }
 
-export default function TaskCard({ task, onDelete }: TaskCardProps) {
+export default function TaskCard({ task, onDelete, onSelect, isSelected }: TaskCardProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleClick = useCallback(() => {
-    router.push(`/tasks/${task.id}`);
-  }, [router, task.id]);
+    if (onSelect) {
+      onSelect(task.id);
+    } else {
+      router.push(`/tasks/${task.id}`);
+    }
+  }, [router, task.id, onSelect]);
 
   const handleDelete = useCallback(async () => {
     setIsDeleting(true);
@@ -123,6 +129,7 @@ export default function TaskCard({ task, onDelete }: TaskCardProps) {
         className={cn(
           "cursor-pointer transition-shadow duration-200 hover:shadow-md",
           task.status === "done" && "opacity-70",
+          isSelected && "ring-2 ring-primary/50 shadow-md",
         )}
         onClick={handleClick}
       >
