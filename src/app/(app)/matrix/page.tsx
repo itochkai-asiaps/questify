@@ -287,8 +287,8 @@ export default function MatrixPage() {
           </div>
 
           {/* Row 2: Important — P2 (Not Urgent & Important) | P1 (Urgent & Important) */}
-          <div className="flex items-center pr-2">
-            <span className="text-xs font-medium text-muted-foreground">Important</span>
+          <div className="flex items-center justify-center py-2">
+            <span className="text-xs font-medium text-muted-foreground [writing-mode:vertical-rl]">Important</span>
           </div>
           {([TaskPriority.P2, TaskPriority.P1] as TaskPriority[]).map((priority) => (
             <div key={priority}>
@@ -297,8 +297,8 @@ export default function MatrixPage() {
           ))}
 
           {/* Row 3: Not Important — P4 (Not Urgent & Not Important) | P3 (Urgent & Not Important) */}
-          <div className="flex items-center pr-2">
-            <span className="text-xs font-medium text-muted-foreground">Not Important</span>
+          <div className="flex items-center justify-center py-2">
+            <span className="text-xs font-medium text-muted-foreground [writing-mode:vertical-rl]">Not Important</span>
           </div>
           {([TaskPriority.P4, TaskPriority.P3] as TaskPriority[]).map((priority) => (
             <div key={priority}>
