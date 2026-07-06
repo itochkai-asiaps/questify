@@ -182,6 +182,20 @@ export default function MatrixPage() {
     [allTasks, tasksByPriority],
   );
 
+  const totalTasks = allTasks.length;
+  const unprioritized = allTasks.filter(
+    (t) => !ALL_PRIORITIES.includes(t.priority as TaskPriority) && (showCompleted || t.status !== "done"),
+  );
+
+  const displayByPriority: TasksByPriority = useMemo(() => {
+    if (showCompleted) return tasksByPriority;
+    const filtered = { ...EMPTY_MATRIX };
+    for (const priority of ALL_PRIORITIES) {
+      filtered[priority] = tasksByPriority[priority].filter((t) => t.status !== "done");
+    }
+    return filtered;
+  }, [tasksByPriority, showCompleted]);
+
   // Loading skeleton
   if (isLoading) {
     return (
@@ -204,20 +218,6 @@ export default function MatrixPage() {
       </div>
     );
   }
-
-  const totalTasks = allTasks.length;
-  const unprioritized = allTasks.filter(
-    (t) => !ALL_PRIORITIES.includes(t.priority as TaskPriority) && (showCompleted || t.status !== "done"),
-  );
-
-  const displayByPriority: TasksByPriority = useMemo(() => {
-    if (showCompleted) return tasksByPriority;
-    const filtered = { ...EMPTY_MATRIX };
-    for (const priority of ALL_PRIORITIES) {
-      filtered[priority] = displayByPriority[priority].filter((t) => t.status !== "done");
-    }
-    return filtered;
-  }, [tasksByPriority, showCompleted]);
 
   return (
     <div className="container mx-auto p-6">
