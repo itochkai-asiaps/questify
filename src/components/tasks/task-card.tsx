@@ -127,9 +127,12 @@ export default function TaskCard({ task, onDelete, onSelect, isSelected }: TaskC
     >
       <Card
         className={cn(
-          "cursor-pointer transition-shadow duration-200 hover:shadow-md",
+          // DESIGN.md: Card — border-subtle, no shadow, ring on hover/select
+          "cursor-pointer rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-secondary)]",
+          "transition-shadow duration-200",
+          "hover:ring-1 hover:ring-[var(--accent-primary)]/20",
           task.status === "done" && "opacity-70",
-          isSelected && "ring-2 ring-primary/50 shadow-md",
+          isSelected && "ring-2 ring-[var(--accent-interactive)]/50",
         )}
         onClick={handleClick}
       >
@@ -137,7 +140,8 @@ export default function TaskCard({ task, onDelete, onSelect, isSelected }: TaskC
           <div className="flex items-start justify-between gap-2">
             <CardTitle
               className={cn(
-                "line-clamp-2 text-base leading-snug",
+                // DESIGN.md: H3 — 16px, weight 510, line-height 1.4
+                "line-clamp-2 text-base font-[510] leading-[1.4] text-[var(--text-primary)]",
                 task.status === "done" && "line-through",
               )}
             >
@@ -190,7 +194,7 @@ export default function TaskCard({ task, onDelete, onSelect, isSelected }: TaskC
         </CardHeader>
 
         <CardContent className="space-y-3">
-          {/* Priority + Status badges */}
+          {/* Priority + Status badges — DESIGN.md: Caption 11px, gap-1.5 */}
           <div className="flex flex-wrap items-center gap-1.5">
             <Badge variant={priority.variant}>{priority.label}</Badge>
             <Badge variant={status.variant}>{status.label}</Badge>
@@ -198,8 +202,9 @@ export default function TaskCard({ task, onDelete, onSelect, isSelected }: TaskC
             {dueDateLabel && (
               <span
                 className={cn(
-                  "flex items-center gap-1 text-xs",
-                  overdue ? "font-medium text-destructive" : "text-muted-foreground",
+                  // DESIGN.md: Caption — 11px, secondary text for default, error for overdue
+                  "flex items-center gap-1 text-[11px]",
+                  overdue ? "font-[510] text-[var(--status-error)]" : "text-[var(--text-tertiary)]",
                 )}
               >
                 <Calendar className="size-3" />
@@ -208,14 +213,14 @@ export default function TaskCard({ task, onDelete, onSelect, isSelected }: TaskC
             )}
           </div>
 
-          {/* Tags */}
+          {/* Tags — DESIGN.md: Overline 10px */}
           {task.tags && task.tags.length > 0 && (
             <div className="flex flex-wrap items-center gap-1">
-              <Tag className="size-3 text-muted-foreground" />
+              <Tag className="size-3 text-[var(--text-tertiary)]" />
               {task.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                  className="rounded-md bg-[var(--surface-elevated)] px-1.5 py-0.5 text-[10px] text-[var(--text-tertiary)]"
                 >
                   {tag}
                 </span>
