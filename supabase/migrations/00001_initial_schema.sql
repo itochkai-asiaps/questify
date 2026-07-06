@@ -153,14 +153,19 @@ ALTER TABLE plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE plan_items ENABLE ROW LEVEL SECURITY;
 
 -- Profiles: users see own profile
+DO $$ BEGIN
 CREATE POLICY "Users see own profile" ON profiles
   FOR ALL USING (auth.uid() = id);
+EXCEPTION WHEN duplicate_object THEN END $$;
 
 -- Tasks: users see own non-deleted tasks
+DO $$ BEGIN
 CREATE POLICY "Users see own tasks" ON tasks
   FOR ALL USING (auth.uid() = user_id AND deleted_at IS NULL);
+EXCEPTION WHEN duplicate_object THEN END $$;
 
 -- Subtasks: users see subtasks of own tasks
+DO $$ BEGIN
 CREATE POLICY "Users see own subtasks" ON subtasks
   FOR ALL USING (
     EXISTS (
@@ -170,28 +175,40 @@ CREATE POLICY "Users see own subtasks" ON subtasks
         AND tasks.deleted_at IS NULL
     )
   );
+EXCEPTION WHEN duplicate_object THEN END $$;
 
 -- Achievements: everyone can read
+DO $$ BEGIN
 CREATE POLICY "Everyone can read achievements" ON achievements
   FOR SELECT USING (true);
+EXCEPTION WHEN duplicate_object THEN END $$;
 
 -- User Achievements: users see own
+DO $$ BEGIN
 CREATE POLICY "Users see own achievements" ON user_achievements
   FOR ALL USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN END $$;
 
 -- User Stats: users see own
+DO $$ BEGIN
 CREATE POLICY "Users see own stats" ON user_stats
   FOR ALL USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN END $$;
 
 -- Ideas: users see own
+DO $$ BEGIN
 CREATE POLICY "Users see own ideas" ON ideas
   FOR ALL USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN END $$;
 
 -- Plans: users see own plans
+DO $$ BEGIN
 CREATE POLICY "Users see own plans" ON plans
   FOR ALL USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN END $$;
 
 -- Plan Items: users see items of own plans
+DO $$ BEGIN
 CREATE POLICY "Users see own plan items" ON plan_items
   FOR ALL USING (
     EXISTS (
@@ -200,6 +217,7 @@ CREATE POLICY "Users see own plan items" ON plan_items
         AND plans.user_id = auth.uid()
     )
   );
+EXCEPTION WHEN duplicate_object THEN END $$;
 
 -- ============================================================
 -- FUNCTIONS
