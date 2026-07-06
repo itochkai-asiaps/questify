@@ -22,7 +22,7 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
         run: |
           npx supabase db push \
-            --db-url "postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.irmihumjlbckwygtnvfi.supabase.co:5432/postgres"
+            --db-url "postgresql://postgres.irmihumjlbckwygtnvfi:${SUPABASE_DB_PASSWORD}@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres"
 
       - name: Build
         env:
