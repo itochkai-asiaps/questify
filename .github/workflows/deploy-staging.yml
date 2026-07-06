@@ -48,12 +48,18 @@ jobs:
             fi
           done
 
+      - name: Get version
+        id: version
+        run: |
+          VER=$(node -p "require('./package.json').version")
+          echo "VALUE=S v${VER}-b${{ github.run_number }}" >> $GITHUB_OUTPUT
+
       - name: Build
         env:
           NEXT_PUBLIC_SUPABASE_URL: "https://irmihumjlbckwygtnvfi.supabase.co"
           NEXT_PUBLIC_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlybWlodW1qbGJja3d5Z3RudmZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNDgzMTEsImV4cCI6MjA5NzcyNDMxMX0.5BqCxAjfJKRUHJkPE3OiwouuI1JxvyoD9SW2eVcDrMw"
           NEXT_PUBLIC_APP_ENV: "staging"
-          NEXT_PUBLIC_APP_VERSION: "S v$(node -p \"require('./package.json').version\")-b${{ github.run_number }}"
+          NEXT_PUBLIC_APP_VERSION: ${{ steps.version.outputs.VALUE }}
         run: npm run build
 
       - name: Rsync .next to VPS
