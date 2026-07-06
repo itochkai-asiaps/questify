@@ -23,13 +23,30 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
-          # Mark 00001 as applied (already exists on prod), db push will apply 00002-00005
           PGPASSWORD="${SUPABASE_DB_PASSWORD}" psql \
             -h aws-1-ap-southeast-1.pooler.supabase.com -p 6543 \
             -U "postgres.zkifblsbwfllfmlndxjt" -d postgres \
-            -c "INSERT INTO supabase_migrations.schema_migrations (version) VALUES ('00001') ON CONFLICT DO NOTHING;"
-          npx supabase db push \
-            --db-url "postgresql://postgres.zkifblsbwfllfmlndxjt:${SUPABASE_DB_PASSWORD}@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres"
+            -c "CREATE SCHEMA IF NOT EXISTS supabase_migrations; CREATE TABLE IF NOT EXISTS supabase_migrations.schema_migrations (version TEXT PRIMARY KEY);"
+          for f in supabase/migrations/*.sql; do
+            ver=$(basename "$f" | cut -d_ -f1)
+            exists=$(PGPASSWORD="${SUPABASE_DB_PASSWORD}" psql -tA \
+              -h aws-1-ap-southeast-1.pooler.supabase.com -p 6543 \
+              -U "postgres.zkifblsbwfllfmlndxjt" -d postgres \
+              -c "SELECT version FROM supabase_migrations.schema_migrations WHERE version='$ver';")
+            if [ -z "$exists" ]; then
+              echo "Applying: $ver"
+              PGPASSWORD="${SUPABASE_DB_PASSWORD}" psql \
+                -h aws-1-ap-southeast-1.pooler.supabase.com -p 6543 \
+                -U "postgres.zkifblsbwfllfmlndxjt" -d postgres \
+                -f "$f" -v ON_ERROR_STOP=1
+              PGPASSWORD="${SUPABASE_DB_PASSWORD}" psql \
+                -h aws-1-ap-southeast-1.pooler.supabase.com -p 6543 \
+                -U "postgres.zkifblsbwfllfmlndxjt" -d postgres \
+                -c "INSERT INTO supabase_migrations.schema_migrations (version) VALUES ('$ver');"
+            else
+              echo "Skipping: $ver (already applied)"
+            fi
+          done
 
       - name: Build
         env:
