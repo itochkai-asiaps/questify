@@ -32,10 +32,10 @@ CREATE TABLE IF NOT EXISTS tasks (
   deleted_at TIMESTAMPTZ
 );
 
-CREATE INDEX idx_tasks_user_id ON tasks(user_id);
-CREATE INDEX idx_tasks_status ON tasks(status);
-CREATE INDEX idx_tasks_deleted_at ON tasks(deleted_at);
-CREATE INDEX idx_tasks_user_not_deleted ON tasks(user_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON tasks(user_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+CREATE INDEX IF NOT EXISTS idx_tasks_deleted_at ON tasks(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_tasks_user_not_deleted ON tasks(user_id) WHERE deleted_at IS NULL;
 
 -- Subtasks
 CREATE TABLE IF NOT EXISTS subtasks (
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS subtasks (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_subtasks_task_id ON subtasks(task_id);
+CREATE INDEX IF NOT EXISTS idx_subtasks_task_id ON subtasks(task_id);
 
 -- Achievements
 CREATE TABLE IF NOT EXISTS achievements (
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS user_achievements (
   UNIQUE(user_id, achievement_id)
 );
 
-CREATE INDEX idx_user_achievements_user_id ON user_achievements(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_achievements_user_id ON user_achievements(user_id);
 
 -- User Stats (gamification)
 CREATE TABLE IF NOT EXISTS user_stats (
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS user_stats (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_user_stats_user_id ON user_stats(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_stats_user_id ON user_stats(user_id);
 
 -- Plans
 CREATE TABLE IF NOT EXISTS plans (
@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS plans (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_plans_user_id ON plans(user_id);
+CREATE INDEX IF NOT EXISTS idx_plans_user_id ON plans(user_id);
 
 -- Plan Items (checklist steps)
 CREATE TABLE IF NOT EXISTS plan_items (
@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS plan_items (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_plan_items_plan_id ON plan_items(plan_id);
+CREATE INDEX IF NOT EXISTS idx_plan_items_plan_id ON plan_items(plan_id);
 
 -- Ideas (inbox for quick capture, telegram bot)
 CREATE TABLE IF NOT EXISTS ideas (
@@ -125,8 +125,8 @@ CREATE TABLE IF NOT EXISTS ideas (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_ideas_user_id ON ideas(user_id);
-CREATE INDEX idx_ideas_created_at ON ideas(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ideas_user_id ON ideas(user_id);
+CREATE INDEX IF NOT EXISTS idx_ideas_created_at ON ideas(created_at DESC);
 
 -- Telegram Chat ↔ User mapping
 CREATE TABLE IF NOT EXISTS telegram_chats (
@@ -136,7 +136,7 @@ CREATE TABLE IF NOT EXISTS telegram_chats (
   linked_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_telegram_chats_chat_id ON telegram_chats(chat_id);
+CREATE INDEX IF NOT EXISTS idx_telegram_chats_chat_id ON telegram_chats(chat_id);
 
 -- ============================================================
 -- ROW LEVEL SECURITY
