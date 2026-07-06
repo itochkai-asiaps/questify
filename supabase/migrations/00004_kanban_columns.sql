@@ -11,7 +11,9 @@ CREATE TABLE IF NOT EXISTS kanban_columns (
 );
 
 ALTER TABLE kanban_columns ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
 CREATE POLICY "Users manage own columns" ON kanban_columns FOR ALL USING (user_id = auth.uid());
+EXCEPTION WHEN duplicate_object THEN END $$;
 
 -- Add kanban_column_id to tasks (nullable for migration period)
 ALTER TABLE tasks ADD COLUMN IF NOT EXISTS kanban_column_id UUID REFERENCES kanban_columns(id) ON DELETE SET NULL;

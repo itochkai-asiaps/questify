@@ -254,18 +254,22 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Triggers for updated_at
+DROP TRIGGER IF EXISTS set_tasks_updated_at ON tasks;
 CREATE TRIGGER set_tasks_updated_at
   BEFORE UPDATE ON tasks
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
+DROP TRIGGER IF EXISTS set_plans_updated_at ON plans;
 CREATE TRIGGER set_plans_updated_at
   BEFORE UPDATE ON plans
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
+DROP TRIGGER IF EXISTS set_plan_items_updated_at ON plan_items;
 CREATE TRIGGER set_plan_items_updated_at
   BEFORE UPDATE ON plan_items
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
+DROP TRIGGER IF EXISTS set_user_stats_updated_at ON user_stats;
 CREATE TRIGGER set_user_stats_updated_at
   BEFORE UPDATE ON user_stats
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
