@@ -48,7 +48,7 @@ export function KanbanColumn({
   };
 
   return (
-    <div className="flex w-[300px] shrink-0 flex-col rounded-xl border border-border bg-card/60 md:w-full">
+    <div className="flex w-[300px] shrink-0 flex-col rounded-xl border border-border bg-card/60 md:flex-1 md:min-w-0">
       {/* Column header — rename, count, reorder, delete */}
       <div className="flex items-center gap-1 border-b border-border px-3 py-2">
         {editing ? (
