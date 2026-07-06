@@ -74,7 +74,7 @@ export function MatrixCard({ task, onReprioritize }: MatrixCardProps) {
         </p>
 
         {/* Meta row: priority badge (dropdown trigger) + status + due date */}
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
           <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger>
               <Badge
