@@ -19,6 +19,9 @@ jobs:
 
       - name: Build
         env:
+          NEXT_PUBLIC_SUPABASE_URL: "https://irmihumjlbckwygtnvfi.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlybWlodW1qbGJja3d5Z3RudmZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNDgzMTEsImV4cCI6MjA5NzcyNDMxMX0.5BqCxAjfJKRUHJkPE3OiwouuI1JxvyoD9SW2eVcDrMw"
+          NEXT_PUBLIC_APP_ENV: "staging"
           NEXT_PUBLIC_APP_VERSION: "S v0.2-b${{ github.run_number }}"
         run: npm run build
 
