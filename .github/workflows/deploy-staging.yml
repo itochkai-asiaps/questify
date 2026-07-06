@@ -21,6 +21,13 @@ jobs:
         env:
           SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
         run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          # Mark manually-applied migrations so db push skips them
+          PGPASSWORD="${SUPABASE_DB_PASSWORD}" psql \
+            -h aws-1-ap-southeast-2.pooler.supabase.com -p 6543 \
+            -U "postgres.irmihumjlbckwygtnvfi" -d postgres \
+            -c "INSERT INTO supabase_migrations.schema_migrations (version) VALUES ('00001'),('00002'),('00003'),('00004') ON CONFLICT DO NOTHING;"
+          # Push only new migrations (00005)
           npx supabase db push \
             --db-url "postgresql://postgres.irmihumjlbckwygtnvfi:${SUPABASE_DB_PASSWORD}@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres"
 
