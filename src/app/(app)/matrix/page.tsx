@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { LayoutGrid, Sparkles, Eye, EyeOff, Inbox } from "lucide-react";
+import { LayoutGrid, Sparkles, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -122,9 +121,6 @@ export default function MatrixPage() {
   );
 
   const totalTasks = allTasks.length;
-  const unprioritized = allTasks.filter(
-    (t) => !ALL_PRIORITIES.includes(t.priority as TaskPriority) && (showCompleted || t.status !== "done"),
-  );
 
   const displayByPriority: TasksByPriority = useMemo(() => {
     if (showCompleted) return tasksByPriority;
@@ -256,31 +252,6 @@ export default function MatrixPage() {
           />
         ))}
       </div>
-
-      {/* Unprioritized section */}
-      {unprioritized.length > 0 && (
-        <div className="mt-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Inbox className="size-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-muted-foreground">Unprioritized</h2>
-            <span className="text-xs text-muted-foreground tabular-nums">{unprioritized.length}</span>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {unprioritized.map((task) => (
-              <Link
-                key={task.id}
-                href={`/tasks/${task.id}`}
-                className="block rounded-lg border border-border bg-card p-3 text-sm hover:shadow-sm transition-shadow"
-              >
-                <p className="font-medium truncate">{task.title}</p>
-                {task.description && (
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
-                )}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Empty state */}
       {totalTasks === 0 && !isLoading && (
