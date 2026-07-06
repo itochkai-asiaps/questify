@@ -1,12 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { Calendar, GripVertical } from "lucide-react";
+import { Calendar } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Task, TaskPriority } from "@/types/task";
 
@@ -20,6 +25,13 @@ const PRIORITY_CONFIG: Record<
   [TaskPriority.P4]: { label: "P4", variant: "outline" },
 };
 
+const ALL_PRIORITIES: TaskPriority[] = [
+  TaskPriority.P1,
+  TaskPriority.P2,
+  TaskPriority.P3,
+  TaskPriority.P4,
+];
+
 const STATUS_DOT: Record<string, string> = {
   todo: "bg-slate-400",
   in_progress: "bg-amber-500",
@@ -28,26 +40,12 @@ const STATUS_DOT: Record<string, string> = {
 
 interface MatrixCardProps {
   task: Task;
+  onReprioritize: (taskId: string, newPriority: TaskPriority) => void;
 }
 
-export function MatrixCard({ task }: MatrixCardProps) {
+export function MatrixCard({ task, onReprioritize }: MatrixCardProps) {
   const router = useRouter();
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: task.id,
-    data: { type: "task", task },
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  const [open, setOpen] = useState(false);
 
   const priority = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG[TaskPriority.P3];
   const dueDate = task.due_date
@@ -58,65 +56,71 @@ export function MatrixCard({ task }: MatrixCardProps) {
     : null;
   const statusDot = STATUS_DOT[task.status] ?? STATUS_DOT.todo;
 
-  const handleClick = (e: React.MouseEvent) => {
-    // Don't navigate if user was dragging (dragged > 5px)
-    if (isDragging) return;
-    router.push(`/tasks/${task.id}`);
-  };
+  const otherPriorities = ALL_PRIORITIES.filter((p) => p !== task.priority);
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      onClick={handleClick}
+    <Card
+      size="sm"
+      onClick={() => router.push(`/tasks/${task.id}`)}
       className={cn(
-        "group/card block touch-none cursor-pointer",
-        isDragging && "opacity-50",
+        "cursor-pointer transition-shadow",
+        "hover:shadow-md hover:ring-foreground/20",
       )}
     >
-      <Card
-        size="sm"
-        className={cn(
-          "cursor-grab transition-shadow active:cursor-grabbing",
-          "hover:shadow-md hover:ring-foreground/20",
-          isDragging && "shadow-lg ring-2 ring-primary/30",
-        )}
-      >
-        <CardContent className="flex flex-col gap-2">
-          {/* Title row */}
-          <div className="flex items-start gap-2">
-            <GripVertical className="mt-0.5 size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/card:opacity-100" />
-            <p className="truncate text-sm font-medium leading-snug">
-              {task.title}
-            </p>
-          </div>
+      <CardContent className="flex flex-col gap-2">
+        {/* Title row */}
+        <p className="truncate text-sm font-medium leading-snug">
+          {task.title}
+        </p>
 
-          {/* Meta row: priority + status + due date */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Badge variant={priority.variant} className="text-[10px]">
-              {priority.label}
-            </Badge>
+        {/* Meta row: priority badge (dropdown trigger) + status + due date */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <DropdownMenu open={open} onOpenChange={setOpen}>
+            <DropdownMenuTrigger>
+              <Badge
+                variant={priority.variant}
+                className="text-[10px] cursor-pointer hover:opacity-80"
+              >
+                {priority.label}
+              </Badge>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-28">
+              {otherPriorities.map((p) => {
+                const cfg = PRIORITY_CONFIG[p];
+                return (
+                  <DropdownMenuItem
+                    key={p}
+                    onClick={() => {
+                      onReprioritize(task.id, p);
+                      setOpen(false);
+                    }}
+                  >
+                    <Badge variant={cfg.variant} className="text-[10px]">
+                      {cfg.label}
+                    </Badge>
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-            <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-              <span className={cn("size-1.5 rounded-full", statusDot)} />
-              {task.status === "todo"
-                ? "To Do"
-                : task.status === "in_progress"
-                  ? "In Progress"
-                  : "Done"}
+          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+            <span className={cn("size-1.5 rounded-full", statusDot)} />
+            {task.status === "todo"
+              ? "To Do"
+              : task.status === "in_progress"
+                ? "In Progress"
+                : "Done"}
+          </span>
+
+          {dueDate && (
+            <span className="ml-auto inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+              <Calendar className="size-3" />
+              {dueDate}
             </span>
-
-            {dueDate && (
-              <span className="ml-auto inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-                <Calendar className="size-3" />
-                {dueDate}
-              </span>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -2,26 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  DndContext,
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-  PointerSensor,
-  TouchSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
 import { LayoutGrid, Sparkles, Eye, EyeOff, Inbox } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getTasks, updateTask } from "@/lib/actions/tasks";
-import { cn } from "@/lib/utils";
 import { Task, TaskPriority } from "@/types/task";
 
-import { MatrixCard } from "@/components/matrix/matrix-card";
 import { MatrixQuadrant } from "@/components/matrix/matrix-quadrant";
 
 type TasksByPriority = Record<TaskPriority, Task[]>;
@@ -54,20 +41,13 @@ function groupTasksByPriority(tasks: Task[]): TasksByPriority {
   return grouped;
 }
 
-
 export default function MatrixPage() {
   const [tasksByPriority, setTasksByPriority] = useState<TasksByPriority>(EMPTY_MATRIX);
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [showDistributeInfo, setShowDistributeInfo] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
-  );
 
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
@@ -98,61 +78,24 @@ export default function MatrixPage() {
     setShowDistributeInfo((v) => !v);
   }, []);
 
-  const handleDragStart = useCallback(
-    (event: DragStartEvent) => {
-      const task = allTasks.find((t) => t.id === event.active.id);
-      setActiveTask(task ?? null);
-    },
-    [allTasks],
-  );
-
-  const handleDragEnd = useCallback(
-    async (event: DragEndEvent) => {
-      const { active, over } = event;
-      setActiveTask(null);
-
-      if (!over) return;
-
-      const taskId = active.id as string;
+  const handleReprioritize = useCallback(
+    async (taskId: string, newPriority: TaskPriority) => {
       const task = allTasks.find((t) => t.id === taskId);
       if (!task) return;
+      const oldPriority = task.priority;
 
-      // Determine target priority
-      let newPriority: TaskPriority | null = null;
-
-      if (ALL_PRIORITIES.includes(over.id as TaskPriority)) {
-        // Dropped directly on a quadrant
-        newPriority = over.id as TaskPriority;
-      } else {
-        // Dropped on a card — find which quadrant that card belongs to
-        const overTask = allTasks.find((t) => t.id === over.id);
-        if (overTask) {
-          newPriority = overTask.priority as TaskPriority;
-        }
-      }
-
-      if (!newPriority) return;
-
-      // Preserve original priority for rollback
-      const originalPriority = task.priority;
-
-      // Optimistic update — scan ALL quadrants to find and remove the task
-      // (task.priority from closure can be stale after rapid drags)
+      // Optimistic update
       setTasksByPriority((prev) => {
-        // Already at target — nothing to do
-        if (prev[newPriority!].some((t) => t.id === taskId)) return prev;
-
         const next = { ...prev };
-        // Remove from whatever quadrant it's currently in
-        for (const priority of Object.keys(prev) as TaskPriority[]) {
-          next[priority] = prev[priority].filter((t) => t.id !== taskId);
+        for (const p of ALL_PRIORITIES) {
+          next[p] = prev[p].filter((t) => t.id !== taskId);
         }
-        next[newPriority!] = [
-          ...prev[newPriority!],
-          { ...task, priority: newPriority! },
-        ];
+        next[newPriority] = [...prev[newPriority], { ...task, priority: newPriority }];
         return next;
       });
+      setAllTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, priority: newPriority } : t)),
+      );
 
       // Persist
       const formData = new FormData();
@@ -160,26 +103,22 @@ export default function MatrixPage() {
       const result = await updateTask(taskId, formData);
 
       if (result.error) {
-        // Revert: move task back to original quadrant
+        // Revert
         setTasksByPriority((prev) => {
           const next = { ...prev };
-          for (const priority of Object.keys(prev) as TaskPriority[]) {
-            next[priority] = prev[priority].filter((t) => t.id !== taskId);
+          for (const p of ALL_PRIORITIES) {
+            next[p] = prev[p].filter((t) => t.id !== taskId);
           }
-          next[originalPriority] = [...prev[originalPriority], { ...task, priority: originalPriority }];
+          next[oldPriority] = [...prev[oldPriority], { ...task, priority: oldPriority }];
           return next;
         });
+        setAllTasks((prev) =>
+          prev.map((t) => (t.id === taskId ? { ...t, priority: oldPriority } : t)),
+        );
         setError(result.error);
-        return;
       }
-
-      setAllTasks((prev) =>
-        prev.map((t) =>
-          t.id === taskId ? { ...t, priority: newPriority! } : t,
-        ),
-      );
     },
-    [allTasks, tasksByPriority],
+    [allTasks],
   );
 
   const totalTasks = allTasks.length;
@@ -268,59 +207,57 @@ export default function MatrixPage() {
         )}
       </div>
 
-      {/* Matrix grid */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        {/* Axis labels + Matrix grid (desktop) — single grid, columns aligned */}
-        <div className="hidden md:grid gap-2" style={{ gridTemplateColumns: "auto 1fr 1fr", gridTemplateRows: "auto auto auto" }}>
-          {/* Row 1: X-axis labels */}
-          <div />
-          <div className="text-center py-1">
-            <span className="text-xs font-medium text-muted-foreground">Not Urgent</span>
-          </div>
-          <div className="text-center py-1">
-            <span className="text-xs font-medium text-muted-foreground">Urgent</span>
-          </div>
-
-          {/* Row 2: Important — P2 (Not Urgent & Important) | P1 (Urgent & Important) */}
-          <div className="flex items-center justify-center py-2">
-            <span className="text-xs font-medium text-muted-foreground [writing-mode:vertical-rl]">Important</span>
-          </div>
-          {([TaskPriority.P2, TaskPriority.P1] as TaskPriority[]).map((priority) => (
-            <MatrixQuadrant key={priority} priority={priority} tasks={displayByPriority[priority]} />
-          ))}
-
-          {/* Row 3: Not Important — P4 (Not Urgent & Not Important) | P3 (Urgent & Not Important) */}
-          <div className="flex items-center justify-center py-2">
-            <span className="text-xs font-medium text-muted-foreground [writing-mode:vertical-rl]">Not Important</span>
-          </div>
-          {([TaskPriority.P4, TaskPriority.P3] as TaskPriority[]).map((priority) => (
-            <MatrixQuadrant key={priority} priority={priority} tasks={displayByPriority[priority]} />
-          ))}
+      {/* Matrix grid — single grid, columns aligned, mirrored X-axis */}
+      <div className="hidden md:grid gap-2" style={{ gridTemplateColumns: "auto 1fr 1fr", gridTemplateRows: "auto auto auto" }}>
+        {/* Row 1: X-axis labels */}
+        <div />
+        <div className="text-center py-1">
+          <span className="text-xs font-medium text-muted-foreground">Not Urgent</span>
+        </div>
+        <div className="text-center py-1">
+          <span className="text-xs font-medium text-muted-foreground">Urgent</span>
         </div>
 
-        {/* Mobile — simple 2×2 grid without axis labels, mirrored X-axis */}
-        <div className="grid gap-4 md:hidden grid-cols-2 grid-rows-2">
-          {([TaskPriority.P2, TaskPriority.P1, TaskPriority.P4, TaskPriority.P3] as TaskPriority[]).map((priority) => (
-            <MatrixQuadrant key={priority} priority={priority} tasks={displayByPriority[priority]} />
-          ))}
+        {/* Row 2: Important — P2 | P1 */}
+        <div className="flex items-center justify-center py-2">
+          <span className="text-xs font-medium text-muted-foreground [writing-mode:vertical-rl]">Important</span>
         </div>
+        {([TaskPriority.P2, TaskPriority.P1] as TaskPriority[]).map((priority) => (
+          <MatrixQuadrant
+            key={priority}
+            priority={priority}
+            tasks={displayByPriority[priority]}
+            onReprioritize={handleReprioritize}
+          />
+        ))}
 
-        {/* Drag overlay */}
-        <DragOverlay>
-          {activeTask ? (
-            <div className="w-[284px] rotate-2 opacity-90">
-              <MatrixCard task={activeTask} />
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+        {/* Row 3: Not Important — P4 | P3 */}
+        <div className="flex items-center justify-center py-2">
+          <span className="text-xs font-medium text-muted-foreground [writing-mode:vertical-rl]">Not Important</span>
+        </div>
+        {([TaskPriority.P4, TaskPriority.P3] as TaskPriority[]).map((priority) => (
+          <MatrixQuadrant
+            key={priority}
+            priority={priority}
+            tasks={displayByPriority[priority]}
+            onReprioritize={handleReprioritize}
+          />
+        ))}
+      </div>
 
-      {/* Unprioritized — tasks without P1-P4 priority */}
+      {/* Mobile — simple 2×2 grid */}
+      <div className="grid gap-4 md:hidden grid-cols-2 grid-rows-2">
+        {([TaskPriority.P2, TaskPriority.P1, TaskPriority.P4, TaskPriority.P3] as TaskPriority[]).map((priority) => (
+          <MatrixQuadrant
+            key={priority}
+            priority={priority}
+            tasks={displayByPriority[priority]}
+            onReprioritize={handleReprioritize}
+          />
+        ))}
+      </div>
+
+      {/* Unprioritized section */}
       {unprioritized.length > 0 && (
         <div className="mt-6">
           <div className="flex items-center gap-2 mb-3">
@@ -353,7 +290,7 @@ export default function MatrixPage() {
           </div>
           <h2 className="text-lg font-semibold">No tasks yet</h2>
           <p className="max-w-sm text-sm text-muted-foreground">
-            Create tasks with priorities (P1–P4) to see them in the Eisenhower Matrix. Drag tasks between quadrants to reprioritize.
+            Create tasks with priorities (P1–P4) to see them in the Eisenhower Matrix.
           </p>
         </div>
       )}

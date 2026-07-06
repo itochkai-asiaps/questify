@@ -1,8 +1,6 @@
 "use client";
 
 import { memo } from "react";
-import { useDroppable } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { cn } from "@/lib/utils";
 import { Task, TaskPriority } from "@/types/task";
 
@@ -50,24 +48,22 @@ const QUADRANT_CONFIG: Record<TaskPriority, QuadrantConfig> = {
 interface MatrixQuadrantProps {
   priority: TaskPriority;
   tasks: Task[];
+  onReprioritize: (taskId: string, newPriority: TaskPriority) => void;
 }
 
-export const MatrixQuadrant = memo(function MatrixQuadrant({ priority, tasks }: MatrixQuadrantProps) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: priority,
-    data: { type: "quadrant", priority },
-  });
-
+export const MatrixQuadrant = memo(function MatrixQuadrant({
+  priority,
+  tasks,
+  onReprioritize,
+}: MatrixQuadrantProps) {
   const config = QUADRANT_CONFIG[priority];
-  const taskIds = tasks.map((t) => t.id);
 
   return (
     <div
       className={cn(
-        "flex h-full flex-col rounded-xl border transition-colors",
+        "flex h-full flex-col rounded-xl border",
         config.bg,
         config.border,
-        isOver && "ring-2 ring-primary/30 ring-offset-1",
       )}
     >
       {/* Quadrant header */}
@@ -85,29 +81,16 @@ export const MatrixQuadrant = memo(function MatrixQuadrant({ priority, tasks }: 
       </div>
 
       {/* Card list */}
-      <div
-        ref={setNodeRef}
-        className={cn(
-          "flex flex-col gap-2 p-3",
-          isOver && "bg-primary/5",
+      <div className="flex flex-col gap-2 p-3">
+        {tasks.length > 0 ? (
+          tasks.map((task) => (
+            <MatrixCard key={task.id} task={task} onReprioritize={onReprioritize} />
+          ))
+        ) : (
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border/40 px-3 py-6 text-center">
+            <p className="text-xs text-muted-foreground">Drop tasks here</p>
+          </div>
         )}
-      >
-        <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
-          {tasks.length > 0 ? (
-            tasks.map((task) => <MatrixCard key={task.id} task={task} />)
-          ) : (
-            <div
-              className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border/40 px-3 py-6 text-center transition-colors",
-                isOver && "border-primary/40 bg-primary/5",
-              )}
-            >
-              <p className="text-xs text-muted-foreground">
-                {isOver ? "Release to drop" : "Drop tasks here"}
-              </p>
-            </div>
-          )}
-        </SortableContext>
       </div>
     </div>
   );
