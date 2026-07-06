@@ -54,12 +54,6 @@ function groupTasksByPriority(tasks: Task[]): TasksByPriority {
   return grouped;
 }
 
-const AXIS_LABELS = {
-  yTop: "Important",
-  yBottom: "Not Important",
-  xLeft: "Urgent",
-  xRight: "Not Urgent",
-};
 
 export default function MatrixPage() {
   const [tasksByPriority, setTasksByPriority] = useState<TasksByPriority>(EMPTY_MATRIX);
@@ -269,33 +263,36 @@ export default function MatrixPage() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        {/* Axis labels + Matrix grid (desktop) */}
-        <div className="hidden md:block">
-          <div className="grid grid-cols-[auto_1fr_1fr] gap-x-1 gap-y-0.5 mb-1">
-            <div />
-            <div className="text-center"><span className="text-xs font-medium text-muted-foreground">{AXIS_LABELS.xLeft}</span></div>
-            <div className="text-center"><span className="text-xs font-medium text-muted-foreground">{AXIS_LABELS.xRight}</span></div>
+        {/* Axis labels + Matrix grid (desktop) — single grid, columns aligned */}
+        <div className="hidden md:grid gap-2" style={{ gridTemplateColumns: "auto 1fr 1fr", gridTemplateRows: "auto auto auto" }}>
+          {/* Row 1: X-axis labels */}
+          <div />
+          <div className="text-center py-1">
+            <span className="text-xs font-medium text-muted-foreground">Not Urgent</span>
           </div>
-          <div className="grid grid-cols-[auto_1fr_1fr] gap-1">
-            <div className="flex items-center pr-1"><span className="text-xs font-medium text-muted-foreground">{AXIS_LABELS.yTop}</span></div>
-            <div className="grid gap-4 grid-cols-2">
-              {ALL_PRIORITIES.slice(0, 2).map((priority) => (
-                <motion.div key={priority} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-                  <MatrixQuadrant priority={priority} tasks={tasksByPriority[priority]} />
-                </motion.div>
-              ))}
-            </div>
+          <div className="text-center py-1">
+            <span className="text-xs font-medium text-muted-foreground">Urgent</span>
           </div>
-          <div className="grid grid-cols-[auto_1fr_1fr] gap-1 mt-4">
-            <div className="flex items-center pr-1"><span className="text-xs font-medium text-muted-foreground">{AXIS_LABELS.yBottom}</span></div>
-            <div className="grid gap-4 grid-cols-2">
-              {ALL_PRIORITIES.slice(2, 4).map((priority) => (
-                <motion.div key={priority} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-                  <MatrixQuadrant priority={priority} tasks={tasksByPriority[priority]} />
-                </motion.div>
-              ))}
-            </div>
+
+          {/* Row 2: Important — P2 (Not Urgent & Important) | P1 (Urgent & Important) */}
+          <div className="flex items-center pr-2">
+            <span className="text-xs font-medium text-muted-foreground">Important</span>
           </div>
+          {([TaskPriority.P2, TaskPriority.P1] as TaskPriority[]).map((priority) => (
+            <motion.div key={priority} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+              <MatrixQuadrant priority={priority} tasks={tasksByPriority[priority]} />
+            </motion.div>
+          ))}
+
+          {/* Row 3: Not Important — P4 (Not Urgent & Not Important) | P3 (Urgent & Not Important) */}
+          <div className="flex items-center pr-2">
+            <span className="text-xs font-medium text-muted-foreground">Not Important</span>
+          </div>
+          {([TaskPriority.P4, TaskPriority.P3] as TaskPriority[]).map((priority) => (
+            <motion.div key={priority} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+              <MatrixQuadrant priority={priority} tasks={tasksByPriority[priority]} />
+            </motion.div>
+          ))}
         </div>
 
         {/* Mobile — simple 2×2 grid without axis labels */}
