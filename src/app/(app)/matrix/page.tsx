@@ -220,7 +220,7 @@ export default function MatrixPage() {
 
         {/* Row 2: Important — P2 | P1 */}
         <div className="flex items-center justify-center py-2">
-          <span className="text-xs font-medium text-muted-foreground [writing-mode:vertical-rl]">Important</span>
+          <span className="text-xs font-medium text-muted-foreground [writing-mode:vertical-rl] rotate-180">Important</span>
         </div>
         {([TaskPriority.P2, TaskPriority.P1] as TaskPriority[]).map((priority) => (
           <MatrixQuadrant
@@ -233,7 +233,7 @@ export default function MatrixPage() {
 
         {/* Row 3: Not Important — P4 | P3 */}
         <div className="flex items-center justify-center py-2">
-          <span className="text-xs font-medium text-muted-foreground [writing-mode:vertical-rl]">Not Important</span>
+          <span className="text-xs font-medium text-muted-foreground [writing-mode:vertical-rl] rotate-180">Not Important</span>
         </div>
         {([TaskPriority.P4, TaskPriority.P3] as TaskPriority[]).map((priority) => (
           <MatrixQuadrant
