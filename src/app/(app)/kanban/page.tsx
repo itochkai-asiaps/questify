@@ -92,11 +92,11 @@ export default function KanbanPage() {
     const col = columns.find((c) => c.id === over.id);
     if (col) {
       newCol = col.id;
-      // Map column title to status
-      const t = col.title.toLowerCase();
-      if (t === "done") newStatus = "done";
-      else if (t === "in progress") newStatus = "in_progress";
-      else if (t === "to do") newStatus = "todo";
+      // Map by position: first column → todo, last → done, rest → in_progress
+      const idx = columns.findIndex((c) => c.id === col.id);
+      if (idx === 0) newStatus = "todo";
+      else if (idx === columns.length - 1) newStatus = "done";
+      else newStatus = "in_progress";
     }
     else { const ot = allTasks.find((t) => t.id === over.id); if (ot) newCol = (ot as Record<string,unknown>).kanban_column_id as string ?? null; }
     const cur = (task as Record<string,unknown>).kanban_column_id as string ?? "__none__";
