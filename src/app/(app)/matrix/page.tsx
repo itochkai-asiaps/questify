@@ -295,7 +295,6 @@ export default function MatrixPage() {
             {ALL_PRIORITIES.map((priority) => (
               <motion.div
                 key={priority}
-                layout
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25 }}
