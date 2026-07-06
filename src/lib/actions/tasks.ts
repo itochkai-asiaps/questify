@@ -108,6 +108,8 @@ export async function updateTask(
   if (due_date !== null) rawData.due_date = due_date;
   const tags = formData.get("tags");
   if (tags !== null) rawData.tags = tags;
+  const kanban_column_id = formData.get("kanban_column_id");
+  if (kanban_column_id !== null) rawData.kanban_column_id = kanban_column_id || null;
 
   const parsed = UpdateTaskInputSchema.safeParse(rawData);
   if (!parsed.success) {

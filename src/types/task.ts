@@ -43,6 +43,7 @@ export const UpdateTaskInputSchema = z.object({
   priority: z.nativeEnum(TaskPriority).optional(),
   due_date: z.string().datetime().nullable().optional(),
   tags: z.array(z.string()).optional(),
+  kanban_column_id: z.string().uuid().nullable().optional(),
 });
 
 export type Task = z.infer<typeof TaskSchema>;
