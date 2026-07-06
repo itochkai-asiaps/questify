@@ -8,7 +8,7 @@ export default function AppLayout({
   return (
     <div className="flex min-h-screen">
       <AppSidebar />
-      <main className="min-w-0 flex-1 pb-20 lg:pb-0">
+      <main className="min-w-0 flex-1 pb-16 lg:pb-0">
         {children}
       </main>
     </div>

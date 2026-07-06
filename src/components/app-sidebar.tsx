@@ -270,10 +270,10 @@ export default function AppSidebar() {
         "flex items-center justify-around",
         "bg-card/80 backdrop-blur border-t border-sidebar-border",
         "safe-bottom",
-        "h-16",
+        "h-14",
       )}
     >
-      {NAV_ITEMS.map((item) => {
+      {NAV_ITEMS.slice(0, 5).map((item) => {
         const isActive =
           pathname === item.href || pathname.startsWith(item.href + "/");
         const Icon = item.icon;
@@ -290,8 +290,8 @@ export default function AppSidebar() {
             )}
             aria-label={item.label}
           >
-            <Icon className="size-6 shrink-0" />
-            <span className="text-xs font-medium leading-none truncate max-w-[56px]">
+            <Icon className="size-5 shrink-0" />
+            <span className="text-[10px] font-medium leading-none truncate max-w-[48px]">
               {item.label}
             </span>
           </Link>
