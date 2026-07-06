@@ -129,7 +129,7 @@ export default function TaskCard({ task, onDelete, onSelect, isSelected }: TaskC
         className={cn(
           // DESIGN.md §5: Card — shadow on hover, ring on select, opacity-70 when done
           "cursor-pointer transition-shadow duration-200 hover:shadow-md",
-          task.status === "done" && "opacity-70",
+          task.status === "done" && "opacity-70 bg-muted/50",
           isSelected && "ring-2 ring-primary/50 shadow-md",
         )}
         onClick={handleClick}
@@ -217,7 +217,7 @@ export default function TaskCard({ task, onDelete, onSelect, isSelected }: TaskC
               {task.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                  className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground"
                 >
                   {tag}
                 </span>

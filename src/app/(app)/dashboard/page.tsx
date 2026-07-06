@@ -262,7 +262,7 @@ function XpProgressBar({ stats }: { stats: UserStatsRow }) {
                   </span>
                 )}
               </div>
-              <span className="text-xs tabular-nums text-muted-foreground">
+              <span className="text-xs tabular-nums text-foreground/70">
                 {maxLevel ? (
                   <span className="flex items-center gap-1 text-amber-500">
                     <Trophy className="size-3" />
@@ -437,7 +437,7 @@ function TodaysTasks({ tasks }: { tasks: TaskItem[] }) {
                         : "bg-muted-foreground/30",
                   )}
                 />
-                <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                <span className="min-w-0 flex-1 truncate text-[15px] text-foreground">
                   {task.title}
                 </span>
                 <div className="flex shrink-0 items-center gap-1.5">
@@ -542,7 +542,7 @@ function HeartAnimation() {
   const stroke = isProd ? "#7f1d1d" : "#991b1b";
 
   return (
-    <div className="flex items-center justify-center py-10">
+    <div className="flex items-center justify-center py-6">
       <motion.div
         animate={{ scale: [1, 1.05, 1] }}
         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
