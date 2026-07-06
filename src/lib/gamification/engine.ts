@@ -3,10 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { TaskPriority } from "@/types/task";
 import {
-  XP_REWARDS,
   getStreakMultiplier,
-  getLevel,
-  xpForLevel,
   xpForPriority,
 } from "./levels";
 
@@ -386,7 +383,7 @@ export async function getOrCreateUserStats(
 ): Promise<UserStatsRow> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("user_stats")
     .select("*")
     .eq("user_id", userId)

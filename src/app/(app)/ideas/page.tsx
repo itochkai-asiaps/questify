@@ -120,6 +120,7 @@ export default function IdeasPage() {
       }
     }
     setQuickAdding(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quickAdding]);
 
   if (authLoading || !user) return null;

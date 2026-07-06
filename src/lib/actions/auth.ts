@@ -68,7 +68,7 @@ export async function signIn(
 
   const { email, password } = parsed.data;
 
-  const { data: authData, error } = await supabase.auth.signInWithPassword({
+  const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -76,8 +76,6 @@ export async function signIn(
   if (error) {
     return { error: error.message };
   }
-
-  const user = authData.user;
 
   revalidatePath("/", "layout");
   redirect("/dashboard");

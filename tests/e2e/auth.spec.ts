@@ -167,7 +167,7 @@ test.describe("Public routes", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("Auth redirect for logged-in users", () => {
-  test("should redirect authenticated users from /login to /dashboard", async ({ page, context }) => {
+  test("should redirect authenticated users from /login to /dashboard", async ({ page }) => {
     // Simulate authenticated state by setting a dummy session cookie.
     // Without a real session, the client-side useAuth hook won't detect
     // a user, so the redirect won't happen. We verify the page loads

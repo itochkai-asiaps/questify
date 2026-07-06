@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getTasks, updateTask } from "@/lib/actions/tasks";
+import { getKanbanColumns, createKanbanColumn, updateKanbanColumn, deleteKanbanColumn, reorderKanbanColumns, type KanbanColumn as KanbanCol } from "@/lib/actions/kanban-columns";
 import { Task } from "@/types/task";
 
 import { KanbanCard } from "@/components/kanban/kanban-card";
@@ -111,6 +112,7 @@ export default function KanbanPage() {
     const r = await updateTask(taskId, fd);
     if (r.error) { setError(r.error); fetchData(); return; }
     setAllTasks((p) => p.map((t) => t.id === taskId ? { ...t, kanban_column_id: newCol, ...(newStatus ? { status: newStatus as Task["status"] } : {}) } : t));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allTasks, columns]);
 
   const displayTasks = useMemo(() => {

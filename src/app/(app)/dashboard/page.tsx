@@ -631,6 +631,7 @@ export default function DashboardPage() {
       lastFetchedUserId.current = user.id;
       fetchData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading, fetchData]);
 
   if (authLoading || !user) {

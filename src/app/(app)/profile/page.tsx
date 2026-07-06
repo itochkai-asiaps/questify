@@ -504,6 +504,7 @@ export default function ProfilePage() {
       lastFetchedUserId.current = user.id;
       fetchProfile();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading, fetchProfile]);
 
   if (authLoading || !user) {

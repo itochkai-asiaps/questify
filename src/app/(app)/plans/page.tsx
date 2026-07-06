@@ -148,7 +148,7 @@ export default function PlansPage() {
       {!isLoading && plans.length > 0 && (
         <motion.div layout className="grid gap-4 sm:grid-cols-2">
           <AnimatePresence mode="popLayout">
-            {plans.map((plan, index) => (
+            {plans.map((plan) => (
               <PlanCard
                 key={plan.id}
                 plan={plan}
