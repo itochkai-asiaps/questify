@@ -18,6 +18,13 @@ jobs:
 
       - run: npm install
 
+      - name: Push DB migrations (prod)
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
+        run: |
+          npx supabase db push \
+            --db-url "postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.zkifblsbwfllfmlndxjt.supabase.co:5432/postgres"
+
       - name: Build
         env:
           NEXT_PUBLIC_SUPABASE_URL: "https://zkifblsbwfllfmlndxjt.supabase.co"

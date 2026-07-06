@@ -43,8 +43,8 @@
 - [ ] **G6.** Фаза 2: команда `/approve` из Telegram бота
 
 ## Блок H — Инфраструктура (★★☆)
-- [ ] **H1.** GitHub Secret с `SUPABASE_ACCESS_TOKEN`
-- [ ] **H2.** Автоматические миграции при деплое (`supabase db push` в CI/CD)
+- [x] **H1.** GitHub Secret с `SUPABASE_ACCESS_TOKEN`
+- [x] **H2.** Автоматические миграции при деплое (`supabase db push` в CI/CD)
 - [ ] **H3.** Резерв: `psql` на VPS с connection string из Secrets
 - [ ] **H4.** Резервное копирование БД — нужно продумать
 - [x] **H5.** Билд на GitHub Actions + rsync готового .next на VPS — решает проблему нехватки памяти при сборке:
