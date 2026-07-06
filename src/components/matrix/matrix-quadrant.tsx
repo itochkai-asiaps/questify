@@ -87,7 +87,7 @@ export function MatrixQuadrant({ priority, tasks }: MatrixQuadrantProps) {
       <div
         ref={setNodeRef}
         className={cn(
-          "flex flex-1 min-h-0 flex-col gap-2 overflow-y-auto p-3",
+          "flex flex-col gap-2 overflow-y-auto p-3",
           isOver && "bg-primary/5",
         )}
       >
