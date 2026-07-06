@@ -84,7 +84,8 @@ jobs:
             cd /opt/questify
             git fetch origin master
             git reset --hard origin/master
-            npm ci --production=false 2>/dev/null || npm install
+            rm -rf node_modules
+            npm install
             cp -f deploy/nginx-questify.conf /etc/nginx/sites-available/questify
             ln -sf /etc/nginx/sites-available/questify /etc/nginx/sites-enabled/questify
             nginx -t && systemctl reload nginx || true
