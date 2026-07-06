@@ -127,6 +127,7 @@ export default function TaskCard({ task, onDelete, onSelect, isSelected }: TaskC
     >
       <Card
         className={cn(
+          // DESIGN.md §5: Card — shadow on hover, ring on select, opacity-70 when done
           "cursor-pointer transition-shadow duration-200 hover:shadow-md",
           task.status === "done" && "opacity-70",
           isSelected && "ring-2 ring-primary/50 shadow-md",
@@ -137,6 +138,7 @@ export default function TaskCard({ task, onDelete, onSelect, isSelected }: TaskC
           <div className="flex items-start justify-between gap-2">
             <CardTitle
               className={cn(
+                // DESIGN.md §3: Card title — text-base (16px)
                 "line-clamp-2 text-base leading-snug",
                 task.status === "done" && "line-through",
               )}
