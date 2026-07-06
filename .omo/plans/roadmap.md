@@ -48,7 +48,7 @@
 - [ ] **H2.** Автоматические миграции при деплое (`supabase db push` в CI/CD)
 - [ ] **H3.** Резерв: `psql` на VPS с connection string из Secrets
 - [ ] **H4.** Резервное копирование БД — нужно продумать
-- [ ] **H5.** Билд на GitHub Actions + rsync готового .next на VPS — решает проблему нехватки памяти при сборке:
+- [x] **H5.** Билд на GitHub Actions + rsync готового .next на VPS — решает проблему нехватки памяти при сборке:
   - **Supabase:** встроенные бэкапы (есть на Pro-плане, нет на Free)
   - **Внешний pg_dump:** крон на VPS, ежедневный дамп в S3/Google Drive
   - **Supabase CLI:** `supabase db dump` по расписанию через GitHub Actions
