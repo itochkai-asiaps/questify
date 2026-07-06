@@ -273,7 +273,7 @@ export default function AppSidebar() {
         "h-14",
       )}
     >
-      {NAV_ITEMS.slice(0, 5).map((item) => {
+      {NAV_ITEMS.map((item) => {
         const isActive =
           pathname === item.href || pathname.startsWith(item.href + "/");
         const Icon = item.icon;
