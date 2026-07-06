@@ -334,9 +334,9 @@ export default function IdeasPage() {
                   idea.type === "problem" && "border-orange-500/20 bg-orange-500/10 dark:border-purple-400/30 dark:bg-purple-500/15"
                 )}>
                   <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between gap-3">
-                      <CardTitle className="text-base">{idea.title}</CardTitle>
-                      <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex flex-col gap-2">
+                      <CardTitle className="text-base line-clamp-3">{idea.title}</CardTitle>
+                      <div className="flex items-center justify-end gap-1.5">
                         <Badge variant={TYPE_BADGE[idea.type].variant} className={TYPE_BADGE[idea.type].className}>
                           {TYPE_BADGE[idea.type].label}
                         </Badge>
