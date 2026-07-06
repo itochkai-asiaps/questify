@@ -5,12 +5,53 @@ on:
     branches: [master]
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: "https://zkifblsbwfllfmlndxjt.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "sb_publishable_AbDJH5ukLh_Ea3p_LeQSww_7l4JzWQ6"
+          NEXT_PUBLIC_APP_ENV: "production"
+          NEXT_PUBLIC_APP_VERSION: "v0.2-b${{ github.run_number }}"
+        run: npm run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: questify-prod-build
+          path: .next
+          retention-days: 1
+
   deploy:
+    needs: build
     runs-on: ubuntu-latest
     environment: production
-
     steps:
-      - name: Deploy via SSH
+      - uses: actions/download-artifact@v4
+        with:
+          name: questify-prod-build
+          path: .next
+
+      - name: Rsync .next to VPS
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avzr --delete
+          path: .next/
+          remote_path: /opt/questify/.next
+          remote_host: ${{ secrets.SSH_HOST }}
+          remote_user: ${{ secrets.SSH_USER }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Pull code + restart PM2
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -21,13 +62,7 @@ jobs:
             set -e
             cd /opt/questify
             git pull origin master
-            rm -rf .next
             npm ci --production=false 2>/dev/null || npm install
-            echo "=== Building (this takes 2-5 min on 1GB VPS) ==="
-            BUILD=$(git rev-list --count HEAD)
-            export NEXT_PUBLIC_APP_VERSION="v0.2-b${BUILD}"
-            npm run build
-            # Update Nginx config from repo
             cp -f deploy/nginx-questify.conf /etc/nginx/sites-available/questify
             ln -sf /etc/nginx/sites-available/questify /etc/nginx/sites-enabled/questify
             nginx -t && systemctl reload nginx || true
