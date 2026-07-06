@@ -51,6 +51,7 @@
 ## Блок I — На подумать (★☆☆)
 - [ ] **I1.** Локальный доступ к БД из OpenCode: `.pgpass` / `.env.local` / батник. Оценка и выбор.
 - [ ] **I2.** Очистка тестовых юзеров после Playwright e2e: хранение `SUPABASE_SERVICE_ROLE_KEY` (безопасность), авто-удаление `test-*@example.com` в `afterAll`. Или админский API-эндпоинт с проверкой `APP_ENV`.
+- [ ] **I3.** Playwright-автоматизация для визуального QA: скриншоты страниц (Tasks, Dashboard, Matrix, Kanban) → `design-consultant` (GPT-4o). Запуск по команде, не в CI.
 
 ---
 
