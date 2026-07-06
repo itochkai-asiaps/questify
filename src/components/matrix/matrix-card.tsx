@@ -1,8 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import Link from "next/link";
 import { Calendar, GripVertical } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +31,7 @@ interface MatrixCardProps {
 }
 
 export function MatrixCard({ task }: MatrixCardProps) {
+  const router = useRouter();
   const {
     attributes,
     listeners,
@@ -57,15 +58,21 @@ export function MatrixCard({ task }: MatrixCardProps) {
     : null;
   const statusDot = STATUS_DOT[task.status] ?? STATUS_DOT.todo;
 
+  const handleClick = (e: React.MouseEvent) => {
+    // Don't navigate if user was dragging (dragged > 5px)
+    if (isDragging) return;
+    router.push(`/tasks/${task.id}`);
+  };
+
   return (
-    <Link
-      href={`/tasks/${task.id}`}
+    <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
+      onClick={handleClick}
       className={cn(
-        "group/card block touch-none",
+        "group/card block touch-none cursor-pointer",
         isDragging && "opacity-50",
       )}
     >
@@ -110,6 +117,6 @@ export function MatrixCard({ task }: MatrixCardProps) {
           </div>
         </CardContent>
       </Card>
-    </Link>
+    </div>
   );
 }

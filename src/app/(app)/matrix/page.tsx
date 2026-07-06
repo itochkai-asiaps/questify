@@ -291,9 +291,7 @@ export default function MatrixPage() {
             <span className="text-xs font-medium text-muted-foreground [writing-mode:vertical-rl]">Important</span>
           </div>
           {([TaskPriority.P2, TaskPriority.P1] as TaskPriority[]).map((priority) => (
-            <div key={priority}>
-              <MatrixQuadrant priority={priority} tasks={displayByPriority[priority]} />
-            </div>
+            <MatrixQuadrant key={priority} priority={priority} tasks={displayByPriority[priority]} />
           ))}
 
           {/* Row 3: Not Important — P4 (Not Urgent & Not Important) | P3 (Urgent & Not Important) */}
@@ -301,18 +299,14 @@ export default function MatrixPage() {
             <span className="text-xs font-medium text-muted-foreground [writing-mode:vertical-rl]">Not Important</span>
           </div>
           {([TaskPriority.P4, TaskPriority.P3] as TaskPriority[]).map((priority) => (
-            <div key={priority}>
-              <MatrixQuadrant priority={priority} tasks={displayByPriority[priority]} />
-            </div>
+            <MatrixQuadrant key={priority} priority={priority} tasks={displayByPriority[priority]} />
           ))}
         </div>
 
         {/* Mobile — simple 2×2 grid without axis labels, mirrored X-axis */}
         <div className="grid gap-4 md:hidden grid-cols-2 grid-rows-2">
           {([TaskPriority.P2, TaskPriority.P1, TaskPriority.P4, TaskPriority.P3] as TaskPriority[]).map((priority) => (
-            <div key={priority}>
-              <MatrixQuadrant priority={priority} tasks={displayByPriority[priority]} />
-            </div>
+            <MatrixQuadrant key={priority} priority={priority} tasks={displayByPriority[priority]} />
           ))}
         </div>
 

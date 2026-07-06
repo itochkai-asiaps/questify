@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { cn } from "@/lib/utils";
@@ -51,7 +52,7 @@ interface MatrixQuadrantProps {
   tasks: Task[];
 }
 
-export function MatrixQuadrant({ priority, tasks }: MatrixQuadrantProps) {
+export const MatrixQuadrant = memo(function MatrixQuadrant({ priority, tasks }: MatrixQuadrantProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: priority,
     data: { type: "quadrant", priority },
@@ -110,4 +111,4 @@ export function MatrixQuadrant({ priority, tasks }: MatrixQuadrantProps) {
       </div>
     </div>
   );
-}
+});
