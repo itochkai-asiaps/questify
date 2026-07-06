@@ -88,8 +88,16 @@ export default function KanbanPage() {
     const taskId = active.id as string;
     const task = allTasks.find((t) => t.id === taskId); if (!task) return;
     let newCol: string | null = null;
+    let newStatus: string | null = null;
     const col = columns.find((c) => c.id === over.id);
-    if (col) newCol = col.id;
+    if (col) {
+      newCol = col.id;
+      // Map column title to status
+      const t = col.title.toLowerCase();
+      if (t === "done") newStatus = "done";
+      else if (t === "in progress") newStatus = "in_progress";
+      else if (t === "to do") newStatus = "todo";
+    }
     else { const ot = allTasks.find((t) => t.id === over.id); if (ot) newCol = (ot as Record<string,unknown>).kanban_column_id as string ?? null; }
     const cur = (task as Record<string,unknown>).kanban_column_id as string ?? "__none__";
     if (!newCol || newCol === cur) return;
@@ -97,14 +105,15 @@ export default function KanbanPage() {
     setTasksByColumn((p) => {
       const n = { ...p };
       n[cur] = (p[cur] ?? []).filter((t) => t.id !== taskId);
-      n[newCol!] = [...(p[newCol!] ?? []), { ...task, kanban_column_id: newCol } as Task & { kanban_column_id: string }];
+      n[newCol!] = [...(p[newCol!] ?? []), { ...task, kanban_column_id: newCol, ...(newStatus ? { status: newStatus as Task["status"] } : {}) } as Task & { kanban_column_id: string }];
       return n;
     });
 
     const fd = new FormData(); fd.set("kanban_column_id", newCol);
+    if (newStatus) fd.set("status", newStatus);
     const r = await updateTask(taskId, fd);
     if (r.error) { setError(r.error); fetchData(); return; }
-    setAllTasks((p) => p.map((t) => t.id === taskId ? { ...t, kanban_column_id: newCol } : t));
+    setAllTasks((p) => p.map((t) => t.id === taskId ? { ...t, kanban_column_id: newCol, ...(newStatus ? { status: newStatus as Task["status"] } : {}) } : t));
   }, [allTasks, columns]);
 
   const displayTasks = useMemo(() => {
