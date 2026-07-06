@@ -5,11 +5,49 @@ on:
     branches: [staging]
 
 jobs:
-  deploy-staging:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Deploy Staging via SSH
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Build
+        env:
+          NEXT_PUBLIC_APP_VERSION: "S v0.2-b${{ github.run_number }}"
+        run: npm run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: questify-build
+          path: .next
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: questify-build
+          path: .next
+
+      - name: Rsync .next to VPS
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avzr --delete
+          path: .next/
+          remote_path: /opt/questify-staging/.next
+          remote_host: ${{ secrets.STAGING_SSH_HOST }}
+          remote_user: ${{ secrets.STAGING_SSH_USER }}
+          remote_key: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+
+      - name: Pull code + restart PM2
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.STAGING_SSH_HOST }}
@@ -19,27 +57,8 @@ jobs:
           script: |
             set -e
             cd /opt/questify-staging
-
-            # Prevent concurrent builds
-            if [ -f /tmp/questify-build.lock ]; then
-              echo "Another build in progress — waiting 30s..."
-              sleep 30
-              if [ -f /tmp/questify-build.lock ]; then
-                echo "Build still locked — aborting. Push again."
-                exit 1
-              fi
-            fi
-            touch /tmp/questify-build.lock
-            trap "rm -f /tmp/questify-build.lock" EXIT
-
             git pull origin staging
-            rm -rf .next node_modules/.cache
             npm install
-            echo "=== Building staging ==="
-            BUILD=$(git rev-list --count HEAD)
-            export NEXT_PUBLIC_APP_VERSION="S v0.2-b${BUILD}"
-            npm run build
-            # Update Nginx config from repo
             cp -f deploy/nginx-questify-staging.conf /etc/nginx/sites-available/questify-staging
             ln -sf /etc/nginx/sites-available/questify-staging /etc/nginx/sites-enabled/questify-staging
             nginx -t && systemctl reload nginx || true
