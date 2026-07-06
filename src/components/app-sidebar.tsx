@@ -260,55 +260,8 @@ export default function AppSidebar() {
   );
 
   // ------------------------------------------------------------------
-  // Mobile bottom bar
-  // ------------------------------------------------------------------
-
-  const mobileBottomBar = (
-    <nav
-      className={cn(
-        "lg:hidden fixed inset-x-0 z-40",
-        "flex items-center justify-around",
-        "bg-card/80 backdrop-blur border-t border-sidebar-border",
-        "h-16",
-        "pb-[env(safe-area-inset-bottom,8px)]",
-      )}
-      style={{ bottom: "max(env(safe-area-inset-bottom, 0px), 0px)" }}
-    >
-      {NAV_ITEMS.map((item) => {
-        const isActive =
-          pathname === item.href || pathname.startsWith(item.href + "/");
-        const Icon = item.icon;
-
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 rounded-lg transition-colors tap-target",
-              isActive
-                ? "text-sidebar-primary"
-                : "text-sidebar-foreground/60",
-            )}
-            aria-label={item.label}
-          >
-            <Icon className="size-6 shrink-0" />
-            <span className="text-xs font-medium leading-none truncate max-w-[56px]">
-              {item.label}
-            </span>
-          </Link>
-        );
-      })}
-    </nav>
-  );
-
-  // ------------------------------------------------------------------
   // Render
   // ------------------------------------------------------------------
 
-  return (
-    <>
-      {desktopSidebar}
-      {mobileBottomBar}
-    </>
-  );
+  return desktopSidebar;
 }
