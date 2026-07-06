@@ -114,7 +114,7 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
 
 function DashboardSkeleton() {
   return (
-    <div className="container mx-auto max-w-4xl space-y-6 p-6">
+    <div className="w-full max-w-4xl mx-auto space-y-4 sm:space-y-6 px-4 py-6">
       {/* XP Bar skeleton */}
       <Card>
         <CardContent className="py-6">
@@ -204,7 +204,7 @@ function DashboardSkeleton() {
 
 function DashboardError({ onRetry }: { onRetry: () => void }) {
   return (
-    <div className="container mx-auto flex max-w-4xl flex-col items-center justify-center gap-4 p-6 pt-20">
+    <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center gap-4 px-4 py-6 pt-20">
       <div className="rounded-full bg-destructive/10 p-4">
         <RefreshCw className="size-8 text-destructive" />
       </div>
@@ -658,7 +658,7 @@ export default function DashboardPage() {
   ).length;
 
   return (
-    <div className="container mx-auto max-w-4xl space-y-6 p-6">
+    <div className="w-full max-w-4xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-6 py-6">
       {/* Sections ABOVE the heart */}
       {/* XP Progress Bar */}
       <XpProgressBar stats={stats} />
