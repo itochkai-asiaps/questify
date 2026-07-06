@@ -63,7 +63,7 @@ export function MatrixQuadrant({ priority, tasks }: MatrixQuadrantProps) {
   return (
     <div
       className={cn(
-        "flex flex-col rounded-xl border transition-colors h-full",
+        "flex flex-col rounded-xl border transition-colors",
         config.bg,
         config.border,
         isOver && "ring-2 ring-primary/30 ring-offset-1",

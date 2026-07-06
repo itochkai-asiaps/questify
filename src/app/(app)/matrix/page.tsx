@@ -270,7 +270,7 @@ export default function MatrixPage() {
         onDragEnd={handleDragEnd}
       >
         {/* Axis labels + Matrix grid */}
-        <div className="hidden md:grid md:grid-cols-[auto_1fr_1fr] md:grid-rows-[auto_1fr_1fr] gap-x-1">
+        <div className="hidden md:grid md:grid-cols-[auto_1fr_1fr] gap-x-1">
           {/* Corner */}
           <div />
           {/* X axis: Urgent / Not Urgent */}
@@ -289,7 +289,7 @@ export default function MatrixPage() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25 }}
-                className="min-h-0"
+                className=""
               >
                 <MatrixQuadrant
                   priority={priority}
