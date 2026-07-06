@@ -1,0 +1,70 @@
+name: Daily DB Backup
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # daily at 03:00 UTC
+  workflow_dispatch: # manual trigger
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client awscli
+
+      - name: Dump staging DB
+        env:
+          PGPASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+        run: |
+          FILE="questify-staging-$(date -u +%Y%m%d-%H%M).dump"
+          echo "BACKUP_FILE=$FILE" >> $GITHUB_ENV
+          pg_dump \
+            -h aws-1-ap-southeast-2.pooler.supabase.com -p 6543 \
+            -U "postgres.irmihumjlbckwygtnvfi" -d postgres \
+            --no-owner --no-acl -Fc \
+            -f "$FILE"
+
+      - name: Upload to Yandex Object Storage
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.YANDEX_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YANDEX_SECRET_ACCESS_KEY }}
+        run: |
+          aws s3 cp "$BACKUP_FILE" "s3://questify-backups/$BACKUP_FILE" \
+            --endpoint-url https://storage.yandexcloud.net \
+            --region ru-central1
+
+      - name: Upload to AWS S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          aws s3 cp "$BACKUP_FILE" "s3://questify-backups/$BACKUP_FILE" \
+            --region us-east-1
+
+      - name: Cleanup old Yandex backups (>30 days)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.YANDEX_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YANDEX_SECRET_ACCESS_KEY }}
+        run: |
+          aws s3 ls "s3://questify-backups/" \
+            --endpoint-url https://storage.yandexcloud.net \
+            --region ru-central1 \
+          | awk -v cutoff="$(date -d '30 days ago' +%Y-%m-%d)" '$1 < cutoff {print $4}' \
+          | while read f; do
+              aws s3 rm "s3://questify-backups/$f" \
+                --endpoint-url https://storage.yandexcloud.net \
+                --region ru-central1
+            done
+
+      - name: Cleanup old AWS backups (>30 days)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          aws s3 ls "s3://questify-backups/" --region us-east-1 \
+          | awk -v cutoff="$(date -d '30 days ago' +%Y-%m-%d)" '$1 < cutoff {print $4}' \
+          | while read f; do
+              aws s3 rm "s3://questify-backups/$f" --region us-east-1
+            done
