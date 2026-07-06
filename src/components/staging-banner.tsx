@@ -3,16 +3,16 @@
 import { useState, useCallback } from "react";
 
 export default function StagingBanner() {
-  if (process.env.NEXT_PUBLIC_APP_ENV !== "staging") return null;
-
-  const version = process.env.NEXT_PUBLIC_APP_VERSION || "dev";
   const [copied, setCopied] = useState(false);
+  const version = process.env.NEXT_PUBLIC_APP_VERSION || "dev";
 
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(version);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   }, [version]);
+
+  if (process.env.NEXT_PUBLIC_APP_ENV !== "staging") return null;
 
   return (
     <button

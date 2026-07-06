@@ -20,12 +20,6 @@ const PRIORITY_CONFIG: Record<
   [TaskPriority.P4]: { label: "P4", variant: "outline" },
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  todo: "To Do",
-  in_progress: "In Progress",
-  done: "Done",
-};
-
 interface KanbanCardProps {
   task: Task;
 }

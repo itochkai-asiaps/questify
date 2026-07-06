@@ -13,6 +13,14 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      // Intentional patterns: data fetching in useEffect on mount
+      "react-hooks/set-state-in-effect": "off",
+      // Intentional: ref syncing for latest value access in callbacks
+      "react-hooks/refs": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

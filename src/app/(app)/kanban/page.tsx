@@ -1,19 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   DndContext, DragEndEvent, DragOverlay, DragStartEvent,
   PointerSensor, TouchSensor, pointerWithin, useSensor, useSensors,
 } from "@dnd-kit/core";
-import { motion } from "framer-motion";
-import { ClipboardList, Loader2, Plus, Check, X, Eye, EyeOff } from "lucide-react";
+import { ClipboardList, Plus, Check, X, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getTasks, updateTask } from "@/lib/actions/tasks";
-import { getKanbanColumns, createKanbanColumn, updateKanbanColumn, deleteKanbanColumn, reorderKanbanColumns, type KanbanColumn as KanbanCol } from "@/lib/actions/kanban-columns";
-import { cn } from "@/lib/utils";
 import { Task } from "@/types/task";
 
 import { KanbanCard } from "@/components/kanban/kanban-card";

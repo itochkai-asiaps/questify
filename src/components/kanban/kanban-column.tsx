@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import Link from "next/link";
-import { Plus, Pencil, Trash2, Check, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Check, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

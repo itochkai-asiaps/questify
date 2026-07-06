@@ -1,6 +1,7 @@
 "use client";
 
 import { type FormEvent, useActionState, useCallback, useEffect, useId, useRef, useState } from "react";
+import Link from "next/link";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -235,7 +236,7 @@ export default function TaskForm({ task, onSuccess }: TaskFormProps) {
           type="button"
           variant="ghost"
           disabled={isPending}
-          render={<a href="/tasks" />}
+          render={<Link href="/tasks" />}
         >
           Cancel
         </Button>

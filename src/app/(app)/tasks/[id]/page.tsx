@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Loader2, Pencil } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -71,7 +72,7 @@ export default function EditTaskPage() {
   if (error || !task) {
     return (
       <div className="mx-auto max-w-lg space-y-6 px-4 py-8 sm:px-6">
-        <Button variant="ghost" size="sm" render={<a href="/tasks" />}>
+        <Button variant="ghost" size="sm" render={<Link href="/tasks" />}>
           <ArrowLeft className="size-4" />
           Back to Tasks
         </Button>
@@ -83,7 +84,7 @@ export default function EditTaskPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button render={<a href="/tasks" />}>Go to Tasks</Button>
+            <Button render={<Link href="/tasks" />}>Go to Tasks</Button>
           </CardContent>
         </Card>
       </div>
@@ -97,7 +98,7 @@ export default function EditTaskPage() {
         initial={{ opacity: 0, x: -12 }}
         animate={{ opacity: 1, x: 0 }}
       >
-        <Button variant="ghost" size="sm" render={<a href="/tasks" />}>
+        <Button variant="ghost" size="sm" render={<Link href="/tasks" />}>
           <ArrowLeft className="size-4" />
           Back to Tasks
         </Button>

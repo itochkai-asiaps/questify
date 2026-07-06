@@ -134,17 +134,6 @@ export default function TasksPage() {
     setDetailLoading(false);
   }, []);
 
-  // Refresh selected after delete/update
-  const refreshSelected = useCallback(async () => {
-    if (!selectedTaskId) return;
-    const result = await getTaskById(selectedTaskId);
-    if (result.data) {
-      setSelectedTask(result.data as Task);
-      // Also update in list
-      setTasks((prev) => prev.map((t) => t.id === selectedTaskId ? result.data as Task : t));
-    }
-  }, [selectedTaskId]);
-
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
       if (search) {
@@ -340,7 +329,7 @@ export default function TasksPage() {
                         <DialogContent>
                           <DialogHeader>
                             <DialogTitle>Delete task?</DialogTitle>
-                            <DialogDescription>This will permanently delete "{selectedTask.title}".</DialogDescription>
+                            <DialogDescription>This will permanently delete &quot;{selectedTask.title}&quot;.</DialogDescription>
                           </DialogHeader>
                           <DialogFooter>
                             <DialogClose render={<Button variant="outline" disabled={deleting} />}>Cancel</DialogClose>

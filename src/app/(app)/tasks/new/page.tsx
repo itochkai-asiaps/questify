@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, ClipboardList } from "lucide-react";
@@ -24,7 +25,7 @@ export default function NewTaskPage() {
         initial={{ opacity: 0, x: -12 }}
         animate={{ opacity: 1, x: 0 }}
       >
-        <Button variant="ghost" size="sm" render={<a href="/tasks" />}>
+        <Button variant="ghost" size="sm" render={<Link href="/tasks" />}>
           <ArrowLeft className="size-4" />
           Back to Tasks
         </Button>
