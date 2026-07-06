@@ -213,15 +213,6 @@ export default function MatrixPage() {
 
   const totalTasks = allTasks.length;
 
-  const displayByPriority = useMemo(() => {
-    if (showCompleted) return tasksByPriority;
-    const filtered: TasksByPriority = { ...EMPTY_MATRIX };
-    for (const [prio, tasks] of Object.entries(tasksByPriority)) {
-      filtered[prio as TaskPriority] = (tasks as Task[]).filter((t) => t.status !== "done");
-    }
-    return filtered;
-  }, [tasksByPriority, showCompleted]);
-
   return (
     <div className="container mx-auto p-6">
       {/* Page header */}
@@ -302,7 +293,7 @@ export default function MatrixPage() {
               >
                 <MatrixQuadrant
                   priority={priority}
-                  tasks={displayByPriority[priority]}
+                  tasks={tasksByPriority[priority]}
                 />
               </motion.div>
             ))}
