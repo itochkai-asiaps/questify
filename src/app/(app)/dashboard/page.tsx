@@ -497,7 +497,7 @@ function LatestAchievements({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.08 }}
               className={cn(
-                "relative flex w-36 shrink-0 flex-col items-center gap-2 rounded-xl border p-4 text-center",
+                "relative flex min-w-[130px] max-w-[160px] shrink-0 flex-col items-center gap-2 rounded-xl border p-4 text-center",
                 ach.unlocked
                   ? "border-amber-500/30 bg-amber-500/5 shadow-[0_0_15px_rgba(251,191,36,0.15)]"
                   : "border-border bg-muted/30 opacity-50 grayscale",
