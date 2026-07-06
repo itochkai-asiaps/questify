@@ -45,7 +45,8 @@ jobs:
           script: |
             set -e
             cd /opt/questify-staging
-            git pull origin staging
+            git fetch origin staging
+            git reset --hard origin/staging
             npm install
             cp -f deploy/nginx-questify-staging.conf /etc/nginx/sites-available/questify-staging
             ln -sf /etc/nginx/sites-available/questify-staging /etc/nginx/sites-enabled/questify-staging
