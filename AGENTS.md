@@ -84,6 +84,12 @@ questify/
 - **RLS на всех таблицах**. Без исключений. Миграции через Supabase CLI.
 - **Server-side auth**. Supabase client создаётся через `@supabase/ssr`, не через клиентский SDK.
 - **Миграции атомарные**. Одна миграция = одно изменение схемы. Не смешивать.
+- **Миграции идемпотентные** — должны проходить без ошибок при повторном запуске:
+  - Таблицы: `CREATE TABLE IF NOT EXISTS`
+  - Индексы: `CREATE INDEX IF NOT EXISTS`
+  - Политики RLS: `DO $$ BEGIN ... EXCEPTION WHEN duplicate_object THEN END $$`
+  - Триггеры: `DROP TRIGGER IF EXISTS ...; CREATE TRIGGER ...`
+  - Функции: `CREATE OR REPLACE FUNCTION`
 
 ### Стили
 - **Tailwind utility-first**. Никаких CSS modules, никаких inline styles кроме динамических значений.
