@@ -352,7 +352,7 @@ export default function IdeasPage() {
                             else { toast.success("Converted to Task"); setIdeas((p) => p.filter((i) => i.id !== idea.id)); }
                           }}
                           aria-label="Convert to task"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold px-1"
+                          className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity text-[10px] font-bold px-1"
                         >
                           →T
                         </Button>
@@ -365,7 +365,7 @@ export default function IdeasPage() {
                             else { toast.success("Converted to Plan"); setIdeas((p) => p.filter((i) => i.id !== idea.id)); }
                           }}
                           aria-label="Convert to plan"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold px-1"
+                          className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity text-[10px] font-bold px-1"
                         >
                           →P
                         </Button>
@@ -385,7 +385,7 @@ export default function IdeasPage() {
                             }
                           }}
                           aria-label="Toggle type"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity"
                         >
                           {idea.type === "idea" ? (
                             <AlertTriangle className="size-3.5 text-orange-500" />
@@ -399,7 +399,7 @@ export default function IdeasPage() {
                           onClick={() => handleDelete(idea.id)}
                           disabled={deletingId === idea.id}
                           aria-label="Delete idea"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity"
                         >
                           {deletingId === idea.id ? (
                             <Loader2 className="size-3.5 animate-spin" />
