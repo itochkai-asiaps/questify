@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import {
   DndContext,
   DragEndEvent,
@@ -12,8 +13,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { motion } from "framer-motion";
-import { LayoutGrid, Sparkles, Eye, EyeOff } from "lucide-react";
+import { LayoutGrid, Sparkles, Eye, EyeOff, Inbox } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -206,6 +206,9 @@ export default function MatrixPage() {
   }
 
   const totalTasks = allTasks.length;
+  const unprioritized = allTasks.filter(
+    (t) => !ALL_PRIORITIES.includes(t.priority as TaskPriority) && (showCompleted || t.status !== "done"),
+  );
 
   return (
     <div className="container mx-auto p-6">
@@ -279,9 +282,9 @@ export default function MatrixPage() {
             <span className="text-xs font-medium text-muted-foreground">Important</span>
           </div>
           {([TaskPriority.P2, TaskPriority.P1] as TaskPriority[]).map((priority) => (
-            <motion.div key={priority} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+            <div key={priority}>
               <MatrixQuadrant priority={priority} tasks={tasksByPriority[priority]} />
-            </motion.div>
+            </div>
           ))}
 
           {/* Row 3: Not Important — P4 (Not Urgent & Not Important) | P3 (Urgent & Not Important) */}
@@ -289,18 +292,18 @@ export default function MatrixPage() {
             <span className="text-xs font-medium text-muted-foreground">Not Important</span>
           </div>
           {([TaskPriority.P4, TaskPriority.P3] as TaskPriority[]).map((priority) => (
-            <motion.div key={priority} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+            <div key={priority}>
               <MatrixQuadrant priority={priority} tasks={tasksByPriority[priority]} />
-            </motion.div>
+            </div>
           ))}
         </div>
 
         {/* Mobile — simple 2×2 grid without axis labels */}
         <div className="grid gap-4 md:hidden grid-cols-2 grid-rows-2">
           {ALL_PRIORITIES.map((priority) => (
-            <motion.div key={priority} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+            <div key={priority}>
               <MatrixQuadrant priority={priority} tasks={tasksByPriority[priority]} />
-            </motion.div>
+            </div>
           ))}
         </div>
 
@@ -313,6 +316,31 @@ export default function MatrixPage() {
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {/* Unprioritized — tasks without P1-P4 priority */}
+      {unprioritized.length > 0 && (
+        <div className="mt-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Inbox className="size-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold text-muted-foreground">Unprioritized</h2>
+            <span className="text-xs text-muted-foreground tabular-nums">{unprioritized.length}</span>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {unprioritized.map((task) => (
+              <Link
+                key={task.id}
+                href={`/tasks/${task.id}`}
+                className="block rounded-lg border border-border bg-card p-3 text-sm hover:shadow-sm transition-shadow"
+              >
+                <p className="font-medium truncate">{task.title}</p>
+                {task.description && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
+                )}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Empty state */}
       {totalTasks === 0 && !isLoading && (
