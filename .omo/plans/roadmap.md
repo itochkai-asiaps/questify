@@ -42,16 +42,14 @@
 - [ ] **G5.** DDoS-защита: per-email (5/24h), global (10/min), Nginx limit_req
 - [ ] **G6.** Фаза 2: команда `/approve` из Telegram бота
 
-## Блок H — Инфраструктура (★★☆)
+## Блок H — Инфраструктура (★★☆) ✅ DONE
 - [x] **H1.** GitHub Secret с `SUPABASE_ACCESS_TOKEN`
 - [x] **H2.** Автоматические миграции при деплое (`supabase db push` в CI/CD)
-- [ ] **H3.** Локальный доступ к БД из OpenCode: `.pgpass` / `.env.local` / батник. Оценка и выбор.
-- [x] **H4.** Бэкап БД: GitHub Actions → `pg_dump` → Yandex Object Storage + AWS S3, 30 дней хранения
-- [x] **H5.** Билд на GitHub Actions + rsync готового .next на VPS — решает проблему нехватки памяти при сборке:
-  - **Supabase:** встроенные бэкапы (есть на Pro-плане, нет на Free)
-  - **Внешний pg_dump:** крон на VPS, ежедневный дамп в S3/Google Drive
-  - **Supabase CLI:** `supabase db dump` по расписанию через GitHub Actions
-  - Выбрать подход после обсуждения
+- [x] **H3.** Бэкап БД: GitHub Actions → `pg_dump` → Yandex Object Storage + AWS S3, 30 дней хранения
+- [x] **H4.** Билд на GitHub Actions + rsync готового .next на VPS
+
+## Блок I — На подумать (★☆☆)
+- [ ] **I1.** Локальный доступ к БД из OpenCode: `.pgpass` / `.env.local` / батник. Оценка и выбор.
 
 ---
 
