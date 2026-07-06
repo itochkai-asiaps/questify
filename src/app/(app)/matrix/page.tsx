@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   DndContext,
@@ -9,7 +9,7 @@ import {
   DragStartEvent,
   PointerSensor,
   TouchSensor,
-  pointerWithin,
+  closestCenter,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -210,6 +210,15 @@ export default function MatrixPage() {
     (t) => !ALL_PRIORITIES.includes(t.priority as TaskPriority) && (showCompleted || t.status !== "done"),
   );
 
+  const displayByPriority: TasksByPriority = useMemo(() => {
+    if (showCompleted) return tasksByPriority;
+    const filtered = { ...EMPTY_MATRIX };
+    for (const priority of ALL_PRIORITIES) {
+      filtered[priority] = displayByPriority[priority].filter((t) => t.status !== "done");
+    }
+    return filtered;
+  }, [tasksByPriority, showCompleted]);
+
   return (
     <div className="container mx-auto p-6">
       {/* Page header */}
@@ -262,7 +271,7 @@ export default function MatrixPage() {
       {/* Matrix grid */}
       <DndContext
         sensors={sensors}
-        collisionDetection={pointerWithin}
+        collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
@@ -283,7 +292,7 @@ export default function MatrixPage() {
           </div>
           {([TaskPriority.P2, TaskPriority.P1] as TaskPriority[]).map((priority) => (
             <div key={priority}>
-              <MatrixQuadrant priority={priority} tasks={tasksByPriority[priority]} />
+              <MatrixQuadrant priority={priority} tasks={displayByPriority[priority]} />
             </div>
           ))}
 
@@ -293,16 +302,16 @@ export default function MatrixPage() {
           </div>
           {([TaskPriority.P4, TaskPriority.P3] as TaskPriority[]).map((priority) => (
             <div key={priority}>
-              <MatrixQuadrant priority={priority} tasks={tasksByPriority[priority]} />
+              <MatrixQuadrant priority={priority} tasks={displayByPriority[priority]} />
             </div>
           ))}
         </div>
 
-        {/* Mobile — simple 2×2 grid without axis labels */}
+        {/* Mobile — simple 2×2 grid without axis labels, mirrored X-axis */}
         <div className="grid gap-4 md:hidden grid-cols-2 grid-rows-2">
-          {ALL_PRIORITIES.map((priority) => (
+          {([TaskPriority.P2, TaskPriority.P1, TaskPriority.P4, TaskPriority.P3] as TaskPriority[]).map((priority) => (
             <div key={priority}>
-              <MatrixQuadrant priority={priority} tasks={tasksByPriority[priority]} />
+              <MatrixQuadrant priority={priority} tasks={displayByPriority[priority]} />
             </div>
           ))}
         </div>
