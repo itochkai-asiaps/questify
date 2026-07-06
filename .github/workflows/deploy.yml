@@ -5,8 +5,9 @@ on:
     branches: [master]
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - uses: actions/checkout@v4
 
@@ -15,7 +16,7 @@ jobs:
           node-version: 22
           cache: "npm"
 
-      - run: npm ci
+      - run: npm install
 
       - name: Build
         env:
@@ -24,22 +25,6 @@ jobs:
           NEXT_PUBLIC_APP_ENV: "production"
           NEXT_PUBLIC_APP_VERSION: "v0.2-b${{ github.run_number }}"
         run: npm run build
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: questify-prod-build
-          path: .next
-          retention-days: 1
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: questify-prod-build
-          path: .next
 
       - name: Rsync .next to VPS
         uses: burnett01/rsync-deployments@7.0.1
