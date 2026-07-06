@@ -45,8 +45,8 @@
 ## Блок H — Инфраструктура (★★☆)
 - [x] **H1.** GitHub Secret с `SUPABASE_ACCESS_TOKEN`
 - [x] **H2.** Автоматические миграции при деплое (`supabase db push` в CI/CD)
-- [ ] **H3.** Локальный доступ к БД из OpenCode: способ выполнять произвольный SQL против staging/prod без SQL Editor. Варианты: `.pgpass`, `PGPASSWORD` в `.env.local`, батник с паролем. Оценка рисков и выбор.
-- [ ] **H4.** Резервное копирование БД — нужно продумать
+- [ ] **H3.** Локальный доступ к БД из OpenCode: `.pgpass` / `.env.local` / батник. Оценка и выбор.
+- [x] **H4.** Бэкап БД: GitHub Actions → `pg_dump` → Yandex Object Storage + AWS S3, 30 дней хранения
 - [x] **H5.** Билд на GitHub Actions + rsync готового .next на VPS — решает проблему нехватки памяти при сборке:
   - **Supabase:** встроенные бэкапы (есть на Pro-плане, нет на Free)
   - **Внешний pg_dump:** крон на VPS, ежедневный дамп в S3/Google Drive
