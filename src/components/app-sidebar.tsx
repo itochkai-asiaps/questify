@@ -266,12 +266,13 @@ export default function AppSidebar() {
   const mobileBottomBar = (
     <nav
       className={cn(
-        "lg:hidden fixed bottom-0 inset-x-0 z-40",
+        "lg:hidden fixed inset-x-0 z-40",
         "flex items-center justify-around",
         "bg-card/80 backdrop-blur border-t border-sidebar-border",
-        "safe-bottom",
         "h-16",
+        "pb-[env(safe-area-inset-bottom,8px)]",
       )}
+      style={{ bottom: "max(env(safe-area-inset-bottom, 0px), 0px)" }}
     >
       {NAV_ITEMS.map((item) => {
         const isActive =
