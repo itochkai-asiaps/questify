@@ -24,7 +24,7 @@ export function MoodChart() {
 
   if (loading) {
     return (
-      <Card>
+    <Card className="overflow-visible">
         <CardHeader>
           <Skeleton className="h-5 w-32" />
         </CardHeader>
