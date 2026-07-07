@@ -12,7 +12,7 @@ import { getFocusTask, setFocusTask, clearFocusTask } from "@/lib/actions/focus"
 import { cn } from "@/lib/utils";
 
 interface FocusWidgetProps {
-  tasks: Array<{ id: string; title: string; status: string }>;
+  tasks: Array<{ id: string; title: string; status: string; priority: string; due_date: string | null }>;
 }
 
 export function FocusWidget({ tasks }: FocusWidgetProps) {
@@ -48,7 +48,23 @@ export function FocusWidget({ tasks }: FocusWidgetProps) {
     setFocusTaskState(null);
   }, []);
 
-  const activeTasks = tasks.filter((t) => t.status !== "done").slice(0, 5);
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  // Combo sort: P1 (deadline today) → P1 (no deadline) → P2 (deadline today) → ...
+  const priorityOrder: Record<string, number> = { p1: 0, p2: 1, p3: 2, p4: 3 };
+
+  const activeTasks = tasks
+    .filter((t) => t.status !== "done")
+    .sort((a, b) => {
+      const pa = priorityOrder[a.priority] ?? 99;
+      const pb = priorityOrder[b.priority] ?? 99;
+      if (pa !== pb) return pa - pb;
+      // Same priority: deadline today first, then no deadline, then future
+      const aToday = a.due_date?.slice(0, 10) === todayStr ? 0 : !a.due_date ? 1 : 2;
+      const bToday = b.due_date?.slice(0, 10) === todayStr ? 0 : !b.due_date ? 1 : 2;
+      return aToday - bToday;
+    })
+    .slice(0, 5);
 
   if (loading) {
     return (
