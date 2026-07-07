@@ -92,10 +92,10 @@ export function WellbeingHeart() {
 
   const isProd = typeof window !== "undefined" && process.env.NEXT_PUBLIC_APP_ENV === "production";
 
-  // Gradient colors: red (bottom) → yellow (mid) → green (top)
-  const fillColor1 = isProd ? "#ef4444" : "#fde047"; // bottom
-  const fillColor2 = isProd ? "#22c55e" : "#22c55e"; // top
-  const emptyColor = isProd ? "#7f1d1d33" : "#a1620733";
+  // HP-bar gradient: yellow (top / 100%) → red (bottom / 0%)
+  const fillColor1 = isProd ? "#dc2626" : "#ef4444"; // bottom = low
+  const fillColor2 = isProd ? "#fbbf24" : "#fde047"; // top = full
+  const emptyColor = isProd ? "#7f1d1d22" : "#fde04722";
 
   // Heart shape path
   const heartPath = "M50 85 C30 70, 5 55, 5 35 C5 20, 20 8, 35 12 C42 14, 48 19, 50 25 C52 19, 58 14, 65 12 C80 8, 95 20, 95 35 C95 55, 70 70, 50 85Z";
