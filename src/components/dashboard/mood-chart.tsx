@@ -72,6 +72,7 @@ export function MoodChart() {
 
   const maxY = 100;
   const chartHeight = 120;
+  const chartPadding = 6; // space for bottom circles not to clip
 
   return (
     <Card>
@@ -100,7 +101,7 @@ export function MoodChart() {
           {/* Data points + line */}
           <svg
             className="absolute inset-0 left-6"
-            viewBox={`0 0 ${(days.length - 1) * 48} ${chartHeight}`}
+            viewBox={`0 0 ${(days.length - 1) * 48} ${chartHeight + chartPadding}`}
             preserveAspectRatio="none"
           >
             {/* Connecting lines */}
@@ -110,8 +111,8 @@ export function MoodChart() {
               if (prev?.score === null) return null;
               const x1 = (i - 1) * 48;
               const x2 = i * 48;
-              const y1 = ((maxY - prev.score) / maxY) * chartHeight;
-              const y2 = ((maxY - day.score) / maxY) * chartHeight;
+              const y1 = chartPadding + ((maxY - prev.score) / maxY) * (chartHeight - chartPadding);
+              const y2 = chartPadding + ((maxY - day.score) / maxY) * (chartHeight - chartPadding);
               return (
                 <line
                   key={i}
@@ -131,7 +132,7 @@ export function MoodChart() {
                 <circle
                   key={i}
                   cx={i * 48}
-                  cy={((maxY - day.score) / maxY) * chartHeight}
+                  cy={chartPadding + ((maxY - day.score) / maxY) * (chartHeight - chartPadding)}
                   r="4"
                   className="fill-primary stroke-background"
                   strokeWidth="2"
