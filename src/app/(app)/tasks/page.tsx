@@ -341,17 +341,7 @@ export default function TasksPage() {
                     <div className="h-px flex-1 bg-border" />
                   </div>
                 )}
-                {/* Backlog tasks */}
-                {backlogTasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    onSelect={loadSelectedTask}
-                    isSelected={selectedTaskId === task.id}
-                    onDelete={fetchTasks}
-                  />
-                ))}
-                {/* D5: Backlog inline create — always visible (even without backlog tasks) */}
+                {/* D5: Backlog inline create — always visible, above backlog tasks */}
                 <form
                   onSubmit={(e) => { e.preventDefault(); handleBacklogQuickCreate(); }}
                   className="flex items-center gap-2 px-1"
@@ -368,6 +358,16 @@ export default function TasksPage() {
                     <Plus className="size-3.5" />
                   </Button>
                 </form>
+                {/* Backlog tasks */}
+                {backlogTasks.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onSelect={loadSelectedTask}
+                    isSelected={selectedTaskId === task.id}
+                    onDelete={fetchTasks}
+                  />
+                ))}
               </motion.div>
             )}
           </AnimatePresence>
