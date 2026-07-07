@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   DndContext, DragEndEvent, DragOverlay, DragStartEvent,
-  PointerSensor, TouchSensor, pointerWithin, useSensor, useSensors,
+  PointerSensor, pointerWithin, useSensor, useSensors,
 } from "@dnd-kit/core";
 import { ClipboardList, Plus, Check, X, Eye, EyeOff, Inbox } from "lucide-react";
 
@@ -39,7 +39,7 @@ export default function KanbanPage() {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+    // TouchSensor disabled — mobile D&D needs rework, see Z6
   );
 
   const fetchData = useCallback(async () => {
