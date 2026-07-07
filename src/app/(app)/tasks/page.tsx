@@ -333,8 +333,8 @@ export default function TasksPage() {
                     onDelete={fetchTasks}
                   />
                 ))}
-                {/* D5: Backlog / Todo separator — always visible when there are backlog tasks */}
-                {backlogTasks.length > 0 && (
+                {/* D5: Backlog / Todo separator — always visible when there are active tasks */}
+                {activeTasks.length > 0 && (
                   <div className="flex items-center gap-3 py-1">
                     <div className="h-px flex-1 bg-border" />
                     <span className="text-xs font-medium text-muted-foreground">Backlog</span>
@@ -351,25 +351,23 @@ export default function TasksPage() {
                     onDelete={fetchTasks}
                   />
                 ))}
-                {/* D5: Backlog inline create — only when backlog tasks exist */}
-                {backlogTasks.length > 0 && (
-                  <form
-                    onSubmit={(e) => { e.preventDefault(); handleBacklogQuickCreate(); }}
-                    className="flex items-center gap-2 px-1"
-                  >
-                    <Input
-                      placeholder="Quick add to backlog..."
-                      value={backlogQuickTitle}
-                      onChange={(e) => setBacklogQuickTitle(e.target.value)}
-                      disabled={backlogQuickAdding}
-                      className="h-8 text-xs"
-                    />
-                    <Button type="submit" size="icon" variant="ghost" className="size-7 shrink-0"
-                      disabled={!backlogQuickTitle.trim() || backlogQuickAdding}>
-                      <Plus className="size-3.5" />
-                    </Button>
-                  </form>
-                )}
+                {/* D5: Backlog inline create — always visible (even without backlog tasks) */}
+                <form
+                  onSubmit={(e) => { e.preventDefault(); handleBacklogQuickCreate(); }}
+                  className="flex items-center gap-2 px-1"
+                >
+                  <Input
+                    placeholder="Quick add to backlog..."
+                    value={backlogQuickTitle}
+                    onChange={(e) => setBacklogQuickTitle(e.target.value)}
+                    disabled={backlogQuickAdding}
+                    className="h-8 text-xs"
+                  />
+                  <Button type="submit" size="icon" variant="ghost" className="size-7 shrink-0"
+                    disabled={!backlogQuickTitle.trim() || backlogQuickAdding}>
+                    <Plus className="size-3.5" />
+                  </Button>
+                </form>
               </motion.div>
             )}
           </AnimatePresence>
