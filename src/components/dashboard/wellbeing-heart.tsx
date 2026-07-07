@@ -5,20 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
 import { createWellbeingEntry, getTodaysLatestEntry } from "@/lib/actions/wellbeing";
-import { MOOD_LABELS, type WellbeingEntry } from "@/types/wellbeing";
-
-// 20 zones of 5% each → maps to mood 1-5 for DB
-function percentToMood(pct: number): number {
-  if (pct <= 20) return 1;
-  if (pct <= 40) return 2;
-  if (pct <= 60) return 3;
-  if (pct <= 80) return 4;
-  return 5;
-}
-
-function moodToFillPct(mood: number): number {
-  return mood * 20; // 1→20%, 2→40%, ..., 5→100%
-}
+import { getMoodLabel, type WellbeingEntry } from "@/types/wellbeing";
 
 export function WellbeingHeart() {
   const heartRef = useRef<HTMLDivElement>(null);
@@ -31,22 +18,23 @@ export function WellbeingHeart() {
   // Post-save note input
   const [showNote, setShowNote] = useState(false);
   const [note, setNote] = useState("");
-  const [noteTimer, setNoteTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [noteSaved, setNoteSaved] = useState(false);
+  const noteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const noteRef = useRef<HTMLInputElement>(null);
 
   const fetchLatest = useCallback(async () => {
     const result = await getTodaysLatestEntry();
     if (result.data) {
       setLatestEntry(result.data);
-      setSavedPct(moodToFillPct(result.data.mood_score));
+      setSavedPct(result.data.mood_score);
     }
     setLoading(false);
   }, []);
 
   useEffect(() => { fetchLatest(); }, [fetchLatest]);
 
-  // Cleanup note timer on unmount
-  useEffect(() => () => { if (noteTimer) clearTimeout(noteTimer); }, [noteTimer]);
+  // Cleanup timer on unmount
+  useEffect(() => () => { if (noteTimerRef.current) clearTimeout(noteTimerRef.current); }, []);
 
   const displayPct = hoverPct ?? savedPct ?? 0;
 
@@ -67,29 +55,40 @@ export function WellbeingHeart() {
     const pct = hoverPct ?? savedPct;
     if (pct === null || saving) return;
     setSaving(true);
-    const mood = percentToMood(pct);
-    const result = await createWellbeingEntry(mood, note || undefined);
+    const result = await createWellbeingEntry(pct, note || undefined);
     if (result.data) {
       setLatestEntry(result.data as WellbeingEntry);
       setSavedPct(pct);
       setHoverPct(null);
-      // Show note input for 5 seconds
+      // Show note input for 5 seconds (timer pauses while focused)
       setNote("");
+      setNoteSaved(false);
       setShowNote(true);
+      if (noteTimerRef.current) clearTimeout(noteTimerRef.current);
+      noteTimerRef.current = setTimeout(() => setShowNote(false), 5000);
       setTimeout(() => noteRef.current?.focus(), 50);
-      const timer = setTimeout(() => setShowNote(false), 5000);
-      setNoteTimer(timer);
     }
     setSaving(false);
   }, [hoverPct, savedPct, saving, note]);
 
   const handleNoteSubmit = useCallback(async () => {
     if (!note.trim() || !latestEntry) return;
-    // Update the latest entry's note
     await createWellbeingEntry(latestEntry.mood_score, note.trim());
-    setShowNote(false);
+    setNoteSaved(true);
     setNote("");
+    // Clear timer, hide after showing "Saved" briefly
+    if (noteTimerRef.current) clearTimeout(noteTimerRef.current);
+    noteTimerRef.current = setTimeout(() => { setShowNote(false); setNoteSaved(false); }, 1500);
   }, [note, latestEntry]);
+
+  const startNoteTimer = useCallback(() => {
+    if (noteTimerRef.current) clearTimeout(noteTimerRef.current);
+    noteTimerRef.current = setTimeout(() => setShowNote(false), 5000);
+  }, []);
+
+  const pauseNoteTimer = useCallback(() => {
+    if (noteTimerRef.current) clearTimeout(noteTimerRef.current);
+  }, []);
 
   const isProd = typeof window !== "undefined" && process.env.NEXT_PUBLIC_APP_ENV === "production";
 
@@ -101,7 +100,7 @@ export function WellbeingHeart() {
   // Heart shape path
   const heartPath = "M50 85 C30 70, 5 55, 5 35 C5 20, 20 8, 35 12 C42 14, 48 19, 50 25 C52 19, 58 14, 65 12 C80 8, 95 20, 95 35 C95 55, 70 70, 50 85Z";
 
-  const latestMood = latestEntry ? MOOD_LABELS[latestEntry.mood_score] : null;
+  const latestMood = latestEntry ? getMoodLabel(latestEntry.mood_score) : null;
 
   return (
     <div className="flex flex-col items-center justify-center py-4">
@@ -181,27 +180,35 @@ export function WellbeingHeart() {
         <span className="mt-2 text-xs text-muted-foreground">Click to set mood</span>
       )}
 
-      {/* Note input (5s after save) */}
+      {/* Note input (5s after save, pauses while typing) */}
       <AnimatePresence>
         {showNote && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="mt-3 w-full max-w-[200px] overflow-hidden"
+            className="mt-3 w-full max-w-[220px] overflow-hidden"
           >
-            <div className="flex items-center gap-1.5">
-              <input
-                ref={noteRef}
-                type="text"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") handleNoteSubmit(); }}
-                placeholder="Add a note..."
-                maxLength={500}
-                className="h-7 flex-1 rounded-md border border-border bg-transparent px-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-              />
-            </div>
+            {noteSaved ? (
+              <p className="text-center text-xs text-green-600 dark:text-green-400 font-medium">
+                ✓ Saved
+              </p>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <input
+                  ref={noteRef}
+                  type="text"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleNoteSubmit(); }}
+                  onFocus={pauseNoteTimer}
+                  onBlur={startNoteTimer}
+                  placeholder="Add a note..."
+                  maxLength={500}
+                  className="h-7 flex-1 rounded-md border border-border bg-transparent px-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

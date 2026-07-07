@@ -6,7 +6,7 @@ import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getWellbeingHistory } from "@/lib/actions/wellbeing";
-import { MOOD_LABELS, type WellbeingEntry } from "@/types/wellbeing";
+import { getMoodLabel, type WellbeingEntry } from "@/types/wellbeing";
 
 export function MoodChart() {
   const [history, setHistory] = useState<WellbeingEntry[]>([]);
@@ -145,7 +145,7 @@ export function MoodChart() {
               <div key={i} className="flex flex-col items-center gap-0.5">
                 <span className="text-[10px] text-muted-foreground">{day.label}</span>
                 {day.score !== null && (
-                  <span className="text-xs">{MOOD_LABELS[Math.round(day.score)]?.emoji}</span>
+                  <span className="text-xs">{getMoodLabel(Math.round(day.score)).emoji}</span>
                 )}
               </div>
             ))}

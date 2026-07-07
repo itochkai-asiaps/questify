@@ -1,23 +1,34 @@
 import { z } from "zod";
 
-export const MOOD_LABELS: Record<number, { emoji: string; label: string }> = {
-  1: { emoji: "😞", label: "Bad" },
-  2: { emoji: "😐", label: "Meh" },
-  3: { emoji: "🙂", label: "Okay" },
-  4: { emoji: "😊", label: "Good" },
-  5: { emoji: "😄", label: "Great" },
-};
+export interface MoodLabel {
+  emoji: string;
+  label: string;
+  min: number;
+  max: number;
+}
+
+export const MOOD_LABELS: MoodLabel[] = [
+  { emoji: "😞", label: "Awful", min: 0, max: 20 },
+  { emoji: "😐", label: "Meh", min: 21, max: 40 },
+  { emoji: "🙂", label: "Okay", min: 41, max: 60 },
+  { emoji: "😊", label: "Good", min: 61, max: 80 },
+  { emoji: "😄", label: "Great", min: 81, max: 100 },
+];
+
+export function getMoodLabel(score: number): MoodLabel {
+  return MOOD_LABELS.find((m) => score >= m.min && score <= m.max) ?? MOOD_LABELS[2]!;
+}
 
 export const WellbeingEntrySchema = z.object({
   id: z.string().uuid(),
   user_id: z.string().uuid(),
-  mood_score: z.number().int().min(1).max(5),
+  mood_score: z.number().int().min(0).max(100),
   note: z.string().nullable().optional(),
   created_at: z.string().datetime(),
 });
 
 export const CreateWellbeingEntrySchema = z.object({
-  mood_score: z.number().int().min(1).max(5, "Score must be 1-5"),
+  mood_score: z.number().int().min(0).max(100, "Score must be 0-100"),
   note: z.string().max(500).optional(),
 });
 
