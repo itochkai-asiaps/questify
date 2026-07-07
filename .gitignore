@@ -39,7 +39,7 @@ yarn-error.log*
 .vercel
 
 # handoff (local only, contains private data)
-HANDOFF.md
+
 
 # typescript
 *.tsbuildinfo
