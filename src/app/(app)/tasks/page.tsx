@@ -95,6 +95,12 @@ export default function TasksPage() {
   const quickTitleRef = useRef(quickTitle);
   quickTitleRef.current = quickTitle;
 
+  // Backlog quick create
+  const [backlogQuickTitle, setBacklogQuickTitle] = useState("");
+  const [backlogQuickAdding, setBacklogQuickAdding] = useState(false);
+  const backlogQuickTitleRef = useRef(backlogQuickTitle);
+  backlogQuickTitleRef.current = backlogQuickTitle;
+
   // Filters
   const [search, setSearch] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
@@ -180,6 +186,23 @@ export default function TasksPage() {
     }
     setQuickAdding(false);
   }, [quickAdding]);
+
+  const handleBacklogQuickCreate = useCallback(async () => {
+    const title = backlogQuickTitleRef.current.trim();
+    if (!title || backlogQuickAdding) return;
+    setBacklogQuickAdding(true);
+    const formData = new FormData();
+    formData.set("title", title);
+    formData.set("status", "backlog");
+    const result = await createTask(formData);
+    if (!result.error) {
+      setBacklogQuickTitle("");
+      if (result.data) {
+        setTasks((prev) => [result.data as Task, ...prev]);
+      }
+    }
+    setBacklogQuickAdding(false);
+  }, [backlogQuickAdding]);
 
   // D5: Split tasks into backlog and non-backlog for visual separation
   const { backlogTasks, activeTasks } = useMemo(() => {
@@ -300,24 +323,6 @@ export default function TasksPage() {
             )}
             {loadState === "loaded" && (backlogTasks.length > 0 || activeTasks.length > 0) && (
               <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-3">
-                {/* Backlog tasks */}
-                {backlogTasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    onSelect={loadSelectedTask}
-                    isSelected={selectedTaskId === task.id}
-                    onDelete={fetchTasks}
-                  />
-                ))}
-                {/* D5: Backlog / Todo separator */}
-                {backlogTasks.length > 0 && activeTasks.length > 0 && (
-                  <div className="flex items-center gap-3 py-1">
-                    <div className="h-px flex-1 bg-border" />
-                    <span className="text-xs font-medium text-muted-foreground">Todo</span>
-                    <div className="h-px flex-1 bg-border" />
-                  </div>
-                )}
                 {/* Active (non-backlog) tasks */}
                 {activeTasks.map((task) => (
                   <TaskCard
@@ -328,6 +333,43 @@ export default function TasksPage() {
                     onDelete={fetchTasks}
                   />
                 ))}
+                {/* D5: Backlog / Todo separator — always visible when there are backlog tasks */}
+                {backlogTasks.length > 0 && (
+                  <div className="flex items-center gap-3 py-1">
+                    <div className="h-px flex-1 bg-border" />
+                    <span className="text-xs font-medium text-muted-foreground">Backlog</span>
+                    <div className="h-px flex-1 bg-border" />
+                  </div>
+                )}
+                {/* Backlog tasks */}
+                {backlogTasks.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onSelect={loadSelectedTask}
+                    isSelected={selectedTaskId === task.id}
+                    onDelete={fetchTasks}
+                  />
+                ))}
+                {/* D5: Backlog inline create — only when backlog tasks exist */}
+                {backlogTasks.length > 0 && (
+                  <form
+                    onSubmit={(e) => { e.preventDefault(); handleBacklogQuickCreate(); }}
+                    className="flex items-center gap-2 px-1"
+                  >
+                    <Input
+                      placeholder="Quick add to backlog..."
+                      value={backlogQuickTitle}
+                      onChange={(e) => setBacklogQuickTitle(e.target.value)}
+                      disabled={backlogQuickAdding}
+                      className="h-8 text-xs"
+                    />
+                    <Button type="submit" size="icon" variant="ghost" className="size-7 shrink-0"
+                      disabled={!backlogQuickTitle.trim() || backlogQuickAdding}>
+                      <Plus className="size-3.5" />
+                    </Button>
+                  </form>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
