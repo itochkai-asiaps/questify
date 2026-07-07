@@ -105,6 +105,7 @@ questify/
 - Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`.
 - Ветки: `staging` → PR → `master`. Feature-бранчи от `staging`.
 - **Рабочий процесс**: `.omo/` → план → реализация → тесты → коммит — см. workflow в `.omo/`.
+- **После коммита — сразу `git push origin staging`**. Локальные коммиты без пуша недопустимы: CI/CD деплоит только после пуша, незапушенные изменения не попадают на стейджинг.
 
 ## DESIGN WORKFLOW
 
