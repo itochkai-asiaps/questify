@@ -80,9 +80,9 @@ export function MoodChart() {
           Mood · Last 7 Days
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-visible">
         {/* Chart */}
-        <div className="relative mb-8 overflow-visible" style={{ height: chartHeight }}>
+        <div className="relative mb-6 overflow-visible" style={{ height: chartHeight }}>
           {/* Y-axis labels */}
           <div className="absolute inset-y-0 left-0 flex w-6 flex-col justify-between text-[10px] text-muted-foreground">
             <span>100</span>
@@ -153,7 +153,7 @@ export function MoodChart() {
         </div>
 
         {/* Stats row */}
-        <div className="mt-10 flex items-center justify-between text-xs text-muted-foreground">
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span>
             Avg: {avg.toFixed(0)}/100
           </span>
