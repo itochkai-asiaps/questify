@@ -66,11 +66,11 @@ export function MoodChart() {
     const mid = Math.floor(scores.length / 2);
     const firstHalf = scores.slice(0, mid).reduce((a, b) => a + b, 0) / mid;
     const secondHalf = scores.slice(mid).reduce((a, b) => a + b, 0) / (scores.length - mid);
-    if (secondHalf > firstHalf + 0.3) trend = "up";
-    else if (secondHalf < firstHalf - 0.3) trend = "down";
+    if (secondHalf > firstHalf + 5) trend = "up";
+    else if (secondHalf < firstHalf - 5) trend = "down";
   }
 
-  const maxY = 5;
+  const maxY = 100;
   const chartHeight = 120;
 
   return (
@@ -82,19 +82,19 @@ export function MoodChart() {
       </CardHeader>
       <CardContent>
         {/* Chart */}
-        <div className="relative" style={{ height: chartHeight }}>
+        <div className="relative mb-8 overflow-visible" style={{ height: chartHeight }}>
           {/* Y-axis labels */}
           <div className="absolute inset-y-0 left-0 flex w-6 flex-col justify-between text-[10px] text-muted-foreground">
-            <span>5</span>
-            <span>3</span>
-            <span>1</span>
+            <span>100</span>
+            <span>50</span>
+            <span>0</span>
           </div>
           {/* Grid lines */}
-          {[1, 2, 3, 4, 5].map((y) => (
+          {[0, 25, 50, 75, 100].map((y) => (
             <div
               key={y}
               className="absolute left-6 right-0 border-t border-border/50"
-              style={{ top: `${((maxY - y) / (maxY - 1)) * 100}%` }}
+              style={{ top: `${((maxY - y) / maxY) * 100}%` }}
             />
           ))}
           {/* Data points + line */}
@@ -110,8 +110,8 @@ export function MoodChart() {
               if (prev?.score === null) return null;
               const x1 = (i - 1) * 48;
               const x2 = i * 48;
-              const y1 = ((maxY - prev.score) / (maxY - 1)) * chartHeight;
-              const y2 = ((maxY - day.score) / (maxY - 1)) * chartHeight;
+              const y1 = ((maxY - prev.score) / maxY) * chartHeight;
+              const y2 = ((maxY - day.score) / maxY) * chartHeight;
               return (
                 <line
                   key={i}
@@ -131,7 +131,7 @@ export function MoodChart() {
                 <circle
                   key={i}
                   cx={i * 48}
-                  cy={((maxY - day.score) / (maxY - 1)) * chartHeight}
+                  cy={((maxY - day.score) / maxY) * chartHeight}
                   r="4"
                   className="fill-primary stroke-background"
                   strokeWidth="2"
@@ -155,7 +155,7 @@ export function MoodChart() {
         {/* Stats row */}
         <div className="mt-10 flex items-center justify-between text-xs text-muted-foreground">
           <span>
-            Avg: {avg.toFixed(1)}/5
+            Avg: {avg.toFixed(0)}/100
           </span>
           <span className="flex items-center gap-1">
             Trend:{" "}
