@@ -61,6 +61,7 @@ const PRIORITY_FILTER_OPTIONS = [
 
 const STATUS_FILTER_OPTIONS = [
   { value: "", label: "All Statuses" },
+  { value: TaskStatus.Backlog, label: "Backlog" },
   { value: TaskStatus.Todo, label: "Todo" },
   { value: TaskStatus.InProgress, label: "In Progress" },
   { value: TaskStatus.Done, label: "Done" },
@@ -74,6 +75,7 @@ const PRIORITY_CONFIG: Record<string, { label: string; variant: "destructive" | 
 };
 
 const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
+  backlog: { label: "Backlog", variant: "outline" },
   todo: { label: "Todo", variant: "secondary" },
   in_progress: { label: "In Progress", variant: "default" },
   done: { label: "Done", variant: "outline" },
@@ -178,6 +180,17 @@ export default function TasksPage() {
     }
     setQuickAdding(false);
   }, [quickAdding]);
+
+  // D5: Split tasks into backlog and non-backlog for visual separation
+  const { backlogTasks, activeTasks } = useMemo(() => {
+    const bl: Task[] = [];
+    const active: Task[] = [];
+    for (const task of filteredTasks) {
+      if (task.status === TaskStatus.Backlog) bl.push(task);
+      else active.push(task);
+    }
+    return { backlogTasks: bl, activeTasks: active };
+  }, [filteredTasks]);
 
   const priority = selectedTask ? PRIORITY_CONFIG[selectedTask.priority] ?? PRIORITY_CONFIG.p3 : null;
   const status = selectedTask ? STATUS_CONFIG[selectedTask.status] ?? STATUS_CONFIG.todo : null;
@@ -285,9 +298,28 @@ export default function TasksPage() {
                 </Card>
               </motion.div>
             )}
-            {loadState === "loaded" && filteredTasks.length > 0 && (
+            {loadState === "loaded" && (backlogTasks.length > 0 || activeTasks.length > 0) && (
               <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-3">
-                {filteredTasks.map((task) => (
+                {/* Backlog tasks */}
+                {backlogTasks.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onSelect={loadSelectedTask}
+                    isSelected={selectedTaskId === task.id}
+                    onDelete={fetchTasks}
+                  />
+                ))}
+                {/* D5: Backlog / Todo separator */}
+                {backlogTasks.length > 0 && activeTasks.length > 0 && (
+                  <div className="flex items-center gap-3 py-1">
+                    <div className="h-px flex-1 bg-border" />
+                    <span className="text-xs font-medium text-muted-foreground">Todo</span>
+                    <div className="h-px flex-1 bg-border" />
+                  </div>
+                )}
+                {/* Active (non-backlog) tasks */}
+                {activeTasks.map((task) => (
                   <TaskCard
                     key={task.id}
                     task={task}

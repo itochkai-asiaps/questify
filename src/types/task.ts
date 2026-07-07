@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export enum TaskStatus {
+  Backlog = "backlog",
   Todo = "todo",
   InProgress = "in_progress",
   Done = "done",

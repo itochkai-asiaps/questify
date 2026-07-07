@@ -47,19 +47,24 @@ export async function createTask(
 
   const { title, description, priority, due_date, tags } = parsed.data;
   const xp_reward = XP_REWARDS[priority] ?? 15;
+  const status = (formData.get("status") as string) === "backlog" ? "backlog" : "todo";
+  const kanbanColumnId = (formData.get("kanban_column_id") as string) || null;
+
+  const insertData: Record<string, unknown> = {
+    title,
+    description: description ?? null,
+    priority,
+    due_date: due_date ?? null,
+    tags,
+    xp_reward,
+    user_id: user.id,
+    status,
+  };
+  if (kanbanColumnId) insertData.kanban_column_id = kanbanColumnId;
 
   const { data, error } = await supabase
     .from("tasks")
-    .insert({
-      title,
-      description: description ?? null,
-      priority,
-      due_date: due_date ?? null,
-      tags,
-      xp_reward,
-      user_id: user.id,
-      status: "todo",
-    })
+    .insert(insertData)
     .select()
     .single();
 

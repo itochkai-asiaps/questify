@@ -5,14 +5,14 @@ import {
   DndContext, DragEndEvent, DragOverlay, DragStartEvent,
   PointerSensor, TouchSensor, pointerWithin, useSensor, useSensors,
 } from "@dnd-kit/core";
-import { ClipboardList, Plus, Check, X, Eye, EyeOff } from "lucide-react";
+import { ClipboardList, Plus, Check, X, Eye, EyeOff, Inbox } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getTasks, updateTask } from "@/lib/actions/tasks";
+import { getTasks, createTask, updateTask } from "@/lib/actions/tasks";
 import { getKanbanColumns, createKanbanColumn, updateKanbanColumn, deleteKanbanColumn, reorderKanbanColumns, type KanbanColumn as KanbanCol } from "@/lib/actions/kanban-columns";
-import { Task } from "@/types/task";
+import { Task, TaskStatus } from "@/types/task";
 
 import { KanbanCard } from "@/components/kanban/kanban-card";
 import { KanbanColumn } from "@/components/kanban/kanban-column";
@@ -33,6 +33,7 @@ export default function KanbanPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [showBacklog, setShowBacklog] = useState(false);
   const [adding, setAdding] = useState(false);
   const [newTitle, setNewTitle] = useState("");
 
@@ -81,37 +82,78 @@ export default function KanbanPage() {
   };
 
   const handleDragStart = useCallback((e: DragStartEvent) => { setActiveTask(allTasks.find((t) => t.id === e.active.id) ?? null); }, [allTasks]);
+
+  const handleCreateTask = useCallback(async (columnId: string, title: string) => {
+    const t = title.trim();
+    if (!t) return;
+    const fd = new FormData();
+    fd.set("title", t);
+    if (columnId === "__backlog__") {
+      fd.set("status", "backlog");
+    } else {
+      fd.set("kanban_column_id", columnId);
+    }
+    const r = await createTask(fd);
+    if (r.data) {
+      const newTask = r.data as Task;
+      setAllTasks((prev) => [newTask, ...prev]);
+      setTasksByColumn((prev) => {
+        const n = { ...prev };
+        const key = columnId;
+        n[key] = [newTask, ...(prev[key] ?? [])];
+        return n;
+      });
+    }
+  }, []);
   const handleDragEnd = useCallback(async (e: DragEndEvent) => {
     const { active, over } = e; setActiveTask(null); if (!over) return;
     const taskId = active.id as string;
     const task = allTasks.find((t) => t.id === taskId); if (!task) return;
     let newCol: string | null = null;
     let newStatus: string | null = null;
-    const col = columns.find((c) => c.id === over.id);
-    if (col) {
-      newCol = col.id;
-      // Map by position: first column → todo, last → done, rest → in_progress
-      const idx = columns.findIndex((c) => c.id === col.id);
-      if (idx === 0) newStatus = "todo";
-      else if (idx === columns.length - 1) newStatus = "done";
-      else newStatus = "in_progress";
+    const overId = over.id as string;
+
+    // Dropped into backlog column
+    if (overId === "__backlog__") {
+      newCol = null; // remove from kanban columns
+      newStatus = "backlog";
     }
-    else { const ot = allTasks.find((t) => t.id === over.id); if (ot) newCol = (ot as Record<string,unknown>).kanban_column_id as string ?? null; }
-    const cur = (task as Record<string,unknown>).kanban_column_id as string ?? "__none__";
-    if (!newCol || newCol === cur) return;
+    // Dropped into a regular column
+    else {
+      const col = columns.find((c) => c.id === overId);
+      if (col) {
+        newCol = col.id;
+        const idx = columns.findIndex((c) => c.id === col.id);
+        if (idx === 0) newStatus = "todo";
+        else if (idx === columns.length - 1) newStatus = "done";
+        else newStatus = "in_progress";
+      }
+      else {
+        const ot = allTasks.find((t) => t.id === overId);
+        if (ot) newCol = (ot as Record<string,unknown>).kanban_column_id as string ?? null;
+      }
+    }
+
+    const cur = (task as Record<string,unknown>).kanban_column_id as string ?? (task.status === "backlog" ? "__backlog__" : "__none__");
+    if (!newStatus && !newCol) return;
+    if (newCol === cur && newStatus === task.status) return;
+
+    const curKey = task.status === "backlog" ? "__backlog__" : cur;
 
     setTasksByColumn((p) => {
       const n = { ...p };
-      n[cur] = (p[cur] ?? []).filter((t) => t.id !== taskId);
-      n[newCol!] = [...(p[newCol!] ?? []), { ...task, kanban_column_id: newCol, ...(newStatus ? { status: newStatus as Task["status"] } : {}) } as Task & { kanban_column_id: string }];
+      n[curKey] = (p[curKey] ?? []).filter((t) => t.id !== taskId);
+      const targetKey = newCol ?? "__backlog__";
+      n[targetKey] = [...(p[targetKey] ?? []), { ...task, kanban_column_id: newCol, status: newStatus as Task["status"] } as Task & { kanban_column_id: string | null }];
       return n;
     });
 
-    const fd = new FormData(); fd.set("kanban_column_id", newCol);
+    const fd = new FormData();
+    fd.set("kanban_column_id", newCol ?? "");
     if (newStatus) fd.set("status", newStatus);
     const r = await updateTask(taskId, fd);
     if (r.error) { setError(r.error); fetchData(); return; }
-    setAllTasks((p) => p.map((t) => t.id === taskId ? { ...t, kanban_column_id: newCol, ...(newStatus ? { status: newStatus as Task["status"] } : {}) } : t));
+    setAllTasks((p) => p.map((t) => t.id === taskId ? { ...t, kanban_column_id: newCol, status: (newStatus as Task["status"]) ?? t.status } : t));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allTasks, columns]);
 
@@ -125,6 +167,12 @@ export default function KanbanPage() {
     return f;
   }, [tasksByColumn, showCompleted]);
 
+  const backlogTasks = useMemo(() => {
+    const tasks = allTasks.filter((t) => t.status === TaskStatus.Backlog);
+    if (!showCompleted) return tasks;
+    return tasks;
+  }, [allTasks, showCompleted]);
+
   const totalTasks = allTasks.length;
 
   if (isLoading) return <div className="space-y-6 px-4 py-8 sm:px-6"><Skeleton className="h-8 w-40" /><div className="flex gap-4"><Skeleton className="h-32 w-[300px] rounded-xl" /><Skeleton className="h-32 w-[300px] rounded-xl" /></div></div>;
@@ -137,13 +185,39 @@ export default function KanbanPage() {
           <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10"><ClipboardList className="size-5 text-primary" /></div>
           <div><h1 className="text-2xl font-bold tracking-tight">Kanban Board</h1><p className="text-sm text-muted-foreground">{totalTasks} {totalTasks === 1 ? "task" : "tasks"} across {columns.length} columns</p></div>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => setShowCompleted((v) => !v)} className="gap-1.5">
-          {showCompleted ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}{showCompleted ? "Hide completed" : "Show completed"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setShowBacklog((v) => !v)} className="gap-1.5">
+            <Inbox className="size-3.5" />
+            {showBacklog ? "Hide backlog" : "Backlog"}
+            {backlogTasks.length > 0 && (
+              <span className="ml-0.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] tabular-nums">{backlogTasks.length}</span>
+            )}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setShowCompleted((v) => !v)} className="gap-1.5">
+            {showCompleted ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}{showCompleted ? "Hide completed" : "Show completed"}
+          </Button>
+        </div>
       </div>
 
       <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-4">
+          {/* Backlog column — virtual inbox, shown when toggle is on */}
+          {showBacklog && (
+            <KanbanColumn
+              id="__backlog__"
+              title="Backlog"
+              tasks={backlogTasks}
+              isFirst={true}
+              isLast={false}
+              onRename={() => {}}
+              onDelete={() => {}}
+              onMoveLeft={() => {}}
+              onMoveRight={() => {}}
+              isBacklog
+              inlineCreate
+              onCreateTask={(title) => handleCreateTask("__backlog__", title)}
+            />
+          )}
           {columns.map((col, i) => (
             <KanbanColumn
               key={col.id}
@@ -156,6 +230,8 @@ export default function KanbanPage() {
               onDelete={handleDelete}
               onMoveLeft={(id) => handleMove(id, "left")}
               onMoveRight={(id) => handleMove(id, "right")}
+              inlineCreate={i === 0 && !showBacklog}
+              onCreateTask={i === 0 && !showBacklog ? (title) => handleCreateTask(col.id, title) : undefined}
             />
           ))}
           <div className="min-w-[180px] flex items-start pt-1">
