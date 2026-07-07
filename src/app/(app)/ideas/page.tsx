@@ -338,12 +338,7 @@ export default function IdeasPage() {
                     <div className="flex flex-col gap-2">
                       <CardTitle className="text-base line-clamp-3">{idea.title}</CardTitle>
                       <div className="flex items-center justify-end gap-1.5">
-                        <Badge variant={TYPE_BADGE[idea.type].variant} className={TYPE_BADGE[idea.type].className}>
-                          {TYPE_BADGE[idea.type].label}
-                        </Badge>
-                        <Badge variant={sourceBadge(idea.source).variant}>
-                          {sourceBadge(idea.source).label}
-                        </Badge>
+                        {/* Quick actions — hidden on desktop, visible on hover */}
                         <Button
                           variant="ghost"
                           size="icon-sm"
@@ -408,6 +403,13 @@ export default function IdeasPage() {
                             <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
                           )}
                         </Button>
+                        {/* Tags — always visible, anchor the row */}
+                        <Badge variant={TYPE_BADGE[idea.type].variant} className={TYPE_BADGE[idea.type].className}>
+                          {TYPE_BADGE[idea.type].label}
+                        </Badge>
+                        <Badge variant={sourceBadge(idea.source).variant}>
+                          {sourceBadge(idea.source).label}
+                        </Badge>
                       </div>
                     </div>
                   </CardHeader>

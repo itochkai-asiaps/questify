@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { createWellbeingEntry, getTodaysEntry } from "@/lib/actions/wellbeing";
+import { createWellbeingEntry, getTodaysLatestEntry } from "@/lib/actions/wellbeing";
 import { MOOD_LABELS, type WellbeingEntry } from "@/types/wellbeing";
 
 export function WellbeingHeart() {
@@ -19,37 +19,44 @@ export function WellbeingHeart() {
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
-  const [todaysEntry, setTodaysEntry] = useState<WellbeingEntry | null>(null);
+  const [latestEntry, setLatestEntry] = useState<WellbeingEntry | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchTodaysEntry = useCallback(async () => {
-    const result = await getTodaysEntry();
-    if (result.data) setTodaysEntry(result.data);
+  const fetchLatest = useCallback(async () => {
+    const result = await getTodaysLatestEntry();
+    if (result.data) setLatestEntry(result.data);
     setLoading(false);
   }, []);
 
   useEffect(() => {
-    fetchTodaysEntry();
-  }, [fetchTodaysEntry]);
+    fetchLatest();
+  }, [fetchLatest]);
 
   const handleSave = useCallback(async () => {
     if (selectedMood === null || saving) return;
     setSaving(true);
     const result = await createWellbeingEntry(selectedMood, note || undefined);
     if (result.data) {
-      setTodaysEntry(result.data as WellbeingEntry);
+      setLatestEntry(result.data as WellbeingEntry);
       setOpen(false);
       setNote("");
+      setSelectedMood(null);
     }
     setSaving(false);
   }, [selectedMood, note, saving]);
 
+  const openDialog = useCallback(() => {
+    setSelectedMood(null); // always fresh — no prefill
+    setNote("");
+    setOpen(true);
+  }, []);
+
   const isProd = typeof window !== "undefined" && process.env.NEXT_PUBLIC_APP_ENV === "production";
 
-  // Color based on today's mood: 1=red, 3=yellow, 5=green
-  const heartColor = todaysEntry
+  // Color based on today's latest mood
+  const heartColor = latestEntry
     ? (() => {
-        const s = todaysEntry.mood_score;
+        const s = latestEntry.mood_score;
         if (s <= 2) return isProd ? "#ef4444" : "#fde047";
         if (s === 3) return isProd ? "#f97316" : "#eab308";
         return isProd ? "#22c55e" : "#22c55e";
@@ -58,9 +65,9 @@ export function WellbeingHeart() {
       ? "#ef4444"
       : "#fde047";
 
-  const heartColor2 = todaysEntry
+  const heartColor2 = latestEntry
     ? (() => {
-        const s = todaysEntry.mood_score;
+        const s = latestEntry.mood_score;
         if (s <= 2) return isProd ? "#dc2626" : "#eab308";
         if (s === 3) return isProd ? "#ea580c" : "#a16207";
         return isProd ? "#16a34a" : "#16a34a";
@@ -69,18 +76,14 @@ export function WellbeingHeart() {
       ? "#dc2626"
       : "#eab308";
 
-  const todaysMood = todaysEntry ? MOOD_LABELS[todaysEntry.mood_score] : null;
+  const latestMood = latestEntry ? MOOD_LABELS[latestEntry.mood_score] : null;
 
   return (
     <>
       <div className="flex flex-col items-center justify-center py-4">
         <button
           type="button"
-          onClick={() => {
-            setSelectedMood(todaysEntry?.mood_score ?? null);
-            setNote(todaysEntry?.note ?? "");
-            setOpen(true);
-          }}
+          onClick={openDialog}
           className="group relative flex flex-col items-center gap-2"
         >
           <motion.div
@@ -109,12 +112,12 @@ export function WellbeingHeart() {
               />
             </svg>
           </motion.div>
-          {todaysMood && (
+          {latestMood && (
             <span className="text-sm font-medium text-muted-foreground">
-              {todaysMood.emoji} {todaysMood.label}
+              {latestMood.emoji} {latestMood.label}
             </span>
           )}
-          {!todaysMood && !loading && (
+          {!latestMood && !loading && (
             <span className="text-xs text-muted-foreground">How are you today?</span>
           )}
           {loading && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
@@ -160,7 +163,7 @@ export function WellbeingHeart() {
               className="w-full"
             >
               {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
-              {saving ? "Saving..." : todaysEntry ? "Update" : "Save"}
+              {saving ? "Saving..." : "Save"}
             </Button>
           </div>
         </DialogContent>

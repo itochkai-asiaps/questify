@@ -39,18 +39,21 @@ export function MoodChart() {
     return null; // Don't show chart if no data yet
   }
 
-  // Build 7-day array with gaps filled
+  // Build 7-day array with daily averages (multiple entries → average per day)
   const days: { date: string; label: string; score: number | null }[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const dateStr = d.toISOString().split("T")[0];
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const entry = history.find((e) => e.created_at.split("T")[0] === dateStr);
+    const entries = history.filter((e) => e.created_at.split("T")[0] === dateStr);
+    const avgScore = entries.length > 0
+      ? +(entries.reduce((sum, e) => sum + e.mood_score, 0) / entries.length).toFixed(1)
+      : null;
     days.push({
       date: dateStr,
       label: dayNames[d.getDay()]!,
-      score: entry ? entry.mood_score : null,
+      score: avgScore,
     });
   }
 
@@ -142,7 +145,7 @@ export function MoodChart() {
               <div key={i} className="flex flex-col items-center gap-0.5">
                 <span className="text-[10px] text-muted-foreground">{day.label}</span>
                 {day.score !== null && (
-                  <span className="text-xs">{MOOD_LABELS[day.score]?.emoji}</span>
+                  <span className="text-xs">{MOOD_LABELS[Math.round(day.score)]?.emoji}</span>
                 )}
               </div>
             ))}
