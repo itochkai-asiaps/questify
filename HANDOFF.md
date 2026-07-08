@@ -44,7 +44,7 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 | A — Быстрые фиксы | ✅ done |
 | B — Геймификация | ✅ done |
 | C — Связать сущности | ✅ done |
-| D — Kanban-апгрейд | ✅ D1-D5 done (D2 инлайн-создание, D3 Backlog, D5 разделитель) |
+| D — Kanban-апгрейд | ✅ D1-D6 done (D2 инлайн, D3 Backlog, D5 разделитель, D6 drag-to-reorder) |
 | E — Дашборд-центр | ✅ E1-E4 done (быстрые действия, HP-бар сердце, график 0-100, /focus) |
 | F — Крупные фичи | ⬜ |
 | G — Инвайт-система | ⬜ |
@@ -65,13 +65,14 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 ## Текущие задачи
 - 🔴 #1: GitHub PAT — создать токен, добавить в Secrets
 - 🔴 #2: DeepSeek API-ключ — получить для OMA-агентов
-- 🟡 D6: Drag-to-reorder задач в списке и Kanban
+- 🟡 D6: Drag-to-reorder задач в списке и Kanban ✅ done
 - 🟡 D7: Draggable Backlog/Todo разделитель с сохранением previous_status
 - 🟡 E0: Быстродействие дашборда (RPC get_dashboard_data, < 500ms)
 
 ## Последние изменения (сессия 2026-07-08)
 
 ### Блок D — Kanban (добивка)
+- ✅ D6: drag-to-reorder — вертикальный D&D в Tasks (два SortableContext: active + backlog, confirmation при cross-section) и Kanban (кастомный collisionDetection, intra-column position). Два поля: `sort_order` (Tasks) и `position` (Kanban). Миграция 00010: нормализация + RPC `reorder_tasks` + индексы.
 - ✅ D2: инлайн-создание в первой колонке (Enter → создано, Loader2)
 - ✅ D3: Backlog — статус `backlog`, виртуальная колонка с тогглом, D&D в/из backlog
 - ✅ D5: разделитель «Backlog / Todo» в Tasks
@@ -117,6 +118,7 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 | 0007 | wellbeing_entries | ✅ | ⬜ |
 | 0008 | focus_tasks | ✅ | ⬜ |
 | 0009 | mood_score_0_100 | ✅ | ⬜ |
+| 0010 | normalize_task_ordering | ⏳ | ⬜ |
 
 ## Планы и требования
 - `.omo/plans/roadmap.md`

@@ -26,7 +26,7 @@
 - [x] **D3.** Backlog: новый статус задач, отдельный скрываемый столбец в Kanban
 - [x] **D4.** Сплит-вид Tasks: список слева, детали задачи справа при клике (десктоп), мобилка — старая навигация
 - [x] **D5.** Горизонтальная линия-разделитель Backlog/Todo во вкладке Tasks — задачи ниже линии не попадают в Kanban Todo
-- [ ] **D6. Drag-to-reorder** — перетаскивание задач для смены порядка внутри списка Tasks и колонок Kanban. Потребует поле `position` на задачах и настройку @dnd-kit на вертикальную сортировку. Миграция: `ALTER TABLE tasks ADD COLUMN position INT DEFAULT 0`.
+- [x] **D6. Drag-to-reorder** — вертикальный D&D задач в списке Tasks и колонках Kanban. Поле `sort_order` для списка, `position` для Kanban. Два `SortableContext` (active + backlog). Кастомный `collisionDetection`. Миграция: `00010_normalize_task_ordering.sql` (нормализация + RPC `reorder_tasks` + индексы).
 - [ ] **D7. Draggable Backlog/Todo разделитель** — линия-разделитель на странице Tasks перетаскивается вверх/вниз. Задачи выше линии → статус Todo, ниже → Backlog. Массовая смена статуса одним движением.
 - [ ] **D7a. Возврат статуса из Backlog** — при перетаскивании задачи в Backlog сохраняется `previous_status` (todo/in_progress/done). При возврате выше линии — статус восстанавливается. Миграция: `ALTER TABLE tasks ADD COLUMN previous_status TEXT`. Если `previous_status IS NULL` → default `todo`.
 ## Блок E — Дашборд-центр (★★★)
