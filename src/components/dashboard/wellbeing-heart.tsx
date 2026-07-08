@@ -56,8 +56,17 @@ export function WellbeingHeart() {
     setHoverPct(null);
   }, []);
 
-  const handleClick = useCallback(async () => {
-    const pct = hoverPct ?? savedPct;
+  const handleClick = useCallback(async (e: React.MouseEvent) => {
+    // Determine percentage: hover position on desktop, click position on mobile
+    let pct = hoverPct ?? savedPct;
+    if (pct === null) {
+      const el = heartRef.current;
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        const y = Math.max(0, Math.min(1, 1 - (e.clientY - rect.top) / rect.height));
+        pct = Math.round(y * 20) * 5;
+      }
+    }
     if (pct === null || saving) return;
     setSaving(true);
     try {
