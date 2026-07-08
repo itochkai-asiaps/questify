@@ -66,7 +66,7 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 ## Текущие задачи
 - 🔴 #1: GitHub PAT — создать токен, добавить в Secrets
 - 🔴 #2: DeepSeek API-ключ — получить для OMA-агентов
-- 🟡 D6: Drag-to-reorder задач в списке и Kanban ✅ done
+- 🔴 Рефакторинг — аудит архитектуры + блоков D, E (см. `.omo/plans/refactoring.md`)
 - 🟡 D7: Draggable Backlog/Todo разделитель с сохранением previous_status
 - 🟡 E0: Быстродействие дашборда (RPC get_dashboard_data, < 500ms)
 
@@ -109,6 +109,40 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 | Пропущено | Ничего |
 
 **Рекомендация на следующую сессию:** начать с P1 (engine.ts тесты) — setupFiles готов, моки работают, можно сразу в TDD. Промпт: `"ulw deep: напиши тесты для lib/gamification/engine.ts — awardXp, completeTask с моком Supabase"`
+
+### Блок D — D6, ревью, тулинг (сессия 2026-07-08, часть 2)
+
+#### D6 завершён
+- ✅ D6: drag-to-reorder — вертикальный D&D в Tasks (два SortableContext) и Kanban (кастомный collisionDetection). Два поля: `sort_order` (Tasks), `position` (Kanban). Миграция 00010 (нормализация + RPC + индексы)
+- ✅ `/review-work` по D6 — 4/5 агентов, QA упал (управление dev-сервером). 2 CRITICAL + 3 MAJOR найдено
+- ✅ Все CRITICAL исправлены: collisionDetection (`droppableData` → `droppableContainer.data.current.type`), `kanban_column_id` в TaskSchema (`as Record<string,unknown>` удалены), SECURITY DEFINER → INVOKER
+- ✅ Zod-валидация UUID array в reorderTasks, revalidatePath /kanban
+
+#### Тулинг
+- ✅ Lefthook pre-commit: параллельный `lint` + `type-check` (~4 сек), блокирует при ошибке
+- ✅ Playwright visual snapshots: auth.setup (storageState) + dashboard baseline
+- ✅ Lefthook + ESLint/Prettier оставлены (Biome не нужен — 50-100 файлов)
+- ✅ Storybook/Ladle/Lovable/Cursor/Claude Code — отложены (оверкилл для текущей стадии)
+
+#### Процесс (новые правила)
+- ✅ AGENTS.md: AGENT WORKFLOW — hyperplan (сложные фичи), visual-engineering (вёрстка), /visual-qa (гейт), /review-work (закрытие блока)
+- ✅ Правило 3-fix-stop: 3 fix-коммита → стоп + root cause analysis
+- ✅ Статистика коммитов в роадмапе (223 всего, fix:feat = 2.9:1)
+- ✅ План рефакторинга: `.omo/plans/refactoring.md` — 4 этапа (архитектура → D → E → A-C)
+- ✅ Конфиг OMO: `visual-engineering` + `artistry` → GPT-4o (rate limit GPT-4.1)
+
+#### Важные решения (эта сессия)
+- Миграции 0006-0009 на стейджинге ✅ (проверено через GitHub API)
+- `position` и `sort_order` уже были в БД (00001), просто не использовались → миграция только нормализует
+- Старый `kanban_column_id` отсутствовал в TaskSchema — типобезопасность восстановлена
+- GPT-4.1 rate limit (30K TPM) → переключены на GPT-4o для визуальных агентов
+- hyperplan: работает, но требует `team_mode: enabled` в конфиге
+- `/review-work`: QA agent нестабилен при управлении dev-сервером → ручной QA надёжнее
+- ESLint + Prettier оставлены как есть (миграция на Biome — экономия 3 сек, не стоит усилий)
+
+#### Следующая сессия
+- 🔴 **Приоритет #1**: рефакторинг по `.omo/plans/refactoring.md` (архитектура → блоки)
+- После рефакторинга: D7 или E0
 
 ## Миграции
 
