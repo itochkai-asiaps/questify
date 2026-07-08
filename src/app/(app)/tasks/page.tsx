@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   DndContext,
+  DragOverlay,
   closestCenter,
   PointerSensor,
   useSensor,
@@ -58,8 +59,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import DraggableSeparator, { DraggableSeparatorOverlay } from "@/components/tasks/draggable-separator";
 import SortableTaskCard from "@/components/tasks/sortable-task-card";
-import { getTasks, getTaskById, createTask, deleteTask, reorderTasks, updateTask } from "@/lib/actions/tasks";
+import { getTasks, getTaskById, createTask, deleteTask, reorderTasks, updateTask, bulkUpdateTaskStatuses } from "@/lib/actions/tasks";
 import { cn } from "@/lib/utils";
 import type { Task } from "@/types/task";
 import { TaskPriority, TaskStatus } from "@/types/task";
@@ -135,6 +137,9 @@ export default function TasksPage() {
       activationConstraint: { distance: 8 },
     }),
   );
+
+  // Drag overlay state
+  const [activeDragItem, setActiveDragItem] = useState<DragEndEvent["active"] | null>(null);
 
   // Cross-section drag confirmation
   const [crossSectionDialog, setCrossSectionDialog] = useState<{
@@ -279,9 +284,88 @@ export default function TasksPage() {
   }, [fetchTasks]);
 
   const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
+    async (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
+
+      // D7: Draggable backlog separator
+      if (active.data.current?.type === "separator") {
+        const overTaskId = String(over.id);
+
+        // Find the split index — all tasks at/before this index become active (todo)
+        // All tasks after become backlog
+        const allTaskIds = [
+          ...activeTasksRef.current.map((t) => t.id),
+          ...backlogTasksRef.current.map((t) => t.id),
+        ];
+        const splitIndex = allTaskIds.indexOf(overTaskId);
+        if (splitIndex === -1) return;
+
+        // Build updates with previous_status management
+        const updates: { taskId: string; newStatus: string; previousStatus?: string }[] = [];
+
+        for (let i = 0; i < allTaskIds.length; i++) {
+          const taskId = allTaskIds[i];
+          const task = [...activeTasksRef.current, ...backlogTasksRef.current].find((t) => t.id === taskId);
+          if (!task) continue;
+
+          const newStatus = i <= splitIndex ? TaskStatus.Todo : TaskStatus.Backlog;
+
+          if (task.status !== newStatus) {
+            updates.push({
+              taskId,
+              newStatus,
+              previousStatus: newStatus === TaskStatus.Backlog ? task.status : undefined,
+            });
+          }
+        }
+
+        if (updates.length === 0) return;
+
+        // Optimistic UI update
+        const newActive = [...activeTasksRef.current];
+        const newBacklog = [...backlogTasksRef.current];
+
+        for (const update of updates) {
+          const task = [...newActive, ...newBacklog].find((t) => t.id === update.taskId);
+          if (!task) continue;
+
+          if (update.newStatus === TaskStatus.Backlog) {
+            // Move from active to backlog
+            const idx = newActive.indexOf(task);
+            if (idx !== -1) {
+              newActive.splice(idx, 1);
+              task.status = TaskStatus.Backlog;
+              if (update.previousStatus) task.previous_status = update.previousStatus as TaskStatus;
+              newBacklog.push(task);
+            }
+          } else {
+            // Move from backlog to active
+            const idx = newBacklog.indexOf(task);
+            if (idx !== -1) {
+              newBacklog.splice(idx, 1);
+              // Restore previous_status if available, else todo
+              task.status = (task.previous_status || TaskStatus.Todo) as TaskStatus;
+              task.previous_status = null;
+              newActive.push(task);
+            }
+          }
+        }
+
+        setTasks((prev) => {
+          const nonMoving = prev.filter((t) => !updates.some((u) => u.taskId === t.id));
+          return [...nonMoving, ...newActive, ...newBacklog];
+        });
+
+        // Persist to server
+        const result = await bulkUpdateTaskStatuses(updates);
+        if (!result.success) {
+          console.error("Separator drag failed:", result.error);
+          fetchTasks();
+        }
+
+        return;
+      }
 
       const activeTaskId = String(active.id);
       const overTaskId = String(over.id);
@@ -364,6 +448,7 @@ export default function TasksPage() {
         return;
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchTasks is stable (useCallback with [])
     [persistReorder],
   );
 
@@ -526,6 +611,7 @@ export default function TasksPage() {
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
+                onDragStart={(event) => setActiveDragItem(event.active)}
                 onDragEnd={handleDragEnd}
               >
                 <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-3">
@@ -549,13 +635,9 @@ export default function TasksPage() {
                       />
                     ))}
                   </SortableContext>
-                  {/* D5: Backlog / Todo separator — always visible when there are active tasks */}
+                  {/* D7: Draggable backlog separator */}
                   {activeTasks.length > 0 && (
-                    <div className="flex items-center gap-3 py-1">
-                      <div className="h-px flex-1 bg-border" />
-                      <span className="text-xs font-medium text-muted-foreground">Backlog</span>
-                      <div className="h-px flex-1 bg-border" />
-                    </div>
+                    <DraggableSeparator />
                   )}
                   {/* D5: Backlog inline create — always visible, above backlog tasks */}
                   <form
@@ -587,6 +669,9 @@ export default function TasksPage() {
                     ))}
                   </SortableContext>
                 </motion.div>
+                <DragOverlay>
+                  {activeDragItem?.data.current?.type === "separator" && <DraggableSeparatorOverlay />}
+                </DragOverlay>
               </DndContext>
             )}
           </AnimatePresence>

@@ -67,7 +67,7 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 - ✅ #1: GitHub PAT — создан, добавлен в Secrets
 - ✅ #2: DeepSeek API-ключ — получен, настроен для OMA-агентов
 - ✅ Рефакторинг — Stages 1-4 done (9 CRITICAL + 6 MAJOR + 4 MINOR fixes)
-- 🟡 D7: Draggable Backlog/Todo разделитель с сохранением previous_status
+- ✅ D7: Draggable Backlog/Todo разделитель + D7a previous_status (ready to commit)
 - 🟡 E0: Быстродействие дашборда (RPC get_dashboard_data, < 500ms)
 
 ## Последние изменения (сессия 2026-07-08)
@@ -199,6 +199,7 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 | 0011 | telegram_chats_rls | ⬜ | ⬜ |
 | 0012 | with_check_rls | ⬜ | ⬜ |
 | 0012 | with_check_rls | ⬜ | ⬜ |
+| 0013 | add_previous_status | ⬜ | ⬜ |
 
 ## Планы и требования
 - `.omo/plans/roadmap.md`

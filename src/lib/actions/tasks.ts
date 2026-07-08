@@ -118,6 +118,23 @@ export async function updateTask(
     updateData.xp_reward = XP_REWARDS[updateData.priority as TaskPriority] ?? 15;
   }
 
+  // D7a: previous_status management
+  // Save previous_status when moving TO backlog
+  if (
+    parsed.data.status === TaskStatus.Backlog &&
+    currentTask?.status !== TaskStatus.Backlog
+  ) {
+    updateData.previous_status = currentTask?.status ?? TaskStatus.Todo;
+  }
+  // Clear previous_status when moving OUT of backlog
+  if (
+    parsed.data.status &&
+    parsed.data.status !== TaskStatus.Backlog &&
+    currentTask?.status === TaskStatus.Backlog
+  ) {
+    updateData.previous_status = null;
+  }
+
   const { data, error } = await supabase
     .from("tasks")
     .update(updateData)
@@ -258,4 +275,63 @@ export async function getTaskById(
   }
 
   return { data };
+}
+
+/**
+ * Bulk-update task statuses for the draggable backlog separator (D7).
+ * Handles previous_status save/restore for D7a.
+ */
+export async function bulkUpdateTaskStatuses(
+  updates: { taskId: string; newStatus: string; previousStatus?: string }[]
+): Promise<{ success: boolean; error?: string }> {
+  const { supabase, user } = await requireUser();
+  if (!user) return { success: false, error: "Not authenticated" };
+
+  // Validate input
+  if (!Array.isArray(updates) || updates.length === 0) {
+    return { success: false, error: "No updates provided" };
+  }
+  if (updates.length > 500) {
+    return { success: false, error: "Too many tasks (max 500)" };
+  }
+
+  // Validate all task IDs are valid UUIDs
+  const uuidSchema = z.string().uuid();
+  for (const update of updates) {
+    if (!uuidSchema.safeParse(update.taskId).success) {
+      return { success: false, error: `Invalid task ID: ${update.taskId}` };
+    }
+  }
+
+  // Build updates — each task gets status + previous_status
+  // previous_status behavior:
+  // - Going INTO backlog: save current status as previous_status
+  // - Going OUT of backlog: clear previous_status (restoration happens client-side)
+  for (const update of updates) {
+    const updateData: Record<string, unknown> = {
+      status: update.newStatus,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (update.newStatus === "backlog" && update.previousStatus) {
+      updateData.previous_status = update.previousStatus;
+    } else if (update.newStatus !== "backlog") {
+      updateData.previous_status = null;
+    }
+
+    const { error } = await supabase
+      .from("tasks")
+      .update(updateData)
+      .eq("id", update.taskId)
+      .eq("user_id", user.id);
+
+    if (error) {
+      console.error("bulkUpdateTaskStatuses: failed for", update.taskId, error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  revalidatePath("/tasks", "layout");
+  revalidatePath("/dashboard", "layout");
+  return { success: true };
 }
