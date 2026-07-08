@@ -1,0 +1,22 @@
+# Lefthook — Git hooks manager
+# Docs: https://github.com/evilmartians/lefthook
+#
+# Install:  npx lefthook install
+# Run manually: npx lefthook run pre-commit
+#
+# Rules enforced before every commit:
+#   1. ESLint — zero errors (warnings allowed, fixed in separate pass)
+#   2. TypeScript — zero type errors (tsc --noEmit)
+#   3. Both run in parallel for speed (~5-8 seconds total)
+
+pre-commit:
+  parallel: true
+  commands:
+    lint:
+      glob: "*.{ts,tsx,js,jsx}"
+      run: npm run lint
+      fail_text: "ESLint found errors. Fix before committing."
+    type-check:
+      glob: "*.{ts,tsx}"
+      run: npm run type-check
+      fail_text: "TypeScript errors found. Fix before committing."

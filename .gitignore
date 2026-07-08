@@ -40,6 +40,9 @@ yarn-error.log*
 
 # handoff (local only, contains private data)
 
+# playwright auth state (contains session cookies)
+.auth/
+
 
 # typescript
 *.tsbuildinfo

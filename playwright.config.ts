@@ -12,9 +12,19 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   projects: [
+    // Auth setup — logs in once, saves cookies to .auth/user.json
+    {
+      name: "setup",
+      testMatch: /auth\.setup\.ts/,
+    },
+    // All other tests reuse the saved auth session (skip login)
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: ".auth/user.json",
+      },
+      dependencies: ["setup"],
     },
   ],
   webServer: {
