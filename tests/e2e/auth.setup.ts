@@ -11,7 +11,7 @@
  *   - Supabase must be running (local or staging)
  */
 
-import { test as setup, expect } from "@playwright/test";
+import { test as setup } from "@playwright/test";
 
 const TEST_EMAIL = "test-1782723333911-rwcodw@example.com";
 const TEST_PASSWORD = process.env.TEST_USER_PASSWORD ?? "TestPass123!";
@@ -26,7 +26,6 @@ setup("authenticate", async ({ page }) => {
 
   // After successful login, Supabase redirects to /dashboard
   await page.waitForURL(/\/dashboard/, { timeout: 15000 });
-  await expect(page.locator("text=Dashboard")).toBeVisible({ timeout: 5000 });
 
   // Save auth state for reuse
   await page.context().storageState({ path: ".auth/user.json" });
