@@ -56,7 +56,7 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 | M — AI (post-MVP) | ⬜ Декомпозиция, приоритизация, рефлексия |
 | N — Комментарии | ⬜ |
 | O — Тематические флоу | ⬜ Sci-Fi dev-flow (+O2e аналитика), Fantasy, фидбек |
-| P — Тестовое покрытие | 🟡 P0 done (setupFiles), P1-P7 pending |
+| P — Тестовое покрытие | ✅ 280 tests (10 files, P0-P7 done) |
 | Z — Неразвитые идеи | ⬜ Квесты, вебхуки, Pomodoro, S3 |
 
 ## Тесты
@@ -67,8 +67,12 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 - ✅ #1: GitHub PAT — создан, добавлен в Secrets
 - ✅ #2: DeepSeek API-ключ — получен, настроен для OMA-агентов
 - ✅ Рефакторинг — Stages 1-4 done (9 CRITICAL + 6 MAJOR + 4 MINOR fixes)
-- ✅ D7: Draggable Backlog/Todo разделитель + D7a previous_status (ready to commit)
-- ✅ E0: Быстродействие дашборда (RPC get_dashboard_data, < 500ms)
+- ✅ D7+D7a — Draggable Backlog/Todo разделитель + previous_status
+- ✅ E0 — Быстродействие дашборда (RPC get_dashboard_data)
+- ✅ Блок P — тестовое покрытие (280 тестов, 10 файлов)
+- ⬜ Ручное тестирование по тест-плану (`.omo/plans/manual-qa-testplan.md`)
+- ⬜ Груминг: приоритезация оставшихся блоков (F, G, J, K, L, M, N, O, Z)
+- 🟡 E0: Быстродействие дашборда (RPC get_dashboard_data, < 500ms)
 
 ## Последние изменения (сессия 2026-07-08)
 
@@ -182,6 +186,56 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 #### Следующая сессия
 - 🔴 **Приоритет #1**: рефакторинг по `.omo/plans/refactoring.md` (архитектура → блоки)
 - После рефакторинга: D7 или E0
+
+### Блок P + D7 + E0 (сессия 2026-07-08, часть 4 — финал)
+
+#### D7+D7a — Draggable Backlog/Todo разделитель
+- ✅ DraggableSeparator компонент (useDraggable + DragOverlay)
+- ✅ Разделитель в tasks/page.tsx: перетаскивание меняет статусы задач массово
+- ✅ bulkUpdateTaskStatuses action с previous_status save/restore
+- ✅ Миграция 00013: previous_status TEXT на tasks
+- ✅ D7a: updateTask сохраняет/восстанавливает previous_status
+
+#### E0 — Быстродействие дашборда
+- ✅ RPC get_dashboard_data(p_user_id) — 1 запрос вместо 4
+- ✅ Plans: COUNT+FILTER агрегат вместо N+1 fetch всех plan_items
+- ✅ Achievements: SQL-фильтр user_id вместо JS post-filter
+- ✅ 2 новых индекса: idx_plans_user_created_at, idx_tasks_user_sort_order_created
+- ✅ Миграция 00014
+
+#### Блок P — Тестовое покрытие
+- ✅ P0: setupFiles (ранее)
+- ✅ P1: gamification-engine.test.ts — 63 теста (28 pure + 35 async)
+- ✅ P2: tasks-actions.test.ts — 35 тестов (createTask, updateTask, deleteTask, reorderTasks, getTasks)
+- ✅ P3: plans-actions.test.ts — 36 тестов
+- ✅ P4: conversions-actions.test.ts — 30 тестов
+- ✅ P5: kanban-columns-actions.test.ts — 37 тестов
+- ✅ P6: wellbeing-actions.test.ts — 24 теста
+- ✅ P7: useAuth.test.ts — 10 тестов
+- ✅ Итого: 280 тестов в 10 файлах
+
+#### Важные решения
+- Ручное тестирование отложено — создан тест-план (`.omo/plans/manual-qa-testplan.md`)
+- Груминг оставшихся блоков (F-Z) — на следующую сессию
+- 7 коммитов за сессию, 0 откатов, fix:feat = 0:7 (только feat + test + refactor)
+
+#### Рекомендации по процессу (анализ сессии)
+
+> Сессия: 2026-07-08, часть 4. Характер: фичи (D7, E0) + тесты (P1-P7).
+
+| Метрика | Значение |
+|---|---|
+| Коммитов | 7 (за всю сессию) |
+| fix:feat | 0:7 — идеально |
+| Гейты пройдены | Lefthook (type-check + lint) × 7, vitest 280/280 |
+| Агентов задействовано | oracle, explore × 8, deep × 12, quick × 4, visual-engineering × 2, plan |
+| Пропущено | Ручное тестирование (отложено), /review-work (только на марафоне) |
+
+**Рекомендация на следующую сессию:**
+1. Сначала — ручное тестирование по тест-плану (P0: D7 + Auth)
+2. Если баги — фиксы
+3. Груминг: приоритезация блоков F-Z, что реально нужно в MVP
+4. Миграции 0006-0014 применить на стейджинг (`supabase db push`)
 
 ## Миграции
 
