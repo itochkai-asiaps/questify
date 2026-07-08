@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   DndContext, DragEndEvent, DragOverlay, DragStartEvent,
-  PointerSensor, pointerWithin, useSensor, useSensors,
+  PointerSensor, closestCorners, useSensor, useSensors,
+  type CollisionDetection,
 } from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
 import { ClipboardList, Plus, Check, X, Eye, EyeOff, Inbox } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +20,21 @@ import { KanbanCard } from "@/components/kanban/kanban-card";
 import { KanbanColumn } from "@/components/kanban/kanban-column";
 
 type TasksByColumn = Record<string, Task[]>;
+
+/**
+ * Custom collision detection:
+ * - Uses closestCorners as base
+ * - If the `over` droppable has data.type === "task", it's an intra-column card drop
+ * - If the `over` droppable has data.type === "column", it's a cross-column drop
+ */
+const collisionDetection: CollisionDetection = (args) => {
+  const corners = closestCorners(args);
+  if (!corners.length) return corners;
+  const first = corners[0];
+  // If the closest droppable is a task card, prefer it over the column container
+  if (first.data?.droppableData?.type === "task") return [first];
+  return corners;
+};
 
 function groupByColumn(tasks: Task[]): TasksByColumn {
   const g: TasksByColumn = {}; const seen = new Set<string>();
@@ -109,16 +126,73 @@ export default function KanbanPage() {
     const { active, over } = e; setActiveTask(null); if (!over) return;
     const taskId = active.id as string;
     const task = allTasks.find((t) => t.id === taskId); if (!task) return;
+    const overId = over.id as string;
+    const overData = over.data.current as { type?: string; task?: Task } | undefined;
+
+    // Determine which column the active task is currently in
+    const curColId = (task as Record<string, unknown>).kanban_column_id as string ?? null;
+    const curKey = task.status === "backlog" ? "__backlog__" : (curColId ?? "__none__");
+
+    // --- INTRA-COLUMN REORDER ---
+    // If the drop target is a task card, we're reordering within a column
+    if (overData?.type === "task") {
+      const overTask = overData.task;
+      if (!overTask) return;
+
+      // Determine the shared column key
+      const overColId = (overTask as Record<string, unknown>).kanban_column_id as string ?? null;
+      const overKey = overTask.status === "backlog" ? "__backlog__" : (overColId ?? "__none__");
+
+      // Only reorder if both tasks are in the same column
+      if (curKey !== overKey) {
+        // Cross-column drop onto a task — treat as cross-column move
+        // (fall through to cross-column logic below)
+      } else {
+        // Same column — reorder within column
+        const colTasks = [...(tasksByColumn[curKey] ?? [])];
+        const oldIdx = colTasks.findIndex((t) => t.id === taskId);
+        const newIdx = colTasks.findIndex((t) => t.id === overTask.id);
+        if (oldIdx === -1 || newIdx === -1) return;
+        if (oldIdx === newIdx) return;
+
+        const reordered = arrayMove(colTasks, oldIdx, newIdx);
+        const updatedTasks = reordered.map((t, i) => ({ ...t, position: i * 1000 }));
+
+        // Optimistic update
+        setTasksByColumn((p) => ({ ...p, [curKey]: updatedTasks }));
+        setAllTasks((p) =>
+          p.map((t) => {
+            const found = updatedTasks.find((u) => u.id === t.id);
+            return found ? { ...t, position: found.position } : t;
+          }),
+        );
+
+        // Persist — send position update for the moved task only
+        const movedTask = updatedTasks.find((t) => t.id === taskId);
+        if (movedTask) {
+          const fd = new FormData();
+          fd.set("position", String(movedTask.position));
+          const r = await updateTask(taskId, fd);
+          if (r.error) {
+            setError(r.error);
+            fetchData();
+          }
+        }
+        return;
+      }
+    }
+
+    // --- CROSS-COLUMN MOVE ---
     let newCol: string | null = null;
     let newStatus: string | null = null;
-    const overId = over.id as string;
+    let insertAtIndex = -1; // -1 means append at end
 
     // Dropped into backlog column
     if (overId === "__backlog__") {
-      newCol = null; // remove from kanban columns
+      newCol = null;
       newStatus = "backlog";
     }
-    // Dropped into a regular column
+    // Dropped into a regular column container
     else {
       const col = columns.find((c) => c.id === overId);
       if (col) {
@@ -127,35 +201,84 @@ export default function KanbanPage() {
         if (idx === 0) newStatus = "todo";
         else if (idx === columns.length - 1) newStatus = "done";
         else newStatus = "in_progress";
-      }
-      else {
+      } else {
+        // Dropped onto a task card in a different column
         const ot = allTasks.find((t) => t.id === overId);
-        if (ot) newCol = (ot as Record<string,unknown>).kanban_column_id as string ?? null;
+        if (ot) {
+          newCol = (ot as Record<string, unknown>).kanban_column_id as string ?? null;
+          // Determine status from column position
+          if (newCol) {
+            const colIdx = columns.findIndex((c) => c.id === newCol);
+            if (colIdx === 0) newStatus = "todo";
+            else if (colIdx === columns.length - 1) newStatus = "done";
+            else newStatus = "in_progress";
+          }
+          // Find insert position within target column
+          const targetTasks = tasksByColumn[newCol ?? "__backlog__"] ?? [];
+          insertAtIndex = targetTasks.findIndex((t) => t.id === overId);
+        }
       }
     }
 
-    const cur = (task as Record<string,unknown>).kanban_column_id as string ?? (task.status === "backlog" ? "__backlog__" : "__none__");
     if (!newStatus && !newCol) return;
-    if (newCol === cur && newStatus === task.status) return;
+    if (newCol === curColId && newStatus === task.status) return;
 
-    const curKey = task.status === "backlog" ? "__backlog__" : cur;
+    const targetKey = newCol ?? "__backlog__";
 
+    // Optimistic update: remove from source, insert at position in target
     setTasksByColumn((p) => {
       const n = { ...p };
+      // Remove from source
       n[curKey] = (p[curKey] ?? []).filter((t) => t.id !== taskId);
-      const targetKey = newCol ?? "__backlog__";
-      n[targetKey] = [...(p[targetKey] ?? []), { ...task, kanban_column_id: newCol, status: newStatus as Task["status"] } as Task & { kanban_column_id: string | null }];
+      // Build target list with the moved task inserted at the right position
+      const targetTasks = [...(p[targetKey] ?? [])];
+      const updatedTask = {
+        ...task,
+        kanban_column_id: newCol,
+        status: (newStatus as Task["status"]) ?? task.status,
+      } as Task & { kanban_column_id: string | null };
+      if (insertAtIndex >= 0) {
+        targetTasks.splice(insertAtIndex, 0, updatedTask);
+      } else {
+        targetTasks.push(updatedTask);
+      }
+      // Reassign positions
+      const positioned = targetTasks.map((t, i) => ({ ...t, position: i * 1000 }));
+      n[targetKey] = positioned;
       return n;
     });
 
+    // Persist
     const fd = new FormData();
     fd.set("kanban_column_id", newCol ?? "");
     if (newStatus) fd.set("status", newStatus);
+    // Compute position: midpoint between neighbors or sequential gap
+    const targetTasks = tasksByColumn[targetKey] ?? [];
+    let newPosition: number;
+    if (insertAtIndex >= 0 && insertAtIndex < targetTasks.length) {
+      const before = targetTasks[insertAtIndex - 1]?.position ?? 0;
+      const after = targetTasks[insertAtIndex]?.position ?? before + 2000;
+      newPosition = Math.floor((before + after) / 2);
+    } else {
+      newPosition = targetTasks.length * 1000;
+    }
+    fd.set("position", String(newPosition));
+
     const r = await updateTask(taskId, fd);
-    if (r.error) { setError(r.error); fetchData(); return; }
-    setAllTasks((p) => p.map((t) => t.id === taskId ? { ...t, kanban_column_id: newCol, status: (newStatus as Task["status"]) ?? t.status } : t));
+    if (r.error) {
+      setError(r.error);
+      fetchData();
+      return;
+    }
+    setAllTasks((p) =>
+      p.map((t) =>
+        t.id === taskId
+          ? { ...t, kanban_column_id: newCol, status: (newStatus as Task["status"]) ?? t.status, position: newPosition }
+          : t,
+      ),
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allTasks, columns]);
+  }, [allTasks, columns, tasksByColumn]);
 
   const displayTasks = useMemo(() => {
     if (showCompleted) return tasksByColumn;
@@ -199,7 +322,7 @@ export default function KanbanPage() {
         </div>
       </div>
 
-      <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-4">
           {/* Backlog column — virtual inbox, shown when toggle is on */}
           {showBacklog && (

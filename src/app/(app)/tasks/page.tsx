@@ -2,6 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
@@ -45,8 +58,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import TaskCard from "@/components/tasks/task-card";
-import { getTasks, getTaskById, createTask, deleteTask } from "@/lib/actions/tasks";
+import SortableTaskCard from "@/components/tasks/sortable-task-card";
+import { getTasks, getTaskById, createTask, deleteTask, reorderTasks, updateTask } from "@/lib/actions/tasks";
 import { cn } from "@/lib/utils";
 import type { Task } from "@/types/task";
 import { TaskPriority, TaskStatus } from "@/types/task";
@@ -115,6 +128,23 @@ export default function TasksPage() {
   // Delete dialog
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Drag-to-reorder
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+  );
+
+  // Cross-section drag confirmation
+  const [crossSectionDialog, setCrossSectionDialog] = useState<{
+    open: boolean;
+    taskId: string;
+    fromStatus: string;
+    toStatus: string;
+    newActiveOrder: Task[];
+    newBacklogOrder: Task[];
+  } | null>(null);
 
   const fetchTasks = useCallback(async () => {
     setLoadState("loading");
@@ -204,7 +234,7 @@ export default function TasksPage() {
     setBacklogQuickAdding(false);
   }, [backlogQuickAdding]);
 
-  // D5: Split tasks into backlog and non-backlog for visual separation
+  // D5: Split tasks into backlog and non-backlog for visual separation, sorted by sort_order ASC
   const { backlogTasks, activeTasks } = useMemo(() => {
     const bl: Task[] = [];
     const active: Task[] = [];
@@ -212,8 +242,169 @@ export default function TasksPage() {
       if (task.status === TaskStatus.Backlog) bl.push(task);
       else active.push(task);
     }
+    bl.sort((a, b) => a.sort_order - b.sort_order);
+    active.sort((a, b) => a.sort_order - b.sort_order);
     return { backlogTasks: bl, activeTasks: active };
   }, [filteredTasks]);
+
+  // Optimistic reorder within a section
+  function reorderWithinSection(
+    items: Task[],
+    oldIndex: number,
+    newIndex: number,
+  ): Task[] {
+    const reordered = arrayMove(items, oldIndex, newIndex);
+    return reordered.map((task, i) => ({
+      ...task,
+      sort_order: i * 1000,
+    }));
+  }
+
+  // Persist reorder to server
+  async function persistReorder(tasksToPersist: Task[]) {
+    const taskIds = tasksToPersist.map((t) => t.id);
+    const result = await reorderTasks(taskIds);
+    if (!result.success) {
+      // Rollback: re-fetch from server
+      fetchTasks();
+    }
+  }
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+
+      const activeTaskId = String(active.id);
+      const overTaskId = String(over.id);
+
+      // Determine which section the dragged task belongs to
+      const isActiveDrag = activeTasks.some((t) => t.id === activeTaskId);
+      const isBacklogDrag = backlogTasks.some((t) => t.id === activeTaskId);
+      const isActiveOver = activeTasks.some((t) => t.id === overTaskId);
+      const isBacklogOver = backlogTasks.some((t) => t.id === overTaskId);
+
+      // Same section reorder
+      if (isActiveDrag && isActiveOver) {
+        const oldIndex = activeTasks.findIndex((t) => t.id === activeTaskId);
+        const newIndex = activeTasks.findIndex((t) => t.id === overTaskId);
+        const reordered = reorderWithinSection(activeTasks, oldIndex, newIndex);
+        setTasks((prev) => {
+          const updatedIds = new Set(reordered.map((t) => t.id));
+          return prev.map((t) => (updatedIds.has(t.id) ? reordered.find((r) => r.id === t.id)! : t));
+        });
+        persistReorder(reordered);
+        return;
+      }
+
+      if (isBacklogDrag && isBacklogOver) {
+        const oldIndex = backlogTasks.findIndex((t) => t.id === activeTaskId);
+        const newIndex = backlogTasks.findIndex((t) => t.id === overTaskId);
+        const reordered = reorderWithinSection(backlogTasks, oldIndex, newIndex);
+        setTasks((prev) => {
+          const updatedIds = new Set(reordered.map((t) => t.id));
+          return prev.map((t) => (updatedIds.has(t.id) ? reordered.find((r) => r.id === t.id)! : t));
+        });
+        persistReorder(reordered);
+        return;
+      }
+
+      // Cross-section drag: show confirmation dialog
+      if (isActiveDrag && isBacklogOver) {
+        // Dragging from active to backlog
+        const oldIndex = activeTasks.findIndex((t) => t.id === activeTaskId);
+        const newIndex = backlogTasks.findIndex((t) => t.id === overTaskId);
+        const newActive = activeTasks.filter((t) => t.id !== activeTaskId).map((t, i) => ({
+          ...t,
+          sort_order: i * 1000,
+        }));
+        const movedTask = { ...activeTasks[oldIndex], status: TaskStatus.Backlog };
+        const newBacklog = [...backlogTasks];
+        newBacklog.splice(newIndex, 0, movedTask);
+        const newBacklogOrdered = newBacklog.map((t, i) => ({ ...t, sort_order: i * 1000 }));
+        setCrossSectionDialog({
+          open: true,
+          taskId: activeTaskId,
+          fromStatus: activeTasks[oldIndex].status,
+          toStatus: TaskStatus.Backlog,
+          newActiveOrder: newActive,
+          newBacklogOrder: newBacklogOrdered,
+        });
+        return;
+      }
+
+      if (isBacklogDrag && isActiveOver) {
+        // Dragging from backlog to active
+        const oldIndex = backlogTasks.findIndex((t) => t.id === activeTaskId);
+        const newIndex = activeTasks.findIndex((t) => t.id === overTaskId);
+        const newBacklog = backlogTasks.filter((t) => t.id !== activeTaskId).map((t, i) => ({
+          ...t,
+          sort_order: i * 1000,
+        }));
+        const movedTask = { ...backlogTasks[oldIndex], status: TaskStatus.Todo };
+        const newActive = [...activeTasks];
+        newActive.splice(newIndex, 0, movedTask);
+        const newActiveOrdered = newActive.map((t, i) => ({ ...t, sort_order: i * 1000 }));
+        setCrossSectionDialog({
+          open: true,
+          taskId: activeTaskId,
+          fromStatus: TaskStatus.Backlog,
+          toStatus: TaskStatus.Todo,
+          newActiveOrder: newActiveOrdered,
+          newBacklogOrder: newBacklog,
+        });
+        return;
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeTasks, backlogTasks],
+  );
+
+  const confirmCrossSectionDrag = useCallback(async () => {
+    if (!crossSectionDialog) return;
+    const { taskId, toStatus, newActiveOrder, newBacklogOrder } = crossSectionDialog;
+
+    // Optimistic update
+    setTasks((prev) => {
+      const updatedIds = new Set([
+        ...newActiveOrder.map((t) => t.id),
+        ...newBacklogOrder.map((t) => t.id),
+      ]);
+      return prev.map((t) => {
+        if (updatedIds.has(t.id)) {
+          return (
+            newActiveOrder.find((a) => a.id === t.id) ??
+            newBacklogOrder.find((b) => b.id === t.id) ??
+            t
+          );
+        }
+        return t;
+      });
+    });
+
+    setCrossSectionDialog(null);
+
+    // Persist: update status + reorder
+    const formData = new FormData();
+    formData.set("status", toStatus);
+    const statusResult = await updateTask(taskId, formData);
+    if (statusResult.error) {
+      fetchTasks();
+      return;
+    }
+
+    // Reorder both sections
+    const allReordered = [...newActiveOrder, ...newBacklogOrder];
+    const taskIds = allReordered.map((t) => t.id);
+    const reorderResult = await reorderTasks(taskIds);
+    if (!reorderResult.success) {
+      fetchTasks();
+    }
+  }, [crossSectionDialog, fetchTasks]);
+
+  const cancelCrossSectionDrag = useCallback(() => {
+    setCrossSectionDialog(null);
+  }, []);
 
   const priority = selectedTask ? PRIORITY_CONFIG[selectedTask.priority] ?? PRIORITY_CONFIG.p3 : null;
   const status = selectedTask ? STATUS_CONFIG[selectedTask.status] ?? STATUS_CONFIG.todo : null;
@@ -322,53 +513,71 @@ export default function TasksPage() {
               </motion.div>
             )}
             {loadState === "loaded" && (backlogTasks.length > 0 || activeTasks.length > 0) && (
-              <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-3">
-                {/* Active (non-backlog) tasks */}
-                {activeTasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    onSelect={loadSelectedTask}
-                    isSelected={selectedTaskId === task.id}
-                    onDelete={fetchTasks}
-                  />
-                ))}
-                {/* D5: Backlog / Todo separator — always visible when there are active tasks */}
-                {activeTasks.length > 0 && (
-                  <div className="flex items-center gap-3 py-1">
-                    <div className="h-px flex-1 bg-border" />
-                    <span className="text-xs font-medium text-muted-foreground">Backlog</span>
-                    <div className="h-px flex-1 bg-border" />
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-3">
+                  {/* Active (non-backlog) tasks */}
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Active ({activeTasks.length})
+                    </span>
+                    {activeTasks.length > 1 && (
+                      <span className="text-[11px] text-muted-foreground/60">Drag to reorder</span>
+                    )}
                   </div>
-                )}
-                {/* D5: Backlog inline create — always visible, above backlog tasks */}
-                <form
-                  onSubmit={(e) => { e.preventDefault(); handleBacklogQuickCreate(); }}
-                  className="flex items-center gap-2 px-1"
-                >
-                  <Input
-                    placeholder="Quick add to backlog..."
-                    value={backlogQuickTitle}
-                    onChange={(e) => setBacklogQuickTitle(e.target.value)}
-                    disabled={backlogQuickAdding}
-                    className="h-8 text-xs"
-                  />
-                  <Button type="submit" size="icon" variant="ghost" className="size-7 shrink-0"
-                    disabled={!backlogQuickTitle.trim() || backlogQuickAdding}>
-                    <Plus className="size-3.5" />
-                  </Button>
-                </form>
-                {/* Backlog tasks */}
-                {backlogTasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    onSelect={loadSelectedTask}
-                    isSelected={selectedTaskId === task.id}
-                    onDelete={fetchTasks}
-                  />
-                ))}
-              </motion.div>
+                  <SortableContext items={activeTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                    {activeTasks.map((task) => (
+                      <SortableTaskCard
+                        key={task.id}
+                        task={task}
+                        onSelect={loadSelectedTask}
+                        isSelected={selectedTaskId === task.id}
+                        onDelete={fetchTasks}
+                      />
+                    ))}
+                  </SortableContext>
+                  {/* D5: Backlog / Todo separator — always visible when there are active tasks */}
+                  {activeTasks.length > 0 && (
+                    <div className="flex items-center gap-3 py-1">
+                      <div className="h-px flex-1 bg-border" />
+                      <span className="text-xs font-medium text-muted-foreground">Backlog</span>
+                      <div className="h-px flex-1 bg-border" />
+                    </div>
+                  )}
+                  {/* D5: Backlog inline create — always visible, above backlog tasks */}
+                  <form
+                    onSubmit={(e) => { e.preventDefault(); handleBacklogQuickCreate(); }}
+                    className="flex items-center gap-2 px-1"
+                  >
+                    <Input
+                      placeholder="Quick add to backlog..."
+                      value={backlogQuickTitle}
+                      onChange={(e) => setBacklogQuickTitle(e.target.value)}
+                      disabled={backlogQuickAdding}
+                      className="h-8 text-xs"
+                    />
+                    <Button type="submit" size="icon" variant="ghost" className="size-7 shrink-0"
+                      disabled={!backlogQuickTitle.trim() || backlogQuickAdding}>
+                      <Plus className="size-3.5" />
+                    </Button>
+                  </form>
+                  {/* Backlog tasks */}
+                  <SortableContext items={backlogTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                    {backlogTasks.map((task) => (
+                      <SortableTaskCard
+                        key={task.id}
+                        task={task}
+                        onSelect={loadSelectedTask}
+                        isSelected={selectedTaskId === task.id}
+                        onDelete={fetchTasks}
+                      />
+                    ))}
+                  </SortableContext>
+                </motion.div>
+              </DndContext>
             )}
           </AnimatePresence>
         </div>
@@ -458,6 +667,39 @@ export default function TasksPage() {
           </div>
         )}
       </div>
+
+      {/* Cross-section drag confirmation dialog */}
+      <Dialog
+        open={crossSectionDialog?.open ?? false}
+        onOpenChange={(open) => {
+          if (!open) cancelCrossSectionDrag();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {crossSectionDialog?.toStatus === TaskStatus.Backlog
+                ? "Move to Backlog?"
+                : "Move to Active?"}
+            </DialogTitle>
+            <DialogDescription>
+              {crossSectionDialog?.toStatus === TaskStatus.Backlog
+                ? "This task will be moved from active to backlog."
+                : "This task will be moved from backlog to active."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>
+              Cancel
+            </DialogClose>
+            <Button onClick={confirmCrossSectionDrag}>
+              {crossSectionDialog?.toStatus === TaskStatus.Backlog
+                ? "Move to Backlog"
+                : "Move to Active"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

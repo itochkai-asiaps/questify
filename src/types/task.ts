@@ -23,6 +23,8 @@ export const TaskSchema = z.object({
   priority: z.nativeEnum(TaskPriority),
   due_date: z.string().datetime().nullable().optional(),
   tags: z.array(z.string()).default([]),
+  position: z.number().int().nonnegative().default(0),
+  sort_order: z.number().int().nonnegative().default(0),
   xp_reward: z.number().int().nonnegative().default(0),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
@@ -45,6 +47,8 @@ export const UpdateTaskInputSchema = z.object({
   due_date: z.string().datetime().nullable().optional(),
   tags: z.array(z.string()).optional(),
   kanban_column_id: z.string().uuid().nullable().optional(),
+  position: z.number().int().nonnegative().optional(),
+  sort_order: z.number().int().nonnegative().optional(),
 });
 
 export type Task = z.infer<typeof TaskSchema>;

@@ -114,6 +114,10 @@ export async function updateTask(
   if (tags !== null) rawData.tags = tags;
   const kanban_column_id = formData.get("kanban_column_id");
   if (kanban_column_id !== null) rawData.kanban_column_id = kanban_column_id || null;
+  const position = formData.get("position");
+  if (position !== null) rawData.position = Number(position);
+  const sort_order = formData.get("sort_order");
+  if (sort_order !== null) rawData.sort_order = Number(sort_order);
 
   const parsed = UpdateTaskInputSchema.safeParse(rawData);
   if (!parsed.success) {
@@ -185,7 +189,32 @@ export async function deleteTask(
   return { success: true };
 }
 
-export async function getTasks(): Promise<{
+export async function reorderTasks(
+  taskIds: string[],
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const { error } = await supabase.rpc("reorder_tasks", { p_task_ids: taskIds });
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/tasks", "layout");
+  return { success: true };
+}
+
+export async function getTasks(
+  orderBy: "created_at" | "sort_order" = "sort_order",
+): Promise<{
   data?: unknown[];
   error?: string;
 }> {
@@ -199,12 +228,21 @@ export async function getTasks(): Promise<{
     return { error: "Not authenticated" };
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("tasks")
     .select("*")
     .eq("user_id", user.id)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
+    .is("deleted_at", null);
+
+  if (orderBy === "sort_order") {
+    query = query
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
+  } else {
+    query = query.order("created_at", { ascending: false });
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     return { error: error.message };

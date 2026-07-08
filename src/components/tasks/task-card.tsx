@@ -2,7 +2,6 @@
 
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { Calendar, Tag, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -118,13 +117,7 @@ export default function TaskCard({ task, onDelete, onSelect, isSelected }: TaskC
   const dueDateLabel = formatDueDate(task.due_date, task.status);
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.2 }}
-    >
+    <div>
       <Card
         className={cn(
           // DESIGN.md §5: Card — shadow on hover, ring on select, opacity-70 when done
@@ -226,7 +219,7 @@ export default function TaskCard({ task, onDelete, onSelect, isSelected }: TaskC
           )}
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 }
 
