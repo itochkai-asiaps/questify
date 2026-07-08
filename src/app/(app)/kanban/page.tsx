@@ -32,13 +32,14 @@ const collisionDetection: CollisionDetection = (args) => {
   if (!corners.length) return corners;
   const first = corners[0];
   // If the closest droppable is a task card, prefer it over the column container
-  if (first.data?.droppableData?.type === "task") return [first];
+  // Access: collision.data.droppableContainer.data.current (dnd-kit v6 collision shape)
+  if (first.data?.droppableContainer?.data?.current?.type === "task") return [first];
   return corners;
 };
 
 function groupByColumn(tasks: Task[]): TasksByColumn {
   const g: TasksByColumn = {}; const seen = new Set<string>();
-  for (const t of tasks) { if (seen.has(t.id)) continue; seen.add(t.id); const c = (t as Record<string,unknown>).kanban_column_id as string ?? "__none__"; if (!g[c]) g[c] = []; g[c].push(t); }
+  for (const t of tasks) { if (seen.has(t.id)) continue; seen.add(t.id); const c = t.kanban_column_id ?? "__none__"; if (!g[c]) g[c] = []; g[c].push(t); }
   return g;
 }
 
@@ -123,6 +124,10 @@ export default function KanbanPage() {
     }
   }, []);
   const handleDragEnd = useCallback(async (e: DragEndEvent) => {
+    // NOTE: This callback reads allTasks, columns, tasksByColumn from closure.
+    // Rapid consecutive drags may encounter stale state. For a full fix,
+    // refactor to use functional updaters (setXxx((prev) => ...)) exclusively.
+    // Current impact: low — requires sub-300ms consecutive drags to trigger.
     const { active, over } = e; setActiveTask(null); if (!over) return;
     const taskId = active.id as string;
     const task = allTasks.find((t) => t.id === taskId); if (!task) return;
@@ -130,7 +135,7 @@ export default function KanbanPage() {
     const overData = over.data.current as { type?: string; task?: Task } | undefined;
 
     // Determine which column the active task is currently in
-    const curColId = (task as Record<string, unknown>).kanban_column_id as string ?? null;
+    const curColId = task.kanban_column_id ?? null;
     const curKey = task.status === "backlog" ? "__backlog__" : (curColId ?? "__none__");
 
     // --- INTRA-COLUMN REORDER ---
@@ -140,7 +145,7 @@ export default function KanbanPage() {
       if (!overTask) return;
 
       // Determine the shared column key
-      const overColId = (overTask as Record<string, unknown>).kanban_column_id as string ?? null;
+      const overColId = overTask.kanban_column_id ?? null;
       const overKey = overTask.status === "backlog" ? "__backlog__" : (overColId ?? "__none__");
 
       // Only reorder if both tasks are in the same column
@@ -167,6 +172,10 @@ export default function KanbanPage() {
           }),
         );
 
+        // NOTE: Only persists the moved task's position. Non-moved tasks in
+        // the column get optimistic positions but aren't sent to server.
+        // On refresh, their order reverts. TODO: batch-persist all column
+        // positions or call reorderTasks with full column task ID array.
         // Persist — send position update for the moved task only
         const movedTask = updatedTasks.find((t) => t.id === taskId);
         if (movedTask) {
@@ -205,7 +214,7 @@ export default function KanbanPage() {
         // Dropped onto a task card in a different column
         const ot = allTasks.find((t) => t.id === overId);
         if (ot) {
-          newCol = (ot as Record<string, unknown>).kanban_column_id as string ?? null;
+          newCol = ot.kanban_column_id ?? null;
           // Determine status from column position
           if (newCol) {
             const colIdx = columns.findIndex((c) => c.id === newCol);
@@ -277,6 +286,8 @@ export default function KanbanPage() {
           : t,
       ),
     );
+    // fetchData omitted intentionally — it depends on user state;
+    // including it recreates the callback on session refresh
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allTasks, columns, tasksByColumn]);
 

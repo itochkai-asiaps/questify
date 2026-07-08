@@ -41,7 +41,9 @@ CREATE INDEX IF NOT EXISTS idx_tasks_column_position
 CREATE OR REPLACE FUNCTION reorder_tasks(p_task_ids UUID[])
 RETURNS void
 LANGUAGE plpgsql
-SECURITY DEFINER
+-- SECURITY INVOKER: relies on RLS policies + explicit auth.uid() guard below.
+-- Using INVOKER instead of DEFINER to respect RLS and project convention.
+SECURITY INVOKER
 AS $$
 BEGIN
   UPDATE tasks t

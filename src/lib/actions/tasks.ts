@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -192,6 +193,12 @@ export async function deleteTask(
 export async function reorderTasks(
   taskIds: string[],
 ): Promise<{ success: boolean; error?: string }> {
+  // Validate input: non-empty array of UUIDs, max 500 tasks
+  const parseResult = z.array(z.string().uuid()).min(1).max(500).safeParse(taskIds);
+  if (!parseResult.success) {
+    return { success: false, error: "Invalid task IDs" };
+  }
+
   const supabase = await createClient();
 
   const {
@@ -202,13 +209,14 @@ export async function reorderTasks(
     return { success: false, error: "Not authenticated" };
   }
 
-  const { error } = await supabase.rpc("reorder_tasks", { p_task_ids: taskIds });
+  const { error } = await supabase.rpc("reorder_tasks", { p_task_ids: parseResult.data });
 
   if (error) {
     return { success: false, error: error.message };
   }
 
   revalidatePath("/tasks", "layout");
+  revalidatePath("/kanban", "layout");
   return { success: true };
 }
 

@@ -356,6 +356,8 @@ export default function TasksPage() {
         return;
       }
     },
+    // persistReorder is stable (closure over fetchTasks with empty deps);
+    // including it causes unnecessary recreation
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [activeTasks, backlogTasks],
   );

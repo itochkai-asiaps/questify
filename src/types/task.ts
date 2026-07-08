@@ -23,6 +23,7 @@ export const TaskSchema = z.object({
   priority: z.nativeEnum(TaskPriority),
   due_date: z.string().datetime().nullable().optional(),
   tags: z.array(z.string()).default([]),
+  kanban_column_id: z.string().uuid().nullable().optional(),
   position: z.number().int().nonnegative().default(0),
   sort_order: z.number().int().nonnegative().default(0),
   xp_reward: z.number().int().nonnegative().default(0),
