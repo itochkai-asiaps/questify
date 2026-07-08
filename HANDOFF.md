@@ -66,7 +66,7 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 ## Текущие задачи
 - 🔴 #1: GitHub PAT — создать токен, добавить в Secrets
 - 🔴 #2: DeepSeek API-ключ — получить для OMA-агентов
-- 🔴 Рефакторинг — аудит архитектуры + блоков D, E (см. `.omo/plans/refactoring.md`)
+- 🟡 Рефакторинг — Stage 1-3 done (CRITICAL + MAJOR), Stage 4 (MINOR) pending
 - 🟡 D7: Draggable Backlog/Todo разделитель с сохранением previous_status
 - 🟡 E0: Быстродействие дашборда (RPC get_dashboard_data, < 500ms)
 
@@ -109,6 +109,37 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 | Пропущено | Ничего |
 
 **Рекомендация на следующую сессию:** начать с P1 (engine.ts тесты) — setupFiles готов, моки работают, можно сразу в TDD. Промпт: `"ulw deep: напиши тесты для lib/gamification/engine.ts — awardXp, completeTask с моком Supabase"`
+
+### Рефакторинг Stage 1-3 (сессия 2026-07-08, часть 3)
+
+#### Stage 1 — Архитектурный аудит (oracle)
+- ✅ 5 областей проверено: Server Actions, типы/Zod, RLS, Zustand, revalidatePath
+- ✅ 9 CRITICAL + 14 MAJOR + 12 MINOR проблем выявлено
+
+#### Stage 2 — CRITICAL-фиксы
+- ✅ `telegram_chats` RLS (миграция 00011)
+- ✅ `getProfile` auth-проверка (profile.ts)
+- ✅ Zod-валидация Telegram-идей (ideas.ts + route.ts)
+- ✅ tags FormData→Zod fix (tasks.ts + types/task.ts)
+- ✅ Zod-импорты стандартизированы (zod/v4)
+- ✅ console.error в silent catches (tasks.ts + plans.ts)
+- ✅ Double XP race guards (tasks.ts + plans.ts)
+- ✅ Zod-валидация конверсий (conversions.ts)
+
+#### Stage 3 — MAJOR-фиксы
+- ✅ `requireUser()` helper — убрано 25+ дубликатов auth-check (src/lib/auth/requireUser.ts + 10 action-файлов)
+- ✅ `revalidatePath("layout")` во всех action-файлах
+- ✅ kanban-columns.ts — error handling + Zod + auth checks
+- ✅ XP_REWARDS дедупликация (tasks.ts → levels.ts)
+- ✅ Achievement XP divergence задокументирован (engine.ts)
+- ✅ Stale closure fix — kanban/page.tsx (refs вместо closure)
+- ✅ Stale closure fix — tasks/page.tsx (refs + error logging)
+
+#### Важные решения
+- `requireUser()` возвращает `{ supabase, user }` где user = null если не auth — callers проверяют `if (!user)`
+- kanban-columns теперь возвращает `{ data?, error? }` вместо null/void
+- XP_REWARDS теперь единый источник в levels.ts (импортируется tasks, plans, conversions)
+- Stale closures в D&D: refs + useCallback с пустыми deps
 
 ### Блок D — D6, ревью, тулинг (сессия 2026-07-08, часть 2)
 
@@ -157,6 +188,7 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 | 0008 | focus_tasks | ✅ | ⬜ |
 | 0009 | mood_score_0_100 | ✅ | ⬜ |
 | 0010 | normalize_task_ordering | ⏳ | ⬜ |
+| 0011 | telegram_chats_rls | ⬜ | ⬜ |
 
 ## Планы и требования
 - `.omo/plans/roadmap.md`
@@ -177,4 +209,6 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 - `src/lib/actions/plans.ts` — togglePlanItem вызывает awardXp
 - `src/lib/gamification/engine.ts` — awardXp, completeTask, achievements
 - `src/lib/gamification/levels.ts` — XP_REWARDS, уровни, xpForPriority
+- `src/lib/auth/requireUser.ts` — единый auth-хелпер (замена 25+ дубликатов)
+- `supabase/migrations/00011_telegram_chats_rls.sql` — RLS для telegram_chats
 - `HANDOFF.md` — этот файл в корне проекта

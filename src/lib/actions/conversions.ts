@@ -1,17 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth/requireUser";
+import { CreateTaskInputSchema } from "@/types/task";
+import { CreatePlanInputSchema } from "@/types/plan";
+import { XP_REWARDS } from "@/lib/gamification/levels";
 
 /**
  * Convert an idea to a task. Deletes the idea after creation.
+ * @note INSERT + DELETE are not transactional — if DELETE fails, duplicate may exist.
  */
 export async function convertIdeaToTask(
   ideaId: string,
 ): Promise<{ data?: unknown; error?: string }> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
   if (!user) return { error: "Not authenticated" };
 
   const { data: idea, error: fetchError } = await supabase
@@ -23,21 +25,33 @@ export async function convertIdeaToTask(
 
   if (fetchError || !idea) return { error: "Idea not found" };
 
+  const taskInput = {
+    title: idea.title.slice(0, 200),
+    description: (idea.description ?? "").slice(0, 2000) || undefined,
+    priority: "p3" as const,
+  };
+
+  const parsed = CreateTaskInputSchema.safeParse(taskInput);
+  if (!parsed.success) {
+    return { error: `Validation failed: ${parsed.error.message}` };
+  }
+
   const { data: task, error: taskError } = await supabase
     .from("tasks")
     .insert({
       user_id: user.id,
-      title: idea.title.slice(0, 200),
-      description: (idea.description ?? "").slice(0, 2000) || null,
-      priority: "p3",
+      title: parsed.data.title,
+      description: parsed.data.description,
+      priority: parsed.data.priority,
       status: "todo",
-      xp_reward: 15,
+      xp_reward: XP_REWARDS[parsed.data.priority],
     })
     .select()
     .single();
 
   if (taskError) return { error: taskError.message };
 
+  // @note Not transactional — if this DELETE fails, a duplicate may exist
   await supabase.from("ideas").delete().eq("id", ideaId).eq("user_id", user.id);
 
   revalidatePath("/ideas", "layout");
@@ -48,13 +62,12 @@ export async function convertIdeaToTask(
 
 /**
  * Convert an idea to a plan. Deletes the idea after creation.
+ * @note INSERT + DELETE are not transactional — if DELETE fails, duplicate may exist.
  */
 export async function convertIdeaToPlan(
   ideaId: string,
 ): Promise<{ data?: unknown; error?: string }> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
   if (!user) return { error: "Not authenticated" };
 
   const { data: idea, error: fetchError } = await supabase
@@ -66,18 +79,29 @@ export async function convertIdeaToPlan(
 
   if (fetchError || !idea) return { error: "Idea not found" };
 
+  const planInput = {
+    title: idea.title.slice(0, 200),
+    description: (idea.description ?? "").slice(0, 2000) || undefined,
+  };
+
+  const parsed = CreatePlanInputSchema.safeParse(planInput);
+  if (!parsed.success) {
+    return { error: `Validation failed: ${parsed.error.message}` };
+  }
+
   const { data: plan, error: planError } = await supabase
     .from("plans")
     .insert({
       user_id: user.id,
-      title: idea.title.slice(0, 200),
-      description: (idea.description ?? "").slice(0, 2000) || null,
+      title: parsed.data.title,
+      description: parsed.data.description,
     })
     .select()
     .single();
 
   if (planError) return { error: planError.message };
 
+  // @note Not transactional — if this DELETE fails, a duplicate may exist
   await supabase.from("ideas").delete().eq("id", ideaId).eq("user_id", user.id);
 
   revalidatePath("/ideas", "layout");
@@ -88,37 +112,49 @@ export async function convertIdeaToPlan(
 
 /**
  * Convert a plan item to a task. Deletes the plan item after creation.
+ * @note INSERT + DELETE are not transactional — if DELETE fails, duplicate may exist.
  */
 export async function convertPlanItemToTask(
   itemId: string,
 ): Promise<{ data?: unknown; error?: string }> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
   if (!user) return { error: "Not authenticated" };
 
   const { data: item, error: fetchError } = await supabase
     .from("plan_items")
-    .select("title, plan_id")
+    .select("title, description, plan_id")
     .eq("id", itemId)
     .single();
 
   if (fetchError || !item) return { error: "Plan item not found" };
 
+  const taskInput = {
+    title: item.title.slice(0, 200),
+    description: (item.description ?? "").slice(0, 2000) || undefined,
+    priority: "p3" as const,
+  };
+
+  const parsed = CreateTaskInputSchema.safeParse(taskInput);
+  if (!parsed.success) {
+    return { error: `Validation failed: ${parsed.error.message}` };
+  }
+
   const { data: task, error: taskError } = await supabase
     .from("tasks")
     .insert({
       user_id: user.id,
-      title: item.title.slice(0, 200),
-      priority: "p3",
+      title: parsed.data.title,
+      description: parsed.data.description,
+      priority: parsed.data.priority,
       status: "todo",
-      xp_reward: 15,
+      xp_reward: XP_REWARDS[parsed.data.priority],
     })
     .select()
     .single();
 
   if (taskError) return { error: taskError.message };
 
+  // @note Not transactional — if this DELETE fails, a duplicate may exist
   await supabase.from("plan_items").delete().eq("id", itemId);
 
   revalidatePath("/tasks", "layout");

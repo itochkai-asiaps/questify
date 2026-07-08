@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod/v4";
 
 import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth/requireUser";
 
 const createIdeaSchema = z.object({
   title: z.string().min(1, "Title is required").max(500),
@@ -15,11 +16,7 @@ const createIdeaSchema = z.object({
 export async function createIdea(
   formData: FormData,
 ): Promise<{ data?: unknown; error?: string }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   if (!user) {
     return { error: "Not authenticated" };
@@ -63,11 +60,7 @@ export async function createIdea(
 export async function toggleIdeaType(
   ideaId: string,
 ): Promise<{ data?: unknown; error?: string }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   if (!user) {
     return { error: "Not authenticated" };
@@ -105,11 +98,7 @@ export async function toggleIdeaType(
 export async function deleteIdea(
   ideaId: string,
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   if (!user) {
     return { success: false, error: "Not authenticated" };
@@ -130,11 +119,7 @@ export async function deleteIdea(
 }
 
 export async function getIdeas(): Promise<{ data?: unknown[]; error?: string }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   if (!user) {
     return { error: "Not authenticated" };
@@ -154,6 +139,11 @@ export async function getIdeas(): Promise<{ data?: unknown[]; error?: string }> 
   return { data };
 }
 
+const createIdeaFromTelegramInputSchema = z.object({
+  userId: z.string().min(1, "User ID is required").uuid(),
+  text: z.string().min(1, "Text is required").max(5500),
+});
+
 /**
  * Create an idea from Telegram bot message.
  * Called by the telegram webhook route handler.
@@ -162,6 +152,12 @@ export async function createIdeaFromTelegram(
   userId: string,
   text: string,
 ): Promise<{ data?: unknown; error?: string }> {
+  const parsed = createIdeaFromTelegramInputSchema.safeParse({ userId, text });
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0]?.message ?? "Invalid input";
+    return { error: firstError };
+  }
+
   const supabase = await createClient();
 
   // Detect type from prefix: problem:/пр:/проблема: (case-insensitive)
@@ -195,6 +191,7 @@ export async function createIdeaFromTelegram(
     return { error: error.message };
   }
 
+  revalidatePath("/ideas", "layout");
   return { data };
 }
 

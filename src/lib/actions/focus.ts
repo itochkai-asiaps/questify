@@ -1,14 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth/requireUser";
 
 export async function getFocusTask(): Promise<{
   data?: { task_id: string; task_title?: string } | null;
   error?: string;
 }> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
   if (!user) return { error: "Not authenticated" };
 
   const { data: focus, error } = await supabase
@@ -31,8 +30,7 @@ export async function getFocusTask(): Promise<{
 export async function setFocusTask(
   taskId: string,
 ): Promise<{ data?: { task_id: string }; error?: string }> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
   if (!user) return { error: "Not authenticated" };
 
   const { data, error } = await supabase
@@ -42,7 +40,7 @@ export async function setFocusTask(
     .single();
 
   if (error) return { error: error.message };
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
   return { data: data as { task_id: string } };
 }
 
@@ -50,8 +48,7 @@ export async function clearFocusTask(): Promise<{
   success: boolean;
   error?: string;
 }> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
   if (!user) return { error: "Not authenticated", success: false };
 
   const { error } = await supabase
@@ -60,6 +57,6 @@ export async function clearFocusTask(): Promise<{
     .eq("user_id", user.id);
 
   if (error) return { success: false, error: error.message };
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
   return { success: true };
 }

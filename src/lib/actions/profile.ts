@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod/v4";
 
 import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth/requireUser";
 
 const updateProfileSchema = z.object({
   displayName: z.string().min(1, "Display name is required").max(100),
@@ -34,15 +35,23 @@ export async function updateProfile(
     return { error: error.message };
   }
 
-  revalidatePath("/profile");
-  revalidatePath("/dashboard");
+  revalidatePath("/profile", "layout");
+  revalidatePath("/dashboard", "layout");
   return { data };
 }
 
 export async function getProfile(
   userId: string,
 ): Promise<{ data?: unknown; error?: string }> {
-  const supabase = await createClient();
+  const { supabase, user } = await requireUser();
+
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  if (user.id !== userId) {
+    return { error: "Unauthorized" };
+  }
 
   const { data, error } = await supabase
     .from("profiles")

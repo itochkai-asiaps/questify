@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   DndContext, DragEndEvent, DragOverlay, DragStartEvent,
   PointerSensor, closestCorners, useSensor, useSensors,
@@ -60,6 +60,14 @@ export default function KanbanPage() {
     // TouchSensor disabled — mobile D&D needs rework, see Z6
   );
 
+  // Refs to avoid stale closure in handleDragEnd during rapid consecutive drags
+  const allTasksRef = useRef(allTasks);
+  allTasksRef.current = allTasks;
+  const columnsRef = useRef(columns);
+  columnsRef.current = columns;
+  const tasksByColumnRef = useRef(tasksByColumn);
+  tasksByColumnRef.current = tasksByColumn;
+
   const fetchData = useCallback(async () => {
     setIsLoading(true); setError(null);
     const [c, t] = await Promise.all([getKanbanColumns(), getTasks()]);
@@ -68,12 +76,15 @@ export default function KanbanPage() {
     setIsLoading(false);
   }, []);
 
+  const fetchDataRef = useRef(fetchData);
+  fetchDataRef.current = fetchData;
+
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleAdd = async () => {
     const title = newTitle.trim(); if (!title) return;
-    const col = await createKanbanColumn(title);
-    if (col) { setColumns((p) => [...p, col]); setNewTitle(""); setAdding(false); }
+    const result = await createKanbanColumn(title);
+    if (result.data) { setColumns((p) => [...p, result.data!]); setNewTitle(""); setAdding(false); }
   };
 
   const handleRename = async (colId: string, title: string) => {
@@ -99,7 +110,7 @@ export default function KanbanPage() {
     await reorderKanbanColumns(ids);
   };
 
-  const handleDragStart = useCallback((e: DragStartEvent) => { setActiveTask(allTasks.find((t) => t.id === e.active.id) ?? null); }, [allTasks]);
+  const handleDragStart = useCallback((e: DragStartEvent) => { setActiveTask(allTasksRef.current.find((t) => t.id === e.active.id) ?? null); }, []);
 
   const handleCreateTask = useCallback(async (columnId: string, title: string) => {
     const t = title.trim();
@@ -124,13 +135,9 @@ export default function KanbanPage() {
     }
   }, []);
   const handleDragEnd = useCallback(async (e: DragEndEvent) => {
-    // NOTE: This callback reads allTasks, columns, tasksByColumn from closure.
-    // Rapid consecutive drags may encounter stale state. For a full fix,
-    // refactor to use functional updaters (setXxx((prev) => ...)) exclusively.
-    // Current impact: low — requires sub-300ms consecutive drags to trigger.
     const { active, over } = e; setActiveTask(null); if (!over) return;
     const taskId = active.id as string;
-    const task = allTasks.find((t) => t.id === taskId); if (!task) return;
+    const task = allTasksRef.current.find((t) => t.id === taskId); if (!task) return;
     const overId = over.id as string;
     const overData = over.data.current as { type?: string; task?: Task } | undefined;
 
@@ -154,7 +161,7 @@ export default function KanbanPage() {
         // (fall through to cross-column logic below)
       } else {
         // Same column — reorder within column
-        const colTasks = [...(tasksByColumn[curKey] ?? [])];
+        const colTasks = [...(tasksByColumnRef.current[curKey] ?? [])];
         const oldIdx = colTasks.findIndex((t) => t.id === taskId);
         const newIdx = colTasks.findIndex((t) => t.id === overTask.id);
         if (oldIdx === -1 || newIdx === -1) return;
@@ -183,8 +190,9 @@ export default function KanbanPage() {
           fd.set("position", String(movedTask.position));
           const r = await updateTask(taskId, fd);
           if (r.error) {
+            console.error("Drag operation failed:", r.error);
             setError(r.error);
-            fetchData();
+            fetchDataRef.current();
           }
         }
         return;
@@ -203,27 +211,27 @@ export default function KanbanPage() {
     }
     // Dropped into a regular column container
     else {
-      const col = columns.find((c) => c.id === overId);
+      const col = columnsRef.current.find((c) => c.id === overId);
       if (col) {
         newCol = col.id;
-        const idx = columns.findIndex((c) => c.id === col.id);
+        const idx = columnsRef.current.findIndex((c) => c.id === col.id);
         if (idx === 0) newStatus = "todo";
-        else if (idx === columns.length - 1) newStatus = "done";
+        else if (idx === columnsRef.current.length - 1) newStatus = "done";
         else newStatus = "in_progress";
       } else {
         // Dropped onto a task card in a different column
-        const ot = allTasks.find((t) => t.id === overId);
+        const ot = allTasksRef.current.find((t) => t.id === overId);
         if (ot) {
           newCol = ot.kanban_column_id ?? null;
           // Determine status from column position
           if (newCol) {
-            const colIdx = columns.findIndex((c) => c.id === newCol);
+            const colIdx = columnsRef.current.findIndex((c) => c.id === newCol);
             if (colIdx === 0) newStatus = "todo";
-            else if (colIdx === columns.length - 1) newStatus = "done";
+            else if (colIdx === columnsRef.current.length - 1) newStatus = "done";
             else newStatus = "in_progress";
           }
           // Find insert position within target column
-          const targetTasks = tasksByColumn[newCol ?? "__backlog__"] ?? [];
+          const targetTasks = tasksByColumnRef.current[newCol ?? "__backlog__"] ?? [];
           insertAtIndex = targetTasks.findIndex((t) => t.id === overId);
         }
       }
@@ -262,7 +270,7 @@ export default function KanbanPage() {
     fd.set("kanban_column_id", newCol ?? "");
     if (newStatus) fd.set("status", newStatus);
     // Compute position: midpoint between neighbors or sequential gap
-    const targetTasks = tasksByColumn[targetKey] ?? [];
+    const targetTasks = tasksByColumnRef.current[targetKey] ?? [];
     let newPosition: number;
     if (insertAtIndex >= 0 && insertAtIndex < targetTasks.length) {
       const before = targetTasks[insertAtIndex - 1]?.position ?? 0;
@@ -275,8 +283,9 @@ export default function KanbanPage() {
 
     const r = await updateTask(taskId, fd);
     if (r.error) {
+      console.error("Drag operation failed:", r.error);
       setError(r.error);
-      fetchData();
+      fetchDataRef.current();
       return;
     }
     setAllTasks((p) =>
@@ -286,10 +295,7 @@ export default function KanbanPage() {
           : t,
       ),
     );
-    // fetchData omitted intentionally — it depends on user state;
-    // including it recreates the callback on session refresh
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allTasks, columns, tasksByColumn]);
+  }, []);
 
   const displayTasks = useMemo(() => {
     if (showCompleted) return tasksByColumn;

@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth/requireUser";
 import { revalidatePath } from "next/cache";
 
 const ROADMAP_TASKS = [
@@ -47,9 +47,7 @@ const ROADMAP_TASKS = [
 ];
 
 export async function seedRoadmap(): Promise<{ count: number; error?: string }> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
   if (!user) return { count: 0, error: "Not authenticated" };
 
   for (const task of ROADMAP_TASKS) {

@@ -1,7 +1,7 @@
 /**
  * Level thresholds for Questify gamification system.
  * Formula: level_n = (n-1)² × 25
- * Level 1 = 0 XP, Level 50 = 62,500 XP (max)
+ * Level 1 = 0 XP, Level 50 = 60,025 XP (max)
  */
 
 export const MAX_LEVEL = 50;

@@ -230,6 +230,8 @@ export default function TasksPage() {
       if (result.data) {
         setTasks((prev) => [result.data as Task, ...prev]);
       }
+    } else {
+      console.error("Backlog quick create failed:", result.error);
     }
     setBacklogQuickAdding(false);
   }, [backlogQuickAdding]);
@@ -247,6 +249,12 @@ export default function TasksPage() {
     return { backlogTasks: bl, activeTasks: active };
   }, [filteredTasks]);
 
+  // Refs to eliminate stale closure in drag handlers
+  const activeTasksRef = useRef(activeTasks);
+  activeTasksRef.current = activeTasks;
+  const backlogTasksRef = useRef(backlogTasks);
+  backlogTasksRef.current = backlogTasks;
+
   // Optimistic reorder within a section
   function reorderWithinSection(
     items: Task[],
@@ -261,14 +269,14 @@ export default function TasksPage() {
   }
 
   // Persist reorder to server
-  async function persistReorder(tasksToPersist: Task[]) {
+  const persistReorder = useCallback(async (tasksToPersist: Task[]) => {
     const taskIds = tasksToPersist.map((t) => t.id);
     const result = await reorderTasks(taskIds);
     if (!result.success) {
       // Rollback: re-fetch from server
       fetchTasks();
     }
-  }
+  }, [fetchTasks]);
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -279,16 +287,16 @@ export default function TasksPage() {
       const overTaskId = String(over.id);
 
       // Determine which section the dragged task belongs to
-      const isActiveDrag = activeTasks.some((t) => t.id === activeTaskId);
-      const isBacklogDrag = backlogTasks.some((t) => t.id === activeTaskId);
-      const isActiveOver = activeTasks.some((t) => t.id === overTaskId);
-      const isBacklogOver = backlogTasks.some((t) => t.id === overTaskId);
+      const isActiveDrag = activeTasksRef.current.some((t) => t.id === activeTaskId);
+      const isBacklogDrag = backlogTasksRef.current.some((t) => t.id === activeTaskId);
+      const isActiveOver = activeTasksRef.current.some((t) => t.id === overTaskId);
+      const isBacklogOver = backlogTasksRef.current.some((t) => t.id === overTaskId);
 
       // Same section reorder
       if (isActiveDrag && isActiveOver) {
-        const oldIndex = activeTasks.findIndex((t) => t.id === activeTaskId);
-        const newIndex = activeTasks.findIndex((t) => t.id === overTaskId);
-        const reordered = reorderWithinSection(activeTasks, oldIndex, newIndex);
+        const oldIndex = activeTasksRef.current.findIndex((t) => t.id === activeTaskId);
+        const newIndex = activeTasksRef.current.findIndex((t) => t.id === overTaskId);
+        const reordered = reorderWithinSection(activeTasksRef.current, oldIndex, newIndex);
         setTasks((prev) => {
           const updatedIds = new Set(reordered.map((t) => t.id));
           return prev.map((t) => (updatedIds.has(t.id) ? reordered.find((r) => r.id === t.id)! : t));
@@ -298,9 +306,9 @@ export default function TasksPage() {
       }
 
       if (isBacklogDrag && isBacklogOver) {
-        const oldIndex = backlogTasks.findIndex((t) => t.id === activeTaskId);
-        const newIndex = backlogTasks.findIndex((t) => t.id === overTaskId);
-        const reordered = reorderWithinSection(backlogTasks, oldIndex, newIndex);
+        const oldIndex = backlogTasksRef.current.findIndex((t) => t.id === activeTaskId);
+        const newIndex = backlogTasksRef.current.findIndex((t) => t.id === overTaskId);
+        const reordered = reorderWithinSection(backlogTasksRef.current, oldIndex, newIndex);
         setTasks((prev) => {
           const updatedIds = new Set(reordered.map((t) => t.id));
           return prev.map((t) => (updatedIds.has(t.id) ? reordered.find((r) => r.id === t.id)! : t));
@@ -312,20 +320,20 @@ export default function TasksPage() {
       // Cross-section drag: show confirmation dialog
       if (isActiveDrag && isBacklogOver) {
         // Dragging from active to backlog
-        const oldIndex = activeTasks.findIndex((t) => t.id === activeTaskId);
-        const newIndex = backlogTasks.findIndex((t) => t.id === overTaskId);
-        const newActive = activeTasks.filter((t) => t.id !== activeTaskId).map((t, i) => ({
+        const oldIndex = activeTasksRef.current.findIndex((t) => t.id === activeTaskId);
+        const newIndex = backlogTasksRef.current.findIndex((t) => t.id === overTaskId);
+        const newActive = activeTasksRef.current.filter((t) => t.id !== activeTaskId).map((t, i) => ({
           ...t,
           sort_order: i * 1000,
         }));
-        const movedTask = { ...activeTasks[oldIndex], status: TaskStatus.Backlog };
-        const newBacklog = [...backlogTasks];
+        const movedTask = { ...activeTasksRef.current[oldIndex], status: TaskStatus.Backlog };
+        const newBacklog = [...backlogTasksRef.current];
         newBacklog.splice(newIndex, 0, movedTask);
         const newBacklogOrdered = newBacklog.map((t, i) => ({ ...t, sort_order: i * 1000 }));
         setCrossSectionDialog({
           open: true,
           taskId: activeTaskId,
-          fromStatus: activeTasks[oldIndex].status,
+          fromStatus: activeTasksRef.current[oldIndex].status,
           toStatus: TaskStatus.Backlog,
           newActiveOrder: newActive,
           newBacklogOrder: newBacklogOrdered,
@@ -335,14 +343,14 @@ export default function TasksPage() {
 
       if (isBacklogDrag && isActiveOver) {
         // Dragging from backlog to active
-        const oldIndex = backlogTasks.findIndex((t) => t.id === activeTaskId);
-        const newIndex = activeTasks.findIndex((t) => t.id === overTaskId);
-        const newBacklog = backlogTasks.filter((t) => t.id !== activeTaskId).map((t, i) => ({
+        const oldIndex = backlogTasksRef.current.findIndex((t) => t.id === activeTaskId);
+        const newIndex = activeTasksRef.current.findIndex((t) => t.id === overTaskId);
+        const newBacklog = backlogTasksRef.current.filter((t) => t.id !== activeTaskId).map((t, i) => ({
           ...t,
           sort_order: i * 1000,
         }));
-        const movedTask = { ...backlogTasks[oldIndex], status: TaskStatus.Todo };
-        const newActive = [...activeTasks];
+        const movedTask = { ...backlogTasksRef.current[oldIndex], status: TaskStatus.Todo };
+        const newActive = [...activeTasksRef.current];
         newActive.splice(newIndex, 0, movedTask);
         const newActiveOrdered = newActive.map((t, i) => ({ ...t, sort_order: i * 1000 }));
         setCrossSectionDialog({
@@ -356,10 +364,7 @@ export default function TasksPage() {
         return;
       }
     },
-    // persistReorder is stable (closure over fetchTasks with empty deps);
-    // including it causes unnecessary recreation
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeTasks, backlogTasks],
+    [persistReorder],
   );
 
   const confirmCrossSectionDrag = useCallback(async () => {
@@ -391,15 +396,18 @@ export default function TasksPage() {
     formData.set("status", toStatus);
     const statusResult = await updateTask(taskId, formData);
     if (statusResult.error) {
+      console.error("Cross-section drag: updateTask failed:", statusResult.error);
       fetchTasks();
       return;
     }
 
+    // ⚠️ If updateTask succeeds but reorderTasks fails, task is moved but ordering is stale until re-fetch
     // Reorder both sections
     const allReordered = [...newActiveOrder, ...newBacklogOrder];
     const taskIds = allReordered.map((t) => t.id);
     const reorderResult = await reorderTasks(taskIds);
     if (!reorderResult.success) {
+      console.error("Cross-section drag: reorderTasks failed:", reorderResult.error);
       fetchTasks();
     }
   }, [crossSectionDialog, fetchTasks]);

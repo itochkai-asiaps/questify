@@ -1,9 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
+import { z } from "zod/v4";
 
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth/requireUser";
 import {
   CreateTaskInputSchema,
   UpdateTaskInputSchema,
@@ -11,22 +11,12 @@ import {
   TaskStatus,
 } from "@/types/task";
 import { completeTask, checkAndAwardAchievements } from "@/lib/gamification/engine";
-
-const XP_REWARDS: Record<string, number> = {
-  p1: 50,
-  p2: 30,
-  p3: 15,
-  p4: 5,
-};
+import { XP_REWARDS } from "@/lib/gamification/levels";
 
 export async function createTask(
   formData: FormData,
 ): Promise<{ data?: unknown; error?: string }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   if (!user) {
     return { error: "Not authenticated" };
@@ -37,7 +27,7 @@ export async function createTask(
     description: (formData.get("description") as string) || undefined,
     priority: (formData.get("priority") as string) ?? undefined,
     due_date: (formData.get("due_date") as string) || undefined,
-    tags: (formData.get("tags") as string) || undefined,
+    tags: JSON.parse((formData.get("tags") as string) || "[]"),
   };
 
   const parsed = CreateTaskInputSchema.safeParse(rawData);
@@ -82,11 +72,7 @@ export async function updateTask(
   taskId: string,
   formData: FormData,
 ): Promise<{ data?: unknown; error?: string }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   if (!user) {
     return { error: "Not authenticated" };
@@ -112,7 +98,7 @@ export async function updateTask(
   const due_date = formData.get("due_date");
   if (due_date !== null) rawData.due_date = due_date;
   const tags = formData.get("tags");
-  if (tags !== null) rawData.tags = tags;
+  if (tags !== null) rawData.tags = JSON.parse((tags as string) || "[]");
   const kanban_column_id = formData.get("kanban_column_id");
   if (kanban_column_id !== null) rawData.kanban_column_id = kanban_column_id || null;
   const position = formData.get("position");
@@ -129,7 +115,7 @@ export async function updateTask(
   const updateData: Record<string, unknown> = { ...parsed.data };
 
   if (updateData.priority) {
-    updateData.xp_reward = XP_REWARDS[updateData.priority as string] ?? 15;
+    updateData.xp_reward = XP_REWARDS[updateData.priority as TaskPriority] ?? 15;
   }
 
   const { data, error } = await supabase
@@ -147,12 +133,15 @@ export async function updateTask(
   // Award XP if task was just marked as done
   const wasJustCompleted =
     currentTask?.status !== "done" && parsed.data.status === TaskStatus.Done;
-  if (wasJustCompleted) {
+  let wasCompletionAwarded = false;
+  if (wasJustCompleted && !wasCompletionAwarded) {
+    wasCompletionAwarded = true;
     const taskPriority = (currentTask?.priority ?? "p3") as TaskPriority;
     try {
       await completeTask(user.id, taskPriority);
       await checkAndAwardAchievements(user.id);
-    } catch {
+    } catch (e) {
+      console.error("completeTask failed:", e);
       // Gamification failure should not block the task update
     }
   }
@@ -165,11 +154,7 @@ export async function updateTask(
 export async function deleteTask(
   taskId: string,
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   if (!user) {
     return { success: false, error: "Not authenticated" };
@@ -199,11 +184,7 @@ export async function reorderTasks(
     return { success: false, error: "Invalid task IDs" };
   }
 
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   if (!user) {
     return { success: false, error: "Not authenticated" };
@@ -226,11 +207,7 @@ export async function getTasks(
   data?: unknown[];
   error?: string;
 }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   if (!user) {
     return { error: "Not authenticated" };
@@ -262,11 +239,7 @@ export async function getTasks(
 export async function getTaskById(
   taskId: string,
 ): Promise<{ data?: unknown; error?: string }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   if (!user) {
     return { error: "Not authenticated" };

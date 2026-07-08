@@ -1,9 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod/v4";
+import { z } from "zod";
 
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth/requireUser";
 import {
   CreatePlanInputSchema,
   UpdatePlanInputSchema,
@@ -34,11 +34,7 @@ function computeProgress(items: { completed: boolean }[]): PlanProgress {
 export async function createPlan(
   formData: FormData,
 ): Promise<{ data?: unknown; error?: string }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   if (!user) {
     return { error: "Not authenticated" };
@@ -101,8 +97,8 @@ export async function createPlan(
     }
   }
 
-  revalidatePath("/plans");
-  revalidatePath("/dashboard");
+  revalidatePath("/plans", "layout");
+  revalidatePath("/dashboard", "layout");
   return { data: plan };
 }
 
@@ -110,11 +106,7 @@ export async function updatePlan(
   planId: string,
   formData: FormData,
 ): Promise<{ data?: unknown; error?: string }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   if (!user) {
     return { error: "Not authenticated" };
@@ -150,20 +142,16 @@ export async function updatePlan(
     return { error: error.message };
   }
 
-  revalidatePath("/plans");
-  revalidatePath(`/plans/${planId}`);
-  revalidatePath("/dashboard");
+  revalidatePath("/plans", "layout");
+  revalidatePath(`/plans/${planId}`, "layout");
+  revalidatePath("/dashboard", "layout");
   return { data: plan };
 }
 
 export async function deletePlan(
   planId: string,
 ): Promise<{ error?: string }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   if (!user) {
     return { error: "Not authenticated" };
@@ -178,8 +166,8 @@ export async function deletePlan(
     return { error: error.message };
   }
 
-  revalidatePath("/plans");
-  revalidatePath("/dashboard");
+  revalidatePath("/plans", "layout");
+  revalidatePath("/dashboard", "layout");
   return {};
 }
 
@@ -187,11 +175,7 @@ export async function getPlans(): Promise<{
   data?: unknown[];
   error?: string;
 }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   if (!user) {
     return { error: "Not authenticated" };
@@ -218,11 +202,7 @@ export async function getPlans(): Promise<{
 export async function getPlanById(
   planId: string,
 ): Promise<{ data?: unknown; error?: string }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   if (!user) {
     return { error: "Not authenticated" };
@@ -248,11 +228,7 @@ export async function addPlanItem(
   planId: string,
   formData: FormData,
 ): Promise<{ data?: unknown; error?: string }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   if (!user) {
     return { error: "Not authenticated" };
@@ -296,20 +272,16 @@ export async function addPlanItem(
     return { error: error.message };
   }
 
-  revalidatePath("/plans");
-  revalidatePath(`/plans/${planId}`);
-  revalidatePath("/dashboard");
+  revalidatePath("/plans", "layout");
+  revalidatePath(`/plans/${planId}`, "layout");
+  revalidatePath("/dashboard", "layout");
   return { data: item };
 }
 
 export async function togglePlanItem(
   itemId: string,
 ): Promise<{ data?: unknown; error?: string }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   if (!user) {
     return { error: "Not authenticated" };
@@ -342,6 +314,13 @@ export async function togglePlanItem(
     try {
       await awardXp(user.id, XP_REWARDS.planStep);
 
+      // Guard: prevent double plan-completion award within same function call.
+      // NOTE: Cross-request races are still possible — two concurrent toggles
+      // could both see remaining.length === 0 before RPC executes. For true
+      // atomicity, increment_plans_completed should be made idempotent
+      // (INSERT ... ON CONFLICT DO NOTHING on a plans_completed tracking table).
+      let planCompletionAwarded = false;
+
       // Check if all items in this plan are now completed
       const { data: remaining } = await supabase
         .from("plan_items")
@@ -349,32 +328,30 @@ export async function togglePlanItem(
         .eq("plan_id", current.plan_id)
         .eq("completed", false);
 
-      if (remaining && remaining.length === 0) {
+      if (remaining && remaining.length === 0 && !planCompletionAwarded) {
+        planCompletionAwarded = true;
         await awardXp(user.id, XP_REWARDS.planCompleted);
         // Increment plans_completed on user_stats
         await supabase.rpc("increment_plans_completed", { p_user_id: user.id }).maybeSingle();
       }
 
       await checkAndAwardAchievements(user.id);
-    } catch {
+    } catch (e) {
+      console.error("togglePlanItem gamification failed:", e);
       // Gamification failure should not block the toggle
     }
   }
 
-  revalidatePath("/plans");
-  revalidatePath(`/plans/${current.plan_id}`);
-  revalidatePath("/dashboard");
+  revalidatePath("/plans", "layout");
+  revalidatePath(`/plans/${current.plan_id}`, "layout");
+  revalidatePath("/dashboard", "layout");
   return { data: item };
 }
 
 export async function deletePlanItem(
   itemId: string,
 ): Promise<{ error?: string }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   if (!user) {
     return { error: "Not authenticated" };
@@ -400,8 +377,8 @@ export async function deletePlanItem(
     return { error: error.message };
   }
 
-  revalidatePath("/plans");
-  revalidatePath(`/plans/${item.plan_id}`);
-  revalidatePath("/dashboard");
+  revalidatePath("/plans", "layout");
+  revalidatePath(`/plans/${item.plan_id}`, "layout");
+  revalidatePath("/dashboard", "layout");
   return {};
 }

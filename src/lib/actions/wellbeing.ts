@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth/requireUser";
 import { CreateWellbeingEntrySchema } from "@/types/wellbeing";
 import type { WellbeingEntry } from "@/types/wellbeing";
 
@@ -11,8 +11,7 @@ export async function createWellbeingEntry(
   moodScore: number,
   note?: string,
 ): Promise<{ data?: WellbeingEntry; error?: string }> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
   if (!user) return { error: "Not authenticated" };
 
   const parsed = CreateWellbeingEntrySchema.safeParse({ mood_score: moodScore, note });
@@ -42,7 +41,7 @@ export async function createWellbeingEntry(
     .single();
 
   if (error) return { error: error.message };
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
   return { data: data as WellbeingEntry };
 }
 
@@ -50,8 +49,7 @@ export async function getTodaysLatestEntry(): Promise<{
   data?: WellbeingEntry | null;
   error?: string;
 }> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
   if (!user) return { error: "Not authenticated" };
 
   const today = new Date().toISOString().split("T")[0];
@@ -72,8 +70,7 @@ export async function getTodaysLatestEntry(): Promise<{
 export async function getWellbeingHistory(
   days: number = 7,
 ): Promise<{ data?: WellbeingEntry[]; error?: string }> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
   if (!user) return { error: "Not authenticated" };
 
   const since = new Date();

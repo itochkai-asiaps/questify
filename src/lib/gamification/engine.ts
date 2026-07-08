@@ -60,55 +60,59 @@ export interface UserStatsRow {
 // Hardcoded achievement definitions
 // ---------------------------------------------------------------------------
 
+// ⚠️ NOTE: These XP values duplicate the xp_reward column in the database achievements table.
+// The SQL seed (00002_plans_completed_rpc.sql) may have different values.
+// checkAndAwardAchievements uses these TS values for awarding XP — the DB column is for display only.
+// TODO: Single source of truth — either query DB or align both.
 const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
   {
     slug: "first_task",
     title: "First Task",
     description: "Complete your first task",
     iconUrl: null,
-    xpReward: 10,
+    xpReward: 10, // SQL has 25 — divergence, TS used for awards
   },
   {
     slug: "getting_started",
     title: "Getting Started",
     description: "Complete 10 tasks",
     iconUrl: null,
-    xpReward: 25,
+    xpReward: 25, // SQL has 50 — divergence, TS used for awards
   },
   {
     slug: "hard_worker",
     title: "Hard Worker",
     description: "Complete 50 tasks",
     iconUrl: null,
-    xpReward: 50,
+    xpReward: 50, // SQL has 100 — divergence, TS used for awards
   },
   {
     slug: "week_warrior",
     title: "Week Warrior",
     description: "Maintain a 7-day streak",
     iconUrl: null,
-    xpReward: 30,
+    xpReward: 30, // SQL has 75 — divergence, TS used for awards
   },
   {
     slug: "monthly_master",
     title: "Monthly Master",
     description: "Maintain a 30-day streak",
     iconUrl: null,
-    xpReward: 100,
+    xpReward: 100, // SQL has 200 — divergence, TS used for awards
   },
   {
     slug: "perfect_day",
     title: "Perfect Day",
     description: "Complete 10 tasks in a single day",
     iconUrl: null,
-    xpReward: 40,
+    xpReward: 40, // SQL has 50 — divergence, TS used for awards
   },
   {
     slug: "planner",
     title: "Planner",
     description: "Complete 5 plans",
     iconUrl: null,
-    xpReward: 25,
+    xpReward: 25, // SQL has 100 — divergence, TS used for awards
   },
 ];
 

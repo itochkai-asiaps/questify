@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
+import { createIdeaFromTelegram } from "@/lib/actions/ideas";
+
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
 const TG_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
@@ -93,33 +95,15 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Save idea ──
-    // Detect type from prefix: problem:/пр:/проблема: (case-insensitive)
-    const problemPrefix = /^(problem|пр|проблема)\s*:\s*/i;
-    let type = "idea";
-    let title = text.trim();
+    const result = await createIdeaFromTelegram(link.user_id, text);
 
-    const prefixMatch = title.match(problemPrefix);
-    if (prefixMatch) {
-      type = "problem";
-      title = title.slice(prefixMatch[0].length).trim();
-    }
-
-    const lines = title.split("\n");
-    const titleLine = lines[0].slice(0, 500);
-    const desc = lines.slice(1).join("\n").slice(0, 5000) || null;
-
-    const { error } = await getAdmin().from("ideas").insert({
-      user_id: link.user_id,
-      title: titleLine,
-      description: desc,
-      source: "telegram",
-      type,
-    });
-
-    if (error) {
-      await sendMessage(chatId, "❌ Failed: " + error.message);
+    if (result.error) {
+      await sendMessage(chatId, "❌ Failed: " + result.error);
     } else {
-      await sendMessage(chatId, type === "problem" ? "⚠️ Problem saved!" : "💡 Idea saved!");
+      // Detect type for reply message
+      const problemPrefix = /^(problem|пр|проблема)\s*:\s*/i;
+      const isProblem = problemPrefix.test(text.trim());
+      await sendMessage(chatId, isProblem ? "⚠️ Problem saved!" : "💡 Idea saved!");
     }
 
     return NextResponse.json({ ok: true });
