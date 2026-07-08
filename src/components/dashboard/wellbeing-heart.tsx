@@ -23,12 +23,17 @@ export function WellbeingHeart() {
   const noteRef = useRef<HTMLInputElement>(null);
 
   const fetchLatest = useCallback(async () => {
-    const result = await getTodaysLatestEntry();
-    if (result.data) {
-      setLatestEntry(result.data);
-      setSavedPct(result.data.mood_score);
+    try {
+      const result = await getTodaysLatestEntry();
+      if (result.data) {
+        setLatestEntry(result.data);
+        setSavedPct(result.data.mood_score);
+      }
+    } catch (e) {
+      console.error("WellbeingHeart: failed to fetch latest entry", e);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => { fetchLatest(); }, [fetchLatest]);
@@ -55,20 +60,25 @@ export function WellbeingHeart() {
     const pct = hoverPct ?? savedPct;
     if (pct === null || saving) return;
     setSaving(true);
-    const result = await createWellbeingEntry(pct, note || undefined);
-    if (result.data) {
-      setLatestEntry(result.data as WellbeingEntry);
-      setSavedPct(pct);
-      setHoverPct(null);
-      // Show note input for 5 seconds (timer pauses while focused)
-      setNote("");
-      setNoteSaved(false);
-      setShowNote(true);
-      if (noteTimerRef.current) clearTimeout(noteTimerRef.current);
-      noteTimerRef.current = setTimeout(() => setShowNote(false), 5000);
-      setTimeout(() => noteRef.current?.focus(), 50);
+    try {
+      const result = await createWellbeingEntry(pct, note || undefined);
+      if (result.data) {
+        setLatestEntry(result.data as WellbeingEntry);
+        setSavedPct(pct);
+        setHoverPct(null);
+        // Show note input for 5 seconds (timer pauses while focused)
+        setNote("");
+        setNoteSaved(false);
+        setShowNote(true);
+        if (noteTimerRef.current) clearTimeout(noteTimerRef.current);
+        noteTimerRef.current = setTimeout(() => setShowNote(false), 5000);
+        setTimeout(() => noteRef.current?.focus(), 50);
+      }
+    } catch (e) {
+      console.error("WellbeingHeart: failed to save entry", e);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }, [hoverPct, savedPct, saving, note]);
 
   const handleNoteSubmit = useCallback(async () => {
