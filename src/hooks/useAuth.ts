@@ -17,7 +17,7 @@ interface AuthState {
   setLoading: (isLoading: boolean) => void;
 }
 
-const useAuthStore = create<AuthState>()(
+export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
