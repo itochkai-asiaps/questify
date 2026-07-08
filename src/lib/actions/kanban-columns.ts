@@ -11,6 +11,12 @@ export type KanbanColumn = {
   position: number;
 };
 
+const KanbanColumnSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string(),
+  position: z.number(),
+});
+
 const createKanbanColumnSchema = z.object({
   title: z.string().min(1).max(100),
 });
@@ -25,7 +31,7 @@ export async function getKanbanColumns(): Promise<KanbanColumn[]> {
     .eq("user_id", user.id)
     .order("position");
 
-  return (data ?? []) as KanbanColumn[];
+  return KanbanColumnSchema.array().parse(data ?? []);
 }
 
 export async function createKanbanColumn(
@@ -59,7 +65,7 @@ export async function createKanbanColumn(
   if (error) return { error: error.message };
 
   revalidatePath("/kanban", "layout");
-  return { data: data as KanbanColumn };
+  return { data: KanbanColumnSchema.parse(data) };
 }
 
 export async function updateKanbanColumn(
@@ -85,7 +91,7 @@ export async function updateKanbanColumn(
     if (error) return { error: error.message };
 
     revalidatePath("/kanban", "layout");
-    return { data: data as KanbanColumn };
+    return { data: KanbanColumnSchema.parse(data) };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to update column" };
   }

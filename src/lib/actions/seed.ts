@@ -2,6 +2,7 @@
 
 import { requireUser } from "@/lib/auth/requireUser";
 import { revalidatePath } from "next/cache";
+import { CreateTaskInputSchema } from "@/types/task";
 
 const ROADMAP_TASKS = [
   // Block A — done
@@ -51,11 +52,16 @@ export async function seedRoadmap(): Promise<{ count: number; error?: string }> 
   if (!user) return { count: 0, error: "Not authenticated" };
 
   for (const task of ROADMAP_TASKS) {
+    const validated = CreateTaskInputSchema.parse({
+      title: task.title,
+      priority: task.priority,
+    });
+
     await supabase.from("tasks").insert({
       user_id: user.id,
-      title: task.title,
+      title: validated.title,
       status: task.status,
-      priority: task.priority,
+      priority: validated.priority,
       xp_reward: 0,
     });
   }

@@ -1,8 +1,9 @@
 "use server";
 
+import { z } from "zod/v4";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/requireUser";
-import { CreateWellbeingEntrySchema } from "@/types/wellbeing";
+import { CreateWellbeingEntrySchema, WellbeingEntrySchema } from "@/types/wellbeing";
 import type { WellbeingEntry } from "@/types/wellbeing";
 
 const MAX_ENTRIES_PER_DAY = 48;
@@ -42,7 +43,7 @@ export async function createWellbeingEntry(
 
   if (error) return { error: error.message };
   revalidatePath("/dashboard", "layout");
-  return { data: data as WellbeingEntry };
+  return { data: WellbeingEntrySchema.parse(data) };
 }
 
 export async function getTodaysLatestEntry(): Promise<{
@@ -64,7 +65,7 @@ export async function getTodaysLatestEntry(): Promise<{
     .maybeSingle();
 
   if (error) return { error: error.message };
-  return { data: data as WellbeingEntry | null };
+  return { data: WellbeingEntrySchema.nullable().parse(data) };
 }
 
 export async function getWellbeingHistory(
@@ -85,5 +86,5 @@ export async function getWellbeingHistory(
     .order("created_at", { ascending: true });
 
   if (error) return { error: error.message };
-  return { data: (data ?? []) as WellbeingEntry[] };
+  return { data: z.array(WellbeingEntrySchema).parse(data ?? []) };
 }

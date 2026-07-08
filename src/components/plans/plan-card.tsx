@@ -43,7 +43,7 @@ export function PlanCard({ plan, onSelect, onDelete }: PlanCardProps) {
     >
       {/* Left accent bar */}
       <div
-        className="absolute inset-y-0 left-0 w-1 rounded-l-xl"
+        className="absolute inset-y-0 left-0 w-1 rounded-l-xl dark:brightness-75"
         style={{ backgroundColor: color }}
       />
 

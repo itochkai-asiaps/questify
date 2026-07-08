@@ -320,7 +320,7 @@ export default function PlanDetailPage() {
                   animate={item.completed ? "checked" : "unchecked"}
                   onClick={() => handleToggle(item.id)}
                   disabled={togglingItems.has(item.id)}
-                  className={`flex size-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${
+                  className={`flex size-5 shrink-0 items-center justify-center rounded border-2 transition-colors dark:brightness-75 ${
                     item.completed
                       ? "border-transparent text-white"
                       : "border-muted-foreground/30 text-transparent hover:border-muted-foreground/50"
@@ -395,6 +395,7 @@ export default function PlanDetailPage() {
           type="submit"
           size="icon-sm"
           disabled={isAddingItem || !newItemTitle.trim()}
+          className="dark:brightness-75"
           style={{ backgroundColor: planColor, borderColor: planColor }}
         >
           {isAddingItem ? (

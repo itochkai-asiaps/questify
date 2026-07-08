@@ -211,7 +211,7 @@ export function PlanForm({ mode, planId, defaultValues }: PlanFormProps) {
       <Button
         type="submit"
         disabled={isSubmitting || !title.trim()}
-        className="w-full"
+        className="w-full dark:brightness-75"
         style={{ backgroundColor: color, borderColor: color }}
       >
         {isSubmitting ? (

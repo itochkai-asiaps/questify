@@ -31,7 +31,7 @@ export function PlanProgressBar({
     <div className={cn("flex items-center gap-3", className)}>
       <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
         <motion.div
-          className="h-full rounded-full"
+          className="h-full rounded-full dark:brightness-75"
           style={{ backgroundColor: color }}
           initial={{ width: 0 }}
           animate={{ width: `${animatedWidth}%` }}

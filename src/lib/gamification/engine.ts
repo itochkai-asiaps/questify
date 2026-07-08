@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod/v4";
 import { createClient } from "@/lib/supabase/server";
 import { TaskPriority } from "@/types/task";
 import {
@@ -394,7 +395,7 @@ export async function getOrCreateUserStats(
     .single();
 
   if (data) {
-    return mapStatsRow(data);
+    return UserStatsSchema.parse(data);
   }
 
   // Create if missing
@@ -410,24 +411,33 @@ export async function getOrCreateUserStats(
     );
   }
 
-  return mapStatsRow(inserted);
+  return UserStatsSchema.parse(inserted);
 }
 
 // ---------------------------------------------------------------------------
-// Internal helpers
+// Schemas
 // ---------------------------------------------------------------------------
 
-function mapStatsRow(row: Record<string, unknown>): UserStatsRow {
-  return {
-    id: row.id as string,
-    userId: row.user_id as string,
-    totalXp: row.total_xp as number,
-    level: row.level as number,
-    currentStreak: row.current_streak as number,
-    longestStreak: row.longest_streak as number,
-    lastCompletedDate: (row.last_completed_date as string) ?? null,
-    tasksCompleted: row.tasks_completed as number,
-    plansCompleted: row.plans_completed as number,
-    updatedAt: row.updated_at as string,
-  };
-}
+const UserStatsSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  total_xp: z.number(),
+  level: z.number(),
+  current_streak: z.number(),
+  longest_streak: z.number(),
+  last_completed_date: z.string().nullable(),
+  tasks_completed: z.number(),
+  plans_completed: z.number(),
+  updated_at: z.string(),
+}).transform((data) => ({
+  id: data.id,
+  userId: data.user_id,
+  totalXp: data.total_xp,
+  level: data.level,
+  currentStreak: data.current_streak,
+  longestStreak: data.longest_streak,
+  lastCompletedDate: data.last_completed_date,
+  tasksCompleted: data.tasks_completed,
+  plansCompleted: data.plans_completed,
+  updatedAt: data.updated_at,
+}));

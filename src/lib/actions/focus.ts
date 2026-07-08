@@ -1,7 +1,12 @@
 "use server";
 
+import { z } from "zod/v4";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/requireUser";
+
+const TaskTitleSchema = z.object({ title: z.string() });
+
+const SetFocusResultSchema = z.object({ task_id: z.string().uuid() });
 
 export async function getFocusTask(): Promise<{
   data?: { task_id: string; task_title?: string } | null;
@@ -21,8 +26,8 @@ export async function getFocusTask(): Promise<{
 
   // Extract title from nested join result
   const taskTitle = Array.isArray(focus.tasks)
-    ? (focus.tasks[0] as { title: string })?.title
-    : (focus.tasks as unknown as { title: string })?.title;
+    ? TaskTitleSchema.parse(focus.tasks[0]).title
+    : TaskTitleSchema.parse(focus.tasks).title;
 
   return { data: { task_id: focus.task_id, task_title: taskTitle } };
 }
@@ -41,7 +46,7 @@ export async function setFocusTask(
 
   if (error) return { error: error.message };
   revalidatePath("/dashboard", "layout");
-  return { data: data as { task_id: string } };
+  return { data: SetFocusResultSchema.parse(data) };
 }
 
 export async function clearFocusTask(): Promise<{

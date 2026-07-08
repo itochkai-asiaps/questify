@@ -66,7 +66,7 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 ## Текущие задачи
 - 🔴 #1: GitHub PAT — создать токен, добавить в Secrets
 - 🔴 #2: DeepSeek API-ключ — получить для OMA-агентов
-- 🟡 Рефакторинг — Stage 1-3 done (CRITICAL + MAJOR), Stage 4 (MINOR) pending
+- ✅ Рефакторинг — Stages 1-4 done (9 CRITICAL + 6 MAJOR + 4 MINOR fixes)
 - 🟡 D7: Draggable Backlog/Todo разделитель с сохранением previous_status
 - 🟡 E0: Быстродействие дашборда (RPC get_dashboard_data, < 500ms)
 
@@ -141,6 +141,14 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 - XP_REWARDS теперь единый источник в levels.ts (импортируется tasks, plans, conversions)
 - Stale closures в D&D: refs + useCallback с пустыми deps
 
+#### Stage 4 — MINOR-фиксы
+- ✅ `as`-касты → Zod.parse() на query results (focus, wellbeing, kanban-columns, engine, seed)
+- ✅ `WITH CHECK` в RLS-политиках (миграция 00012, 11 таблиц)
+- ✅ Zustand persist middleware — сессия переживает refresh
+- ✅ lastUserId race fix — updateCounter вместо ref-сравнения
+- ✅ signOut wrapper — очистка client state перед serverSignOut
+- ✅ Dark-theme план-цвета — `brightness-75` на цветных элементах
+
 ### Блок D — D6, ревью, тулинг (сессия 2026-07-08, часть 2)
 
 #### D6 завершён
@@ -189,6 +197,8 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 | 0009 | mood_score_0_100 | ✅ | ⬜ |
 | 0010 | normalize_task_ordering | ⏳ | ⬜ |
 | 0011 | telegram_chats_rls | ⬜ | ⬜ |
+| 0012 | with_check_rls | ⬜ | ⬜ |
+| 0012 | with_check_rls | ⬜ | ⬜ |
 
 ## Планы и требования
 - `.omo/plans/roadmap.md`
