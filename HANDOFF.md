@@ -113,10 +113,10 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 | 0003 | type колонка ideas | ✅ | ✅ |
 | 0004 | kanban_columns | ✅ | ✅ |
 | 0005 | fix tasks_completed | ✅ | ✅ |
-| 0006 | backlog_status | ⏳ | ⬜ |
-| 0007 | wellbeing_entries | ⏳ | ⬜ |
-| 0008 | focus_tasks | ⏳ | ⬜ |
-| 0009 | mood_score_0_100 | ⏳ | ⬜ |
+| 0006 | backlog_status | ✅ | ⬜ |
+| 0007 | wellbeing_entries | ✅ | ⬜ |
+| 0008 | focus_tasks | ✅ | ⬜ |
+| 0009 | mood_score_0_100 | ✅ | ⬜ |
 
 ## Планы и требования
 - `.omo/plans/roadmap.md`
