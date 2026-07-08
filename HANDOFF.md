@@ -55,7 +55,8 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 | L — Интеграции | ⬜ Telegram-создание, Google Calendar |
 | M — AI (post-MVP) | ⬜ Декомпозиция, приоритизация, рефлексия |
 | N — Комментарии | ⬜ |
-| O — Тематические флоу | ⬜ Sci-Fi dev-flow, Fantasy, фидбек |
+| O — Тематические флоу | ⬜ Sci-Fi dev-flow (+O2e аналитика), Fantasy, фидбек |
+| P — Тестовое покрытие | 🟡 P0 done (setupFiles), P1-P7 pending |
 | Z — Неразвитые идеи | ⬜ Квесты, вебхуки, Pomodoro, S3 |
 
 ## Тесты
@@ -71,40 +72,43 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 
 ## Последние изменения (сессия 2026-07-08)
 
-### Блок D — Kanban (добивка)
-- ✅ D6: drag-to-reorder — вертикальный D&D в Tasks (два SortableContext: active + backlog, confirmation при cross-section) и Kanban (кастомный collisionDetection, intra-column position). Два поля: `sort_order` (Tasks) и `position` (Kanban). Миграция 00010: нормализация + RPC `reorder_tasks` + индексы.
-- ✅ D2: инлайн-создание в первой колонке (Enter → создано, Loader2)
-- ✅ D3: Backlog — статус `backlog`, виртуальная колонка с тогглом, D&D в/из backlog
-- ✅ D5: разделитель «Backlog / Todo» в Tasks
+### Воркфлоу и процесс (OMO-апгрейд)
+- ✅ AGENTS.md: полный конвейер `ulw → metis → hyperplan → momus → prometheus → /start-work`
+- ✅ AGENTS.md: Context7, /ralph-loop, /remove-ai-slops, /debugging в 3-fix-stop
+- ✅ AGENTS.md: HANDOFF → анализ стиля работы с блоком «Рекомендации по процессу»
+- ✅ roadmap.md: 3 режима сессии (☕ 30мин / 🔧 1-2ч / ⚡ 3+ч марафон)
+- ✅ roadmap.md: старт/финиш ритуалы, таблица частотности агентов, антипаттерны
+- ✅ roadmap.md: O2e — тема «Оптимизация работы» в Sci-Fi dev-флоу
+- ✅ roadmap.md: еженедельный аудит процесса (статистика + внешние рекомендации)
+- ✅ roadmap.md: Block P (тестовое покрытие P0-P7)
 
-### Блок E — Дашборд-центр
-- ✅ E2: быстрые действия (+Task/+Idea/+Plan с мини-диалогом)
-- ✅ E3: HP-бар сердце — курсорный трекинг, 20 зон по 5%, градиент жёлтый→красный, без диалогов, безлимитные записи (≤48/день), шкала 0-100, заметка после клика (таймер паузится при фокусе)
-- ✅ E3: график настроения — смайлики под днями, avg /100, тренд ↑↓→
-- ✅ E4: фокус-задача — комбо-сортировка шортлиста (P1 сегодня→P1 без→P2 сегодня→...), `/focus` с таймером 15/25/45/60 мин
+### Инфраструктура тестов
+- ✅ vitest.config.ts: `setupFiles: ["./tests/unit/setup.ts"]`
+- ✅ tests/unit/setup.ts: глобальные моки `@supabase/ssr`, `next/headers`, `next/cache` (59/59 ✅)
 
-### Бэкапы
-- ✅ AWS CLI v2 (совместимость с ubuntu 24.04)
-- ✅ Убран AWS S3 (не настроен), только Yandex Object Storage
-- ✅ Защита от каскадной очистки: < 7 prod / < 2 staging файлов → skip
-- ✅ Еженедельный бэкап staging БД
-
-### Багфиксы
-- ✅ Ideas: кнопки действий и теги поменяны местами
-- ✅ Kanban: TouchSensor отключён на мобилке → Z6
-- ✅ Mood chart: Card overflow-visible, SVG-кружки убраны
-- ✅ Backup CI: починена установка AWS CLI
-
-### Роадмап
-- ✅ Блок N (Комментарии N1-N4)
-- ✅ Блок Z: Z3-Z6 добавлены
+### Кастомные скиллы OMO
+- ✅ `supabase-migration` — правила идемпотентных миграций (IF NOT EXISTS, DO $$, RLS)
+- ✅ `questify-deploy` — commit → push staging workflow, pre-commit checklist
 
 ### Важные решения
-- Дневник: безлимитные записи (48/день), шкала 0-100, HP-бар без диалогов
-- Фокус: отдельная страница `/focus`, MVP без записи сессий
-- Kanban mobile D&D: отключён до переработки
-- Правило: 3 фейла с визуальным багом → предлагать DevTools, не гадать
-- HANDOFF.md в корне репо (не на десктопе), коммитится в git
+- Режим сессии — под окно возможностей (короткая/нормальная/марафон)
+- hyperplan/momus — только марафон, не каждая сессия (дорого для пет-проекта)
+- Финиш сессии ОБЯЗАТЕЛЕН: HANDOFF + commit + push (через 3 дня теряется контекст)
+- Еженедельный аудит: git-статистика + librarian (новые фичи OMO, модели, скиллы)
+- Коммит `c1aa545` — все изменения воркфлоу
+
+### Рекомендации по процессу (анализ сессии)
+
+> Сессия: 2026-07-08. Характер: чистый воркфлоу (документация + инфраструктура), 0 строк production-кода.
+
+| Метрика | Значение |
+|---|---|
+| Коммитов | 1 (c1aa545) |
+| fix:feat | N/A (нет production-изменений) |
+| Гейты пройдены | Lefthook (type-check + lint), vitest 59/59 |
+| Пропущено | Ничего |
+
+**Рекомендация на следующую сессию:** начать с P1 (engine.ts тесты) — setupFiles готов, моки работают, можно сразу в TDD. Промпт: `"ulw deep: напиши тесты для lib/gamification/engine.ts — awardXp, completeTask с моком Supabase"`
 
 ## Миграции
 
@@ -128,15 +132,15 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 - `.omo/requirements/block-c-connect-entities.md`
 
 ## Ключевые файлы
+- `AGENTS.md` — обновлённый agent workflow (ulw, metis→momus→prometheus, гейты)
+- `.omo/plans/roadmap.md` — 3 режима сессии, Block P (тесты), еженедельный аудит
+- `tests/unit/setup.ts` — глобальные моки Supabase + Next.js для TDD
+- `vitest.config.ts` — setupFiles → ./tests/unit/setup.ts
+- `~/.config/opencode/skills/supabase-migration/SKILL.md` — правила миграций
+- `~/.config/opencode/skills/questify-deploy/SKILL.md` — commit/push workflow
 - `src/hooks/useAuth.ts` — lastUserId ref (не дёргает setUser при TOKEN_REFRESHED)
 - `src/lib/actions/tasks.ts` — updateTask вызывает completeTask
 - `src/lib/actions/plans.ts` — togglePlanItem вызывает awardXp
-- `src/lib/actions/ideas.ts` — createIdea (type), toggleIdeaType
-- `src/lib/actions/seed.ts` — seedRoadmap (31 задача из роадмапа)
 - `src/lib/gamification/engine.ts` — awardXp, completeTask, achievements
 - `src/lib/gamification/levels.ts` — XP_REWARDS, уровни, xpForPriority
-- `src/app/(app)/ideas/page.tsx` — problem cards (orange/purple)
-- `src/app/(app)/profile/page.tsx` — Settings: тема + Seed кнопка + версия
-- `src/app/layout.tsx` — ThemeProvider (defaultTheme="system")
-- `src/components/staging-banner.tsx` — версия в углу (click-to-copy)
 - `HANDOFF.md` — этот файл в корне проекта
