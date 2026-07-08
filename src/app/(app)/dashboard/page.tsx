@@ -25,7 +25,12 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
-import { createClient } from "@/lib/supabase/client";
+import {
+  getAchievements,
+  getOrCreateUserStats,
+} from "@/lib/gamification/engine";
+import { getTasks } from "@/lib/actions/tasks";
+import { getPlans } from "@/lib/actions/plans";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -64,26 +69,6 @@ type PlanItem = {
   completed: number;
   progress: number;
 };
-
-/** Raw shape returned by get_dashboard_data RPC (snake_case from JSONB). */
-interface RawDashboardRpc {
-  stats: {
-    total_xp: number;
-    current_streak: number;
-    tasks_completed: number;
-  };
-  tasks: TaskItem[];
-  plans: PlanItem[];
-  achievements: Array<{
-    slug: string;
-    title: string;
-    description: string;
-    icon_url: string | null;
-    xp_reward: number;
-    unlocked: boolean;
-    unlocked_at: string | null;
-  }>;
-}
 
 type DashboardData = {
   stats: UserStatsRow;
@@ -569,46 +554,35 @@ export default function DashboardPage() {
     setError(null);
 
     try {
-      const supabase = createClient();
-      const { data: dashboardData, error: dashboardError } = await supabase
-        .rpc("get_dashboard_data", { p_user_id: user.id })
-        .single();
+      const [stats, tasksResult, plansResult, achievements] =
+        await Promise.all([
+          getOrCreateUserStats(user.id),
+          getTasks(),
+          getPlans(),
+          getAchievements(user.id),
+        ]);
 
-      if (dashboardError) throw new Error(dashboardError.message);
-      if (!dashboardData) throw new Error("No dashboard data returned");
+      const tasks = (tasksResult.data ?? []) as TaskItem[];
+      const plansData = (plansResult.data ?? []) as Array<{ id: string; title: string; items?: Array<{ completed: boolean }> }>;
 
-      const raw = dashboardData as unknown as RawDashboardRpc;
+      // Compute plan progress client-side
+      const plans: PlanItem[] = plansData.map((p) => {
+        const items = p.items ?? [];
+        const total = items.length;
+        const completed = items.filter((i) => i.completed).length;
+        const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+        return {
+          id: p.id,
+          title: p.title,
+          total,
+          completed,
+          progress,
+        };
+      });
 
-      // Map snake_case (RPC) → camelCase (component props)
-      const stats: UserStatsRow = {
-        id: "",
-        userId: user.id,
-        totalXp: raw.stats.total_xp,
-        level: 0,
-        currentStreak: raw.stats.current_streak,
-        longestStreak: 0,
-        lastCompletedDate: null,
-        tasksCompleted: raw.stats.tasks_completed,
-        plansCompleted: 0,
-        updatedAt: "",
-      };
+      const achievementsList = achievements as AchievementWithStatus[];
 
-      const tasks = raw.tasks;
-      const plans = raw.plans;
-
-      const achievements: AchievementWithStatus[] = raw.achievements.map(
-        (a) => ({
-          slug: a.slug,
-          title: a.title,
-          description: a.description,
-          iconUrl: a.icon_url,
-          xpReward: a.xp_reward,
-          unlocked: a.unlocked,
-          unlockedAt: a.unlocked_at,
-        }),
-      );
-
-      setData({ stats, tasks, plans, achievements });
+      setData({ stats, tasks, plans, achievements: achievementsList });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load dashboard");
     } finally {
