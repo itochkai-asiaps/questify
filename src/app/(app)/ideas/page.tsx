@@ -340,7 +340,67 @@ export default function IdeasPage() {
                   "group hover:ring-1 hover:ring-primary/20 transition-shadow",
                   idea.type === "problem" && "border-orange-500/20 bg-orange-500/10 dark:border-purple-400/30 dark:bg-purple-500/15"
                 )}>
-                  <CardHeader className="pb-2">
+                  <CardHeader className="pb-2 relative">
+                    {/* Mobile dropdown — top-right corner, hidden on desktop */}
+                    <div className="absolute top-3 right-3 md:hidden z-10">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="More actions"><MoreHorizontal className="size-4" /></Button>} />
+                        <DropdownMenuContent align="end" sideOffset={4}>
+                          <DropdownMenuItem
+                            onClick={async () => {
+                              const r = await convertIdeaToTask(idea.id);
+                              if (r.error) toast.error(r.error);
+                              else { toast.success("Converted to Task"); setIdeas((p) => p.filter((i) => i.id !== idea.id)); }
+                            }}
+                          >
+                            →T Convert to Task
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={async () => {
+                              const r = await convertIdeaToPlan(idea.id);
+                              if (r.error) toast.error(r.error);
+                              else { toast.success("Converted to Plan"); setIdeas((p) => p.filter((i) => i.id !== idea.id)); }
+                            }}
+                          >
+                            →P Convert to Plan
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={async () => {
+                              const result = await toggleIdeaType(idea.id);
+                              if (!result.error) {
+                                setIdeas((prev) =>
+                                  prev.map((i) =>
+                                    i.id === idea.id
+                                      ? { ...i, type: i.type === "idea" ? "problem" : "idea" as "idea" | "problem" }
+                                      : i,
+                                  ),
+                                );
+                              }
+                            }}
+                          >
+                            {idea.type === "idea" ? (
+                              <AlertTriangle className="size-3.5 text-orange-500" />
+                            ) : (
+                              <Lightbulb className="size-3.5 text-yellow-500" />
+                            )}
+                            Toggle to {idea.type === "idea" ? "Problem" : "Idea"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => handleDelete(idea.id)}
+                            disabled={deletingId === idea.id}
+                          >
+                            {deletingId === idea.id ? (
+                              <Loader2 className="size-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="size-3.5" />
+                            )}
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
                     <div className="flex flex-col gap-2">
                       <CardTitle className="text-base line-clamp-3">{idea.title}</CardTitle>
                       <div className="flex items-center justify-end gap-1.5">
@@ -412,67 +472,7 @@ export default function IdeasPage() {
                           </Button>
                         </div>
 
-                        {/* Mobile: dropdown menu — hidden on desktop */}
-                        <div className="flex md:hidden">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="More actions"><MoreHorizontal className="size-4" /></Button>} />
-                            <DropdownMenuContent align="end" sideOffset={4}>
-                              <DropdownMenuItem
-                                onClick={async () => {
-                                  const r = await convertIdeaToTask(idea.id);
-                                  if (r.error) toast.error(r.error);
-                                  else { toast.success("Converted to Task"); setIdeas((p) => p.filter((i) => i.id !== idea.id)); }
-                                }}
-                              >
-                                →T Convert to Task
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={async () => {
-                                  const r = await convertIdeaToPlan(idea.id);
-                                  if (r.error) toast.error(r.error);
-                                  else { toast.success("Converted to Plan"); setIdeas((p) => p.filter((i) => i.id !== idea.id)); }
-                                }}
-                              >
-                                →P Convert to Plan
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={async () => {
-                                  const result = await toggleIdeaType(idea.id);
-                                  if (!result.error) {
-                                    setIdeas((prev) =>
-                                      prev.map((i) =>
-                                        i.id === idea.id
-                                          ? { ...i, type: i.type === "idea" ? "problem" : "idea" as "idea" | "problem" }
-                                          : i,
-                                      ),
-                                    );
-                                  }
-                                }}
-                              >
-                                {idea.type === "idea" ? (
-                                  <AlertTriangle className="size-3.5 text-orange-500" />
-                                ) : (
-                                  <Lightbulb className="size-3.5 text-yellow-500" />
-                                )}
-                                Toggle to {idea.type === "idea" ? "Problem" : "Idea"}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                variant="destructive"
-                                onClick={() => handleDelete(idea.id)}
-                                disabled={deletingId === idea.id}
-                              >
-                                {deletingId === idea.id ? (
-                                  <Loader2 className="size-3.5 animate-spin" />
-                                ) : (
-                                  <Trash2 className="size-3.5" />
-                                )}
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-
-                        {/* Tags — always visible, anchor the row */}
+                        {/* Tags — always visible */}
                         <Badge variant={TYPE_BADGE[idea.type].variant} className={TYPE_BADGE[idea.type].className}>
                           {TYPE_BADGE[idea.type].label}
                         </Badge>
