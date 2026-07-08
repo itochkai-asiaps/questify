@@ -64,8 +64,8 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 - E2E: 18/18 ✅ (`npx playwright test`)
 
 ## Текущие задачи
-- 🔴 #1: GitHub PAT — создать токен, добавить в Secrets
-- 🔴 #2: DeepSeek API-ключ — получить для OMA-агентов
+- ✅ #1: GitHub PAT — создан, добавлен в Secrets
+- ✅ #2: DeepSeek API-ключ — получен, настроен для OMA-агентов
 - ✅ Рефакторинг — Stages 1-4 done (9 CRITICAL + 6 MAJOR + 4 MINOR fixes)
 - 🟡 D7: Draggable Backlog/Todo разделитель с сохранением previous_status
 - 🟡 E0: Быстродействие дашборда (RPC get_dashboard_data, < 500ms)
