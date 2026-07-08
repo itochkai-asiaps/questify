@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, Lightbulb, Loader2, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Lightbulb, Loader2, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -338,71 +344,134 @@ export default function IdeasPage() {
                     <div className="flex flex-col gap-2">
                       <CardTitle className="text-base line-clamp-3">{idea.title}</CardTitle>
                       <div className="flex items-center justify-end gap-1.5">
-                        {/* Quick actions — hidden on desktop, visible on hover */}
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={async () => {
-                            const r = await convertIdeaToTask(idea.id);
-                            if (r.error) toast.error(r.error);
-                            else { toast.success("Converted to Task"); setIdeas((p) => p.filter((i) => i.id !== idea.id)); }
-                          }}
-                          aria-label="Convert to task"
-                          className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity text-[10px] font-bold px-1"
-                        >
-                          →T
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={async () => {
-                            const r = await convertIdeaToPlan(idea.id);
-                            if (r.error) toast.error(r.error);
-                            else { toast.success("Converted to Plan"); setIdeas((p) => p.filter((i) => i.id !== idea.id)); }
-                          }}
-                          aria-label="Convert to plan"
-                          className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity text-[10px] font-bold px-1"
-                        >
-                          →P
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={async () => {
-                            const result = await toggleIdeaType(idea.id);
-                            if (!result.error) {
-                              setIdeas((prev) =>
-                                prev.map((i) =>
-                                  i.id === idea.id
-                                    ? { ...i, type: i.type === "idea" ? "problem" : "idea" as "idea" | "problem" }
-                                    : i,
-                                ),
-                              );
-                            }
-                          }}
-                          aria-label="Toggle type"
-                          className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity"
-                        >
-                          {idea.type === "idea" ? (
-                            <AlertTriangle className="size-3.5 text-orange-500" />
-                          ) : (
-                            <Lightbulb className="size-3.5 text-yellow-500" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => handleDelete(idea.id)}
-                          disabled={deletingId === idea.id}
-                          aria-label="Delete idea"
-                          className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity"
-                        >
-                          {deletingId === idea.id ? (
-                            <Loader2 className="size-3.5 animate-spin" />
-                          ) : (
-                            <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
-                          )}
-                        </Button>
+                        {/* Desktop: action buttons row — hidden on mobile */}
+                        <div className="hidden md:flex items-center gap-1.5">
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={async () => {
+                              const r = await convertIdeaToTask(idea.id);
+                              if (r.error) toast.error(r.error);
+                              else { toast.success("Converted to Task"); setIdeas((p) => p.filter((i) => i.id !== idea.id)); }
+                            }}
+                            aria-label="Convert to task"
+                            className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity text-[10px] font-bold px-1"
+                          >
+                            →T
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={async () => {
+                              const r = await convertIdeaToPlan(idea.id);
+                              if (r.error) toast.error(r.error);
+                              else { toast.success("Converted to Plan"); setIdeas((p) => p.filter((i) => i.id !== idea.id)); }
+                            }}
+                            aria-label="Convert to plan"
+                            className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity text-[10px] font-bold px-1"
+                          >
+                            →P
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={async () => {
+                              const result = await toggleIdeaType(idea.id);
+                              if (!result.error) {
+                                setIdeas((prev) =>
+                                  prev.map((i) =>
+                                    i.id === idea.id
+                                      ? { ...i, type: i.type === "idea" ? "problem" : "idea" as "idea" | "problem" }
+                                      : i,
+                                  ),
+                                );
+                              }
+                            }}
+                            aria-label="Toggle type"
+                            className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity"
+                          >
+                            {idea.type === "idea" ? (
+                              <AlertTriangle className="size-3.5 text-orange-500" />
+                            ) : (
+                              <Lightbulb className="size-3.5 text-yellow-500" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => handleDelete(idea.id)}
+                            disabled={deletingId === idea.id}
+                            aria-label="Delete idea"
+                            className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity"
+                          >
+                            {deletingId === idea.id ? (
+                              <Loader2 className="size-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
+                            )}
+                          </Button>
+                        </div>
+
+                        {/* Mobile: dropdown menu — hidden on desktop */}
+                        <div className="flex md:hidden">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="More actions"><MoreHorizontal className="size-4" /></Button>} />
+                            <DropdownMenuContent align="end" sideOffset={4}>
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  const r = await convertIdeaToTask(idea.id);
+                                  if (r.error) toast.error(r.error);
+                                  else { toast.success("Converted to Task"); setIdeas((p) => p.filter((i) => i.id !== idea.id)); }
+                                }}
+                              >
+                                →T Convert to Task
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  const r = await convertIdeaToPlan(idea.id);
+                                  if (r.error) toast.error(r.error);
+                                  else { toast.success("Converted to Plan"); setIdeas((p) => p.filter((i) => i.id !== idea.id)); }
+                                }}
+                              >
+                                →P Convert to Plan
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  const result = await toggleIdeaType(idea.id);
+                                  if (!result.error) {
+                                    setIdeas((prev) =>
+                                      prev.map((i) =>
+                                        i.id === idea.id
+                                          ? { ...i, type: i.type === "idea" ? "problem" : "idea" as "idea" | "problem" }
+                                          : i,
+                                      ),
+                                    );
+                                  }
+                                }}
+                              >
+                                {idea.type === "idea" ? (
+                                  <AlertTriangle className="size-3.5 text-orange-500" />
+                                ) : (
+                                  <Lightbulb className="size-3.5 text-yellow-500" />
+                                )}
+                                Toggle to {idea.type === "idea" ? "Problem" : "Idea"}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => handleDelete(idea.id)}
+                                disabled={deletingId === idea.id}
+                              >
+                                {deletingId === idea.id ? (
+                                  <Loader2 className="size-3.5 animate-spin" />
+                                ) : (
+                                  <Trash2 className="size-3.5" />
+                                )}
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+
                         {/* Tags — always visible, anchor the row */}
                         <Badge variant={TYPE_BADGE[idea.type].variant} className={TYPE_BADGE[idea.type].className}>
                           {TYPE_BADGE[idea.type].label}

@@ -283,6 +283,36 @@ export default function TasksPage() {
     }
   }, [fetchTasks]);
 
+  // Move a task one position up/down (mobile arrow buttons)
+  const handleMoveTask = useCallback((taskId: string, direction: "up" | "down") => {
+    setTasks((prev) => {
+      // Find the task in the current list
+      const idx = prev.findIndex((t) => t.id === taskId);
+      if (idx === -1) return prev;
+
+      const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= prev.length) return prev;
+
+      // Swap sort_order with the adjacent task
+      const updated = [...prev];
+      const taskA = { ...updated[idx] };
+      const taskB = { ...updated[targetIdx] };
+      const tempOrder = taskA.sort_order;
+      taskA.sort_order = taskB.sort_order;
+      taskB.sort_order = tempOrder;
+      updated[idx] = taskA;
+      updated[targetIdx] = taskB;
+
+      // Persist the new order
+      const sectionTasks = updated
+        .filter((t) => t.status === taskA.status)
+        .sort((a, b) => a.sort_order - b.sort_order);
+      persistReorder(sectionTasks);
+
+      return updated;
+    });
+  }, [persistReorder]);
+
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
       const { active, over } = event;
@@ -632,6 +662,8 @@ export default function TasksPage() {
                         onSelect={loadSelectedTask}
                         isSelected={selectedTaskId === task.id}
                         onDelete={fetchTasks}
+                        onMoveUp={() => handleMoveTask(task.id, "up")}
+                        onMoveDown={() => handleMoveTask(task.id, "down")}
                       />
                     ))}
                   </SortableContext>
@@ -665,6 +697,8 @@ export default function TasksPage() {
                         onSelect={loadSelectedTask}
                         isSelected={selectedTaskId === task.id}
                         onDelete={fetchTasks}
+                        onMoveUp={() => handleMoveTask(task.id, "up")}
+                        onMoveDown={() => handleMoveTask(task.id, "down")}
                       />
                     ))}
                   </SortableContext>
