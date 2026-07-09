@@ -41,8 +41,10 @@ export async function createWellbeingEntry(
     .single();
 
   if (error) return { error: error.message };
+  const entryParsed = WellbeingEntrySchema.safeParse(data);
+  if (!entryParsed.success) return { error: entryParsed.error.issues[0]?.message ?? "Invalid entry data" };
   revalidatePath("/dashboard", "layout");
-  return { data: WellbeingEntrySchema.parse(data) };
+  return { data: entryParsed.data };
 }
 
 export async function getTodaysLatestEntry(): Promise<{
@@ -64,7 +66,9 @@ export async function getTodaysLatestEntry(): Promise<{
     .maybeSingle();
 
   if (error) return { error: error.message };
-  return { data: WellbeingEntrySchema.nullable().parse(data) };
+  const parsed = WellbeingEntrySchema.nullable().safeParse(data);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid entry data" };
+  return { data: parsed.data };
 }
 
 export async function getWellbeingHistory(
@@ -85,5 +89,7 @@ export async function getWellbeingHistory(
     .order("created_at", { ascending: true });
 
   if (error) return { error: error.message };
-  return { data: z.array(WellbeingEntrySchema).parse(data ?? []) };
+  const parsed = z.array(WellbeingEntrySchema).safeParse(data ?? []);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid history data" };
+  return { data: parsed.data };
 }
