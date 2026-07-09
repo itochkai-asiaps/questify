@@ -71,6 +71,7 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 - ✅ E0 — Быстродействие дашборда (RPC get_dashboard_data)
 - ✅ Блок P — тестовое покрытие (280 тестов, 10 файлов)
 - ⬜ Ручное тестирование по тест-плану (`.omo/plans/manual-qa-testplan.md`)
+- ⬜ Проверка Safari mobile: server actions → прямой Supabase client в wellbeing-компонентах
 - ⬜ Груминг: приоритезация оставшихся блоков (F, G, J, K, L, M, N, O, Z)
 - 🟡 E0: Быстродействие дашборда (RPC get_dashboard_data, < 500ms)
 
