@@ -14,6 +14,7 @@ export function WellbeingHeart() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [latestEntry, setLatestEntry] = useState<WellbeingEntry | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Post-save note input
   const [showNote, setShowNote] = useState(false);
@@ -25,12 +26,16 @@ export function WellbeingHeart() {
   const fetchLatest = useCallback(async () => {
     try {
       const result = await getTodaysLatestEntry();
-      if (result.data) {
+      if (result.error) {
+        setError(result.error);
+      } else if (result.data) {
         setLatestEntry(result.data);
         setSavedPct(result.data.mood_score);
+        setError(null);
       }
     } catch (e) {
       console.error("WellbeingHeart: failed to fetch latest entry", e);
+      setError("Failed to load mood");
     } finally {
       setLoading(false);
     }
@@ -71,10 +76,13 @@ export function WellbeingHeart() {
     setSaving(true);
     try {
       const result = await createWellbeingEntry(pct, note || undefined);
-      if (result.data) {
+      if (result.error) {
+        setError(result.error);
+      } else if (result.data) {
         setLatestEntry(result.data as WellbeingEntry);
         setSavedPct(pct);
         setHoverPct(null);
+        setError(null);
         // Show note input for 5 seconds (timer pauses while focused)
         setNote("");
         setNoteSaved(false);
@@ -85,6 +93,7 @@ export function WellbeingHeart() {
       }
     } catch (e) {
       console.error("WellbeingHeart: failed to save entry", e);
+      setError("Failed to save mood");
     } finally {
       setSaving(false);
     }
@@ -191,6 +200,8 @@ export function WellbeingHeart() {
       {/* Label */}
       {loading ? (
         <Loader2 className="mt-2 size-4 animate-spin text-muted-foreground" />
+      ) : error ? (
+        <span className="mt-2 text-xs font-medium text-destructive">{error}</span>
       ) : latestMood ? (
         <span className="mt-2 text-sm font-medium text-muted-foreground">
           {latestMood.emoji} {latestMood.label}

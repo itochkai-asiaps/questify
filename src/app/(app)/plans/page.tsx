@@ -30,6 +30,7 @@ export default function PlansPage() {
   const [plans, setPlans] = useState<PlanWithProgress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCompleted, setShowCompleted] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
     title: string;
@@ -83,6 +84,13 @@ export default function PlansPage() {
     setDeleteTarget(null);
   }, []);
 
+  // Filter: hide completed plans unless toggle is on
+  const visiblePlans = showCompleted
+    ? plans
+    : plans.filter((p) => p.total > 0 && p.progress < 100);
+
+  const completedCount = plans.filter((p) => p.total > 0 && p.progress >= 100).length;
+
   return (
     <div className="container mx-auto max-w-4xl p-6">
       {/* Header */}
@@ -93,10 +101,21 @@ export default function PlansPage() {
             Break down your goals into actionable steps.
           </p>
         </div>
-        <Button onClick={() => router.push("/plans/new")} size="lg">
-          <Plus className="size-4" />
-          New Plan
-        </Button>
+        <div className="flex items-center gap-3">
+          {completedCount > 0 && (
+            <Button
+              variant={showCompleted ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setShowCompleted((v) => !v)}
+            >
+              {showCompleted ? "Hide completed" : `Show completed (${completedCount})`}
+            </Button>
+          )}
+          <Button onClick={() => router.push("/plans/new")} size="lg">
+            <Plus className="size-4" />
+            New Plan
+          </Button>
+        </div>
       </div>
 
       {/* Error banner */}
@@ -119,7 +138,7 @@ export default function PlansPage() {
       )}
 
       {/* Empty state */}
-      {!isLoading && plans.length === 0 && (
+      {!isLoading && visiblePlans.length === 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -128,10 +147,13 @@ export default function PlansPage() {
           <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
             <ClipboardList className="size-8 text-muted-foreground" />
           </div>
-          <h2 className="text-lg font-semibold">No plans yet!</h2>
+          <h2 className="text-lg font-semibold">
+            {plans.length === 0 ? "No plans yet!" : "All plans completed!"}
+          </h2>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            Create your first plan to start breaking down your goals into
-            manageable steps.
+            {plans.length === 0
+              ? "Create your first plan to start breaking down your goals into manageable steps."
+              : `You have ${completedCount} completed plan${completedCount > 1 ? "s" : ""}. Toggle "Show completed" to see them.`}
           </p>
           <Button
             onClick={() => router.push("/plans/new")}
@@ -145,10 +167,10 @@ export default function PlansPage() {
       )}
 
       {/* Plan grid */}
-      {!isLoading && plans.length > 0 && (
+      {!isLoading && visiblePlans.length > 0 && (
         <motion.div layout className="grid gap-4 sm:grid-cols-2">
           <AnimatePresence mode="popLayout">
-            {plans.map((plan) => (
+            {visiblePlans.map((plan) => (
               <PlanCard
                 key={plan.id}
                 plan={plan}

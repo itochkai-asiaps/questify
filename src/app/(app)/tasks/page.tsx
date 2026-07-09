@@ -322,69 +322,56 @@ export default function TasksPage() {
       if (active.data.current?.type === "separator") {
         const overTaskId = String(over.id);
 
-        // Find the split index — all tasks at/before this index become active (todo)
-        // All tasks after become backlog
-        const allTaskIds = [
-          ...activeTasksRef.current.map((t) => t.id),
-          ...backlogTasksRef.current.map((t) => t.id),
+        // Build the combined ordered list from refs (active first, then backlog)
+        const allTasks = [
+          ...activeTasksRef.current,
+          ...backlogTasksRef.current,
         ];
-        const splitIndex = allTaskIds.indexOf(overTaskId);
+        const splitIndex = allTasks.findIndex((t) => t.id === overTaskId);
         if (splitIndex === -1) return;
 
-        // Build updates with previous_status management
+        // Walk through in original order, determine new status per task
+        // Push to newActive/newBacklog preserving relative position
         const updates: { taskId: string; newStatus: string; previousStatus?: string }[] = [];
+        const newActive: Task[] = [];
+        const newBacklog: Task[] = [];
 
-        for (let i = 0; i < allTaskIds.length; i++) {
-          const taskId = allTaskIds[i];
-          const task = [...activeTasksRef.current, ...backlogTasksRef.current].find((t) => t.id === taskId);
-          if (!task) continue;
+        for (let i = 0; i < allTasks.length; i++) {
+          const original = allTasks[i];
+          const desiredStatus = i <= splitIndex ? TaskStatus.Todo : TaskStatus.Backlog;
+          const task = { ...original };
 
-          const newStatus = i <= splitIndex ? TaskStatus.Todo : TaskStatus.Backlog;
-
-          if (task.status !== newStatus) {
+          if (original.status !== desiredStatus) {
             updates.push({
-              taskId,
-              newStatus,
-              previousStatus: newStatus === TaskStatus.Backlog ? task.status : undefined,
+              taskId: original.id,
+              newStatus: desiredStatus,
+              previousStatus: desiredStatus === TaskStatus.Backlog ? original.status : undefined,
             });
+
+            if (desiredStatus === TaskStatus.Backlog) {
+              task.status = TaskStatus.Backlog;
+              task.previous_status = original.status as TaskStatus;
+            } else {
+              // Restore previous_status or default to todo
+              task.status = (original.previous_status || TaskStatus.Todo) as TaskStatus;
+              task.previous_status = null;
+            }
+          }
+
+          if (task.status === TaskStatus.Backlog) {
+            newBacklog.push(task);
+          } else {
+            newActive.push(task);
           }
         }
 
         if (updates.length === 0) return;
 
-        // Optimistic UI update
-        const newActive = [...activeTasksRef.current];
-        const newBacklog = [...backlogTasksRef.current];
-
-        for (const update of updates) {
-          const task = [...newActive, ...newBacklog].find((t) => t.id === update.taskId);
-          if (!task) continue;
-
-          if (update.newStatus === TaskStatus.Backlog) {
-            // Move from active to backlog
-            const idx = newActive.indexOf(task);
-            if (idx !== -1) {
-              newActive.splice(idx, 1);
-              task.status = TaskStatus.Backlog;
-              if (update.previousStatus) task.previous_status = update.previousStatus as TaskStatus;
-              newBacklog.push(task);
-            }
-          } else {
-            // Move from backlog to active
-            const idx = newBacklog.indexOf(task);
-            if (idx !== -1) {
-              newBacklog.splice(idx, 1);
-              // Restore previous_status if available, else todo
-              task.status = (task.previous_status || TaskStatus.Todo) as TaskStatus;
-              task.previous_status = null;
-              newActive.push(task);
-            }
-          }
-        }
-
+        // Optimistic UI: replace affected tasks with reconstructed arrays
+        const affectedIds = new Set(allTasks.map((t) => t.id));
         setTasks((prev) => {
-          const nonMoving = prev.filter((t) => !updates.some((u) => u.taskId === t.id));
-          return [...nonMoving, ...newActive, ...newBacklog];
+          const unaffected = prev.filter((t) => !affectedIds.has(t.id));
+          return [...unaffected, ...newActive, ...newBacklog];
         });
 
         // Persist to server

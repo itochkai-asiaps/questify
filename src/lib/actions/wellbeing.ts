@@ -20,14 +20,13 @@ export async function createWellbeingEntry(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  // Check 48/day cap
-  const today = new Date().toISOString().split("T")[0];
+  // Check 48/day cap (24h sliding window — timezone-agnostic)
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const { count, error: countError } = await supabase
     .from("wellbeing_entries")
     .select("*", { count: "exact", head: true })
     .eq("user_id", user.id)
-    .gte("created_at", `${today}T00:00:00Z`)
-    .lte("created_at", `${today}T23:59:59Z`);
+    .gte("created_at", twentyFourHoursAgo);
 
   if (countError) return { error: countError.message };
   if (count !== null && count >= MAX_ENTRIES_PER_DAY) {
@@ -53,13 +52,13 @@ export async function getTodaysLatestEntry(): Promise<{
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Not authenticated" };
 
-  const today = new Date().toISOString().split("T")[0];
+  // 24h sliding window — timezone-agnostic (avoids UTC vs local date mismatch)
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const { data, error } = await supabase
     .from("wellbeing_entries")
     .select("*")
     .eq("user_id", user.id)
-    .gte("created_at", `${today}T00:00:00Z`)
-    .lte("created_at", `${today}T23:59:59Z`)
+    .gte("created_at", twentyFourHoursAgo)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
