@@ -21,13 +21,22 @@ jobs:
         env:
           PGPASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
         run: |
+          set -e
           FILE="questify-staging-$(date -u +%Y%m%d-%H%M).dump"
           echo "BACKUP_FILE=$FILE" >> $GITHUB_ENV
+          echo "::group::Dumping staging DB to $FILE"
           pg_dump \
             -h aws-1-ap-southeast-2.pooler.supabase.com -p 6543 \
             -U "postgres.irmihumjlbckwygtnvfi" -d postgres \
             --no-owner --no-acl -Fc \
             -f "$FILE"
+          SIZE=$(stat -c%s "$FILE" 2>/dev/null || echo 0)
+          echo "Dump size: ${SIZE} bytes"
+          if [ "$SIZE" -lt 1024 ]; then
+            echo "::error::Dump too small (${SIZE} bytes) — likely failed"
+            exit 1
+          fi
+          echo "::endgroup::"
 
       - name: Upload to Yandex Object Storage
         env:

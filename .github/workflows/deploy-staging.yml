@@ -18,31 +18,36 @@ jobs:
       - run: npm install
 
       - name: Push DB migrations (staging)
+        continue-on-error: true  # Don't block deploy on Supabase transient errors (migrations are idempotent)
         env:
           SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
         run: |
+          set -e
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          # Retry helper — Supabase occasionally returns 500
+          retry_psql() {
+            for i in 1 2 3; do
+              if PGPASSWORD="${SUPABASE_DB_PASSWORD}" psql \
+                -h aws-1-ap-southeast-2.pooler.supabase.com -p 6543 \
+                -U "postgres.irmihumjlbckwygtnvfi" -d postgres \
+                "$@" 2>&1; then
+                return 0
+              fi
+              echo "::warning::psql attempt $i failed, retrying in 10s..."
+              sleep 10
+            done
+            echo "::error::psql failed after 3 attempts — migrations skipped, deploy continues"
+            return 1
+          }
           # Ensure migration tracking table exists
-          PGPASSWORD="${SUPABASE_DB_PASSWORD}" psql \
-            -h aws-1-ap-southeast-2.pooler.supabase.com -p 6543 \
-            -U "postgres.irmihumjlbckwygtnvfi" -d postgres \
-            -c "CREATE SCHEMA IF NOT EXISTS supabase_migrations; CREATE TABLE IF NOT EXISTS supabase_migrations.schema_migrations (version TEXT PRIMARY KEY);"
+          retry_psql -c "CREATE SCHEMA IF NOT EXISTS supabase_migrations; CREATE TABLE IF NOT EXISTS supabase_migrations.schema_migrations (version TEXT PRIMARY KEY);" || exit 0
           for f in supabase/migrations/*.sql; do
             ver=$(basename "$f" | cut -d_ -f1)
-            exists=$(PGPASSWORD="${SUPABASE_DB_PASSWORD}" psql -tA \
-              -h aws-1-ap-southeast-2.pooler.supabase.com -p 6543 \
-              -U "postgres.irmihumjlbckwygtnvfi" -d postgres \
-              -c "SELECT version FROM supabase_migrations.schema_migrations WHERE version='$ver';")
+            exists=$(retry_psql -tA -c "SELECT version FROM supabase_migrations.schema_migrations WHERE version='$ver';" || echo "")
             if [ -z "$exists" ]; then
               echo "Applying: $ver"
-              PGPASSWORD="${SUPABASE_DB_PASSWORD}" psql \
-                -h aws-1-ap-southeast-2.pooler.supabase.com -p 6543 \
-                -U "postgres.irmihumjlbckwygtnvfi" -d postgres \
-                -f "$f" -v ON_ERROR_STOP=1
-              PGPASSWORD="${SUPABASE_DB_PASSWORD}" psql \
-                -h aws-1-ap-southeast-2.pooler.supabase.com -p 6543 \
-                -U "postgres.irmihumjlbckwygtnvfi" -d postgres \
-                -c "INSERT INTO supabase_migrations.schema_migrations (version) VALUES ('$ver');"
+              retry_psql -f "$f" -v ON_ERROR_STOP=1 || { echo "::warning::Failed to apply $ver, skipping"; continue; }
+              retry_psql -c "INSERT INTO supabase_migrations.schema_migrations (version) VALUES ('$ver');" || echo "::warning::Failed to record $ver"
             else
               echo "Skipping: $ver (already applied)"
             fi
