@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import Link from "next/link";
-import { Calendar, GripVertical } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, GripVertical } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,9 +22,13 @@ const PRIORITY_CONFIG: Record<
 
 interface KanbanCardProps {
   task: Task;
+  onMoveLeft?: () => void;
+  onMoveRight?: () => void;
+  canMoveLeft?: boolean;
+  canMoveRight?: boolean;
 }
 
-export function KanbanCard({ task }: KanbanCardProps) {
+export function KanbanCard({ task, onMoveLeft, onMoveRight, canMoveLeft, canMoveRight }: KanbanCardProps) {
   const {
     attributes,
     listeners,
@@ -35,6 +39,7 @@ export function KanbanCard({ task }: KanbanCardProps) {
   } = useSortable({
     id: task.id,
     data: { type: "task", task },
+    disabled: typeof window !== "undefined" && window.innerWidth < 640, // disable D&D on mobile
   });
 
   const style = {
@@ -50,18 +55,57 @@ export function KanbanCard({ task }: KanbanCardProps) {
       })
     : null;
 
+  const showArrows = onMoveLeft && onMoveRight;
+
   return (
-    <Link
-      href={`/tasks/${task.id}`}
+    <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
       className={cn(
-        "group/card block touch-none",
+        "group/card relative",
         isDragging && "opacity-50",
       )}
     >
+      {/* Desktop drag handle overlay — hidden on mobile */}
+      <div
+        {...attributes}
+        {...listeners}
+        className="hidden sm:block absolute inset-0 z-10 cursor-grab active:cursor-grabbing touch-none"
+      />
+
+      {/* Mobile column arrows — visible on mobile only */}
+      {showArrows && (
+        <div className="absolute right-1 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-0.5 sm:hidden">
+          {canMoveLeft && (
+            <button
+              type="button"
+              aria-label="Move to previous column"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMoveLeft?.(); }}
+              className="flex size-6 items-center justify-center rounded-sm bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
+            >
+              <ArrowLeft className="size-3.5" />
+            </button>
+          )}
+          {canMoveRight && (
+            <button
+              type="button"
+              aria-label="Move to next column"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMoveRight?.(); }}
+              className="flex size-6 items-center justify-center rounded-sm bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
+            >
+              <ArrowRight className="size-3.5" />
+            </button>
+          )}
+        </div>
+      )}
+
+      <Link
+        href={`/tasks/${task.id}`}
+        className={cn(
+          "block",
+          isDragging && "opacity-50",
+        )}
+      >
       <Card
         size="sm"
         className={cn(
@@ -112,5 +156,6 @@ export function KanbanCard({ task }: KanbanCardProps) {
         </CardContent>
       </Card>
     </Link>
+    </div>
   );
 }

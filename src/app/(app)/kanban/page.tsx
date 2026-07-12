@@ -297,6 +297,68 @@ export default function KanbanPage() {
     );
   }, []);
 
+  // Move a task between columns via mobile arrow buttons
+  const handleMoveTaskColumn = useCallback(async (taskId: string, direction: "left" | "right") => {
+    const task = allTasks.find((t) => t.id === taskId);
+    if (!task) return;
+
+    const regularCols = columns.map((c) => c.id);
+    const isBacklog = task.status === TaskStatus.Backlog;
+    let targetCol: string | null = null;
+    let targetStatus: string | undefined;
+
+    if (direction === "left") {
+      if (isBacklog) return;
+      const curIdx = regularCols.indexOf(task.kanban_column_id ?? "");
+      if (curIdx > 0) {
+        targetCol = regularCols[curIdx - 1];
+      } else if (curIdx === 0 && showBacklog) {
+        targetCol = null;
+        targetStatus = TaskStatus.Backlog;
+      } else return;
+    } else {
+      if (isBacklog) {
+        targetCol = regularCols[0] ?? null;
+        targetStatus = task.previous_status ?? TaskStatus.Todo;
+      } else {
+        const curIdx = regularCols.indexOf(task.kanban_column_id ?? "");
+        if (curIdx >= 0 && curIdx < regularCols.length - 1) {
+          targetCol = regularCols[curIdx + 1];
+        } else if (curIdx === regularCols.length - 1 && showBacklog) {
+          targetCol = null;
+          targetStatus = TaskStatus.Backlog;
+        } else return;
+      }
+    }
+
+    // Optimistic local update
+    setAllTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId
+          ? {
+              ...t,
+              kanban_column_id: (targetCol ?? undefined) as string | undefined,
+              status: (targetStatus as Task["status"]) ?? t.status,
+              previous_status: targetStatus === TaskStatus.Backlog ? t.status : (targetStatus ? null : t.previous_status),
+            } as Task
+          : t,
+      ),
+    );
+
+    const fd = new FormData();
+    if (targetCol) fd.set("kanban_column_id", targetCol);
+    if (targetStatus) {
+      fd.set("status", targetStatus);
+      if (targetStatus === TaskStatus.Backlog) {
+        fd.set("previous_status", task.status);
+      }
+    }
+    const r = await updateTask(taskId, fd);
+    if (r.error) {
+      fetchData(); // rollback
+    }
+  }, [allTasks, columns, showBacklog, fetchData]);
+
   const displayTasks = useMemo(() => {
     if (showCompleted) return tasksByColumn;
     const f: TasksByColumn = {};
@@ -356,6 +418,10 @@ export default function KanbanPage() {
               isBacklog
               inlineCreate
               onCreateTask={(title) => handleCreateTask("__backlog__", title)}
+              columnIds={columns.map((c) => c.id)}
+              showBacklog={showBacklog}
+              onMoveTaskLeft={(taskId) => handleMoveTaskColumn(taskId, "left")}
+              onMoveTaskRight={(taskId) => handleMoveTaskColumn(taskId, "right")}
             />
           )}
           {columns.map((col, i) => (
@@ -372,6 +438,10 @@ export default function KanbanPage() {
               onMoveRight={(id) => handleMove(id, "right")}
               inlineCreate={i === 0 && !showBacklog}
               onCreateTask={i === 0 && !showBacklog ? (title) => handleCreateTask(col.id, title) : undefined}
+              columnIds={columns.map((c) => c.id)}
+              showBacklog={showBacklog}
+              onMoveTaskLeft={(taskId) => handleMoveTaskColumn(taskId, "left")}
+              onMoveTaskRight={(taskId) => handleMoveTaskColumn(taskId, "right")}
             />
           ))}
           <div className="min-w-[180px] flex items-start pt-1">
@@ -388,7 +458,7 @@ export default function KanbanPage() {
             )}
           </div>
         </div>
-        <DragOverlay>{activeTask ? <div className="w-[284px] rotate-2 opacity-90"><KanbanCard task={activeTask} /></div> : null}</DragOverlay>
+        <DragOverlay>{activeTask ? <div className="w-[284px] rotate-2 opacity-90"><KanbanCard task={activeTask} canMoveLeft={false} canMoveRight={false} /></div> : null}</DragOverlay>
       </DndContext>
 
       {totalTasks === 0 && (

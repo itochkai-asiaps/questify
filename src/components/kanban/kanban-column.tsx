@@ -29,6 +29,14 @@ interface KanbanColumnProps {
   onCreateTask?: (title: string) => Promise<void>;
   /** When true, hides rename/delete/move controls (backlog column) */
   isBacklog?: boolean;
+  /** All regular column IDs in order (for task move arrows) */
+  columnIds?: string[];
+  /** Whether backlog is visible (for task move arrows) */
+  showBacklog?: boolean;
+  /** Called when a task should move to previous column */
+  onMoveTaskLeft?: (taskId: string) => void;
+  /** Called when a task should move to next column */
+  onMoveTaskRight?: (taskId: string) => void;
 }
 
 export function KanbanColumn({
@@ -44,6 +52,10 @@ export function KanbanColumn({
   inlineCreate = false,
   onCreateTask,
   isBacklog = false,
+  columnIds = [],
+  showBacklog = false,
+  onMoveTaskLeft,
+  onMoveTaskRight,
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id, data: { type: "column", title } });
   const [editing, setEditing] = useState(false);
@@ -145,7 +157,21 @@ export function KanbanColumn({
       >
         <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
           {tasks.length > 0 ? (
-            tasks.map((task) => <KanbanCard key={task.id} task={task} />)
+            tasks.map((task) => {
+              const colIdx = columnIds.indexOf(id);
+              const canLeft = (isBacklog && columnIds.length > 0) || (colIdx > 0) || (colIdx === 0 && showBacklog);
+              const canRight = (isBacklog && columnIds.length > 0) || (colIdx >= 0 && colIdx < columnIds.length - 1) || (colIdx === columnIds.length - 1 && columnIds.length > 0 && showBacklog);
+              return (
+                <KanbanCard
+                  key={task.id}
+                  task={task}
+                  onMoveLeft={onMoveTaskLeft ? () => onMoveTaskLeft(task.id) : undefined}
+                  onMoveRight={onMoveTaskRight ? () => onMoveTaskRight(task.id) : undefined}
+                  canMoveLeft={canLeft}
+                  canMoveRight={canRight}
+                />
+              );
+            })
           ) : (
             <p className="py-4 text-center text-xs text-muted-foreground">Drop tasks here</p>
           )}
