@@ -70,12 +70,12 @@ export default function SortableTaskCard({
       {/* Mobile reorder buttons — separate strip outside card, hidden on desktop */}
       {onMoveUp && onMoveDown && (
         <div className="absolute left-0 top-0 z-20 flex h-full flex-col items-center justify-center gap-0 sm:hidden">
-          <div className="flex h-full flex-col items-center justify-center gap-0 rounded-l-lg bg-muted/30 px-0.5">
+          <div className="flex h-full flex-col items-center justify-center gap-0 rounded-l-lg bg-muted/30 px-1">
             <button
               type="button"
               aria-label="Move task up"
               onClick={(e) => { e.stopPropagation(); onMoveUp(); }}
-              className="flex size-6 items-center justify-center rounded-sm text-muted-foreground/60 hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
+              className="flex size-6 items-center justify-center rounded-sm text-muted-foreground/60 hover:bg-background hover:text-foreground active:scale-90 transition-transform"
             >
               <Plus className="size-4" />
             </button>
@@ -83,7 +83,7 @@ export default function SortableTaskCard({
               type="button"
               aria-label="Move task down"
               onClick={(e) => { e.stopPropagation(); onMoveDown(); }}
-              className="flex size-6 items-center justify-center rounded-sm text-muted-foreground/60 hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
+              className="flex size-6 items-center justify-center rounded-sm text-muted-foreground/60 hover:bg-background hover:text-foreground active:scale-90 transition-transform"
             >
               <Minus className="size-4" />
             </button>
@@ -92,7 +92,7 @@ export default function SortableTaskCard({
       )}
 
       {/* Task card with left padding — gap + button strip width */}
-      <div className="pl-8 sm:pl-8">
+      <div className="pl-9 sm:pl-8">
         <TaskCard
           task={task}
           onDelete={onDelete}
