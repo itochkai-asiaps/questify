@@ -42,8 +42,8 @@ export async function createPlan(
 
   const rawData = {
     title: formData.get("title") as string,
-    description: formData.get("description") as string | undefined,
-    color: formData.get("color") as string | undefined,
+    description: (formData.get("description") as string) || undefined,
+    color: (formData.get("color") as string) || undefined,
     items: (() => {
       try {
         const raw = formData.get("items");
@@ -113,9 +113,9 @@ export async function updatePlan(
   }
 
   const rawData = {
-    title: formData.get("title") as string | undefined,
-    description: formData.get("description") as string | undefined,
-    color: formData.get("color") as string | undefined,
+    title: (formData.get("title") as string) || undefined,
+    description: (formData.get("description") as string) || undefined,
+    color: (formData.get("color") as string) || undefined,
   };
 
   const parsed = UpdatePlanInputSchema.safeParse(rawData);
