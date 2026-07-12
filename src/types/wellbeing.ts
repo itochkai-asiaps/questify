@@ -24,7 +24,7 @@ export const WellbeingEntrySchema = z.object({
   user_id: z.string().uuid(),
   mood_score: z.number().int().min(0).max(100),
   note: z.string().nullable().optional(),
-  created_at: z.string().datetime(),
+  created_at: z.string().datetime({ offset: true }),
 });
 
 export const CreateWellbeingEntrySchema = z.object({

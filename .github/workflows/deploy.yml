@@ -48,11 +48,24 @@ jobs:
             fi
           done
 
+      - name: Get applied migration version
+        id: migration
+        if: always()
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          LATEST=$(PGPASSWORD="${SUPABASE_DB_PASSWORD}" psql \
+            -h aws-1-ap-southeast-1.pooler.supabase.com -p 6543 \
+            -U "postgres.zkifblsbwfllfmlndxjt" -d postgres -tA \
+            -c "SELECT COALESCE(MAX(version), '0000') FROM supabase_migrations.schema_migrations;" 2>/dev/null || echo "0000")
+          echo "LATEST=${LATEST:-0000}" >> $GITHUB_OUTPUT
+
       - name: Get version
         id: version
         run: |
           VER=$(node -p "require('./package.json').version")
-          echo "VALUE=v${VER}-b${{ github.run_number }}" >> $GITHUB_OUTPUT
+          echo "VALUE=v${VER}-b${{ github.run_number }}/${{ steps.migration.outputs.LATEST }}" >> $GITHUB_OUTPUT
 
       - name: Build
         env:

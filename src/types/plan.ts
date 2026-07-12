@@ -6,8 +6,8 @@ export const PlanItemSchema = z.object({
   title: z.string().min(1).max(500),
   completed: z.boolean().default(false),
   position: z.number().int().nonnegative().default(0),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
+  created_at: z.string().datetime({ offset: true }),
+  updated_at: z.string().datetime({ offset: true }),
 });
 
 export const PlanSchema = z.object({
@@ -16,8 +16,8 @@ export const PlanSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(2000).nullable().optional(),
   color: z.string().default("#6366f1"),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
+  created_at: z.string().datetime({ offset: true }),
+  updated_at: z.string().datetime({ offset: true }),
   items: z.array(PlanItemSchema).default([]),
 });
 

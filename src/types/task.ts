@@ -22,22 +22,22 @@ export const TaskSchema = z.object({
   status: z.nativeEnum(TaskStatus),
   previous_status: z.nativeEnum(TaskStatus).nullable().optional(),
   priority: z.nativeEnum(TaskPriority),
-  due_date: z.string().datetime().nullable().optional(),
+  due_date: z.string().datetime({ offset: true }).nullable().optional(),
   tags: z.array(z.string()).default([]),
   kanban_column_id: z.string().uuid().nullable().optional(),
   position: z.number().int().nonnegative().default(0),
   sort_order: z.number().int().nonnegative().default(0),
   xp_reward: z.number().int().nonnegative().default(0),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
-  deleted_at: z.string().datetime().nullable().optional(),
+  created_at: z.string().datetime({ offset: true }),
+  updated_at: z.string().datetime({ offset: true }),
+  deleted_at: z.string().datetime({ offset: true }).nullable().optional(),
 });
 
 export const CreateTaskInputSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
   description: z.string().max(2000).optional(),
   priority: z.nativeEnum(TaskPriority).default(TaskPriority.P3),
-  due_date: z.string().datetime().optional(),
+  due_date: z.string().datetime({ offset: true }).optional(),
   tags: z.array(z.string()).default([]),
 });
 
@@ -47,7 +47,7 @@ export const UpdateTaskInputSchema = z.object({
   status: z.nativeEnum(TaskStatus).optional(),
   previous_status: z.nativeEnum(TaskStatus).nullable().optional(),
   priority: z.nativeEnum(TaskPriority).optional(),
-  due_date: z.string().datetime().nullable().optional(),
+  due_date: z.string().datetime({ offset: true }).nullable().optional(),
   tags: z.array(z.string()).optional(),
   kanban_column_id: z.string().uuid().nullable().optional(),
   position: z.number().int().nonnegative().optional(),
