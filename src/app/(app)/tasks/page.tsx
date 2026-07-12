@@ -322,17 +322,31 @@ export default function TasksPage() {
     }
   }, [persistReorder]);
 
-  // Move backlog separator one step via +/- buttons
+  // Move backlog separator one step via +/- buttons (optimistic — no page refresh)
   const separatorMovingRef = useRef(false);
   const handleMoveSeparator = useCallback(async (direction: "up" | "down") => {
     if (separatorMovingRef.current) return;
     separatorMovingRef.current = true;
+
+    let snapshot: Task[] = [];
 
     try {
       if (direction === "up") {
         // + : move last active task into backlog
         const lastActive = activeTasks[activeTasks.length - 1];
         if (!lastActive) return;
+
+        snapshot = tasks;
+
+        // Optimistic local update
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id === lastActive.id
+              ? { ...t, status: TaskStatus.Backlog as Task["status"], previous_status: lastActive.status as Task["status"] }
+              : t,
+          ),
+        );
+
         await bulkUpdateTaskStatuses([{
           taskId: lastActive.id,
           newStatus: TaskStatus.Backlog,
@@ -342,16 +356,31 @@ export default function TasksPage() {
         // - : move first backlog task out of backlog (restore previous_status)
         const firstBacklog = backlogTasks[0];
         if (!firstBacklog) return;
+
+        const restoredStatus = (firstBacklog.previous_status || TaskStatus.Todo) as Task["status"];
+        snapshot = tasks;
+
+        // Optimistic local update
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id === firstBacklog.id
+              ? { ...t, status: restoredStatus, previous_status: null as unknown as undefined }
+              : t,
+          ),
+        );
+
         await bulkUpdateTaskStatuses([{
           taskId: firstBacklog.id,
-          newStatus: (firstBacklog.previous_status || TaskStatus.Todo) as string,
+          newStatus: restoredStatus,
         }]);
       }
-      fetchTasks();
+    } catch {
+      // Rollback on failure
+      if (snapshot.length > 0) setTasks(snapshot);
     } finally {
       separatorMovingRef.current = false;
     }
-  }, [activeTasks, backlogTasks, fetchTasks]);
+  }, [activeTasks, backlogTasks, tasks]);
 
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
