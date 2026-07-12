@@ -8,6 +8,13 @@ import type { WellbeingEntry } from "@/types/wellbeing";
 
 const MAX_ENTRIES_PER_DAY = 48;
 
+/** UTC midnight of today — calendar day reset, server time */
+function getTodayStartUTC(): string {
+  const d = new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
 export async function createWellbeingEntry(
   moodScore: number,
   note?: string,
@@ -20,13 +27,13 @@ export async function createWellbeingEntry(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  // Check 48/day cap (24h sliding window — timezone-agnostic)
-  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  // Check 48/day cap (calendar day — resets at 00:00 UTC)
+  const todayStart = getTodayStartUTC();
   const { count, error: countError } = await supabase
     .from("wellbeing_entries")
     .select("*", { count: "exact", head: true })
     .eq("user_id", user.id)
-    .gte("created_at", twentyFourHoursAgo);
+    .gte("created_at", todayStart);
 
   if (countError) return { error: countError.message };
   if (count !== null && count >= MAX_ENTRIES_PER_DAY) {
@@ -54,13 +61,13 @@ export async function getTodaysLatestEntry(): Promise<{
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Not authenticated" };
 
-  // 24h sliding window — timezone-agnostic (avoids UTC vs local date mismatch)
-  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  // Calendar day — resets at 00:00 UTC (server time)
+  const todayStart = getTodayStartUTC();
   const { data, error } = await supabase
     .from("wellbeing_entries")
     .select("*")
     .eq("user_id", user.id)
-    .gte("created_at", twentyFourHoursAgo)
+    .gte("created_at", todayStart)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();

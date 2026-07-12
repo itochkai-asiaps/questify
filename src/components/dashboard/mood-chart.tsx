@@ -102,6 +102,44 @@ export function MoodChart() {
               style={{ top: `${((maxY - y) / maxY) * 100}%` }}
             />
           ))}
+          {/* Data points + trend line */}
+          <svg
+            className="absolute left-6 right-0 top-0"
+            viewBox={`0 0 7 ${chartHeight}`}
+            preserveAspectRatio="none"
+            style={{ width: "100%", height: chartHeight, overflow: "visible" }}
+          >
+            {/* Trend polyline */}
+            {scores.length >= 2 && (
+              <polyline
+                points={days
+                  .map((d, i) =>
+                    d.score !== null
+                      ? `${i + 0.5},${((maxY - d.score) / maxY) * chartHeight}`
+                      : null,
+                  )
+                  .filter(Boolean)
+                  .join(" ")}
+                fill="none"
+                className="stroke-primary/60"
+                strokeWidth="0.08"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            )}
+            {/* Data point dots */}
+            {days.map((d, i) =>
+              d.score !== null ? (
+                <circle
+                  key={i}
+                  cx={i + 0.5}
+                  cy={((maxY - d.score) / maxY) * chartHeight}
+                  r="0.12"
+                  className="fill-primary"
+                />
+              ) : null,
+            )}
+          </svg>
           {/* X-axis labels */}
           <div className="absolute bottom-0 left-6 right-0 flex justify-between">
             {days.map((day, i) => (

@@ -180,6 +180,20 @@ export function WellbeingHeart() {
             stroke={isProd ? "#7f1d1d" : "#991b1b"}
             strokeWidth="1.8"
           />
+
+          {/* Empty-state question mark — only when no mood today and not hovering */}
+          {!saving && !loading && savedPct === null && hoverPct === null && (
+            <text
+              x="50"
+              y="54"
+              textAnchor="middle"
+              dominantBaseline="middle"
+              className="fill-muted-foreground/40 text-[28px] font-light select-none"
+              style={{ fontSize: "28px" }}
+            >
+              ?
+            </text>
+          )}
         </svg>
 
         {/* Saving indicator */}
