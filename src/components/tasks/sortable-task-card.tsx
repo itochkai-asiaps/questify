@@ -74,23 +74,23 @@ export default function SortableTaskCard({
             type="button"
             aria-label="Move task up"
             onClick={(e) => { e.stopPropagation(); onMoveUp(); }}
-            className="flex size-4.5 items-center justify-center rounded-sm text-muted-foreground/50 hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
+            className="flex size-6 items-center justify-center rounded-sm text-muted-foreground/50 hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
           >
-            <Plus className="size-3" />
+            <Plus className="size-4" />
           </button>
           <button
             type="button"
             aria-label="Move task down"
             onClick={(e) => { e.stopPropagation(); onMoveDown(); }}
-            className="flex size-4.5 items-center justify-center rounded-sm text-muted-foreground/50 hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
+            className="flex size-6 items-center justify-center rounded-sm text-muted-foreground/50 hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
           >
-            <Minus className="size-3" />
+            <Minus className="size-4" />
           </button>
         </div>
       )}
 
       {/* Task card with tight left padding for the buttons */}
-      <div className="pl-5 sm:pl-8">
+      <div className="pl-7 sm:pl-8">
         <TaskCard
           task={task}
           onDelete={onDelete}

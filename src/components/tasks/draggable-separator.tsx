@@ -41,23 +41,23 @@ export default function DraggableSeparator({ onMoveUp, onMoveDown }: DraggableSe
         </div>
       </div>
 
-      {/* +/- buttons — always visible (left side) */}
-      <div className="flex items-center gap-0 shrink-0">
+      {/* +/- buttons — always visible, vertical on left */}
+      <div className="flex flex-col items-center gap-0 shrink-0">
         <button
           type="button"
           aria-label="Move separator up (add to backlog)"
           onClick={(e) => { e.stopPropagation(); onMoveUp?.(); }}
-          className="flex size-5 items-center justify-center rounded-sm text-muted-foreground/50 hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
+          className="flex size-6 items-center justify-center rounded-sm text-muted-foreground/50 hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
         >
-          <Plus className="size-3" />
+          <Plus className="size-4" />
         </button>
         <button
           type="button"
           aria-label="Move separator down (remove from backlog)"
           onClick={(e) => { e.stopPropagation(); onMoveDown?.(); }}
-          className="flex size-5 items-center justify-center rounded-sm text-muted-foreground/50 hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
+          className="flex size-6 items-center justify-center rounded-sm text-muted-foreground/50 hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
         >
-          <Minus className="size-3" />
+          <Minus className="size-4" />
         </button>
       </div>
 

@@ -291,7 +291,7 @@ export default function TasksPage() {
     if (movingRef.current) return;
     movingRef.current = true;
 
-    let sectionTasks: Task[] = [];
+    let taskIds: string[] = [];
     setTasks((prev) => {
       const idx = prev.findIndex((t) => t.id === taskId);
       if (idx === -1) return prev;
@@ -299,7 +299,7 @@ export default function TasksPage() {
       const targetIdx = direction === "up" ? idx - 1 : idx + 1;
       if (targetIdx < 0 || targetIdx >= prev.length) return prev;
 
-      // Swap sort_order with the adjacent task
+      // Swap sort_order for immediate visual feedback
       const updated = [...prev];
       const taskA = { ...updated[idx] };
       const taskB = { ...updated[targetIdx] };
@@ -309,18 +309,31 @@ export default function TasksPage() {
       updated[idx] = taskA;
       updated[targetIdx] = taskB;
 
-      // Collect all tasks sorted by sort_order for server persist
-      sectionTasks = [...updated].sort((a, b) => a.sort_order - b.sort_order);
+      // Collect IDs in sort_order for server persist
+      taskIds = [...updated].sort((a, b) => a.sort_order - b.sort_order).map((t) => t.id);
       return updated;
     });
 
-    // Persist AFTER state update completes (not inside setState)
+    if (taskIds.length === 0) { movingRef.current = false; return; }
+
     try {
-      await persistReorder(sectionTasks);
+      const result = await reorderTasks(taskIds);
+      if (result.success) {
+        // Sync sort_order to match server calculation (index * 1000)
+        setTasks((prev) => prev.map((t, i, arr) => {
+          const sorted = [...arr].sort((a, b) => a.sort_order - b.sort_order);
+          const serverIdx = sorted.findIndex((st) => st.id === t.id);
+          return serverIdx !== -1 ? { ...t, sort_order: serverIdx * 1000 } : t;
+        }));
+      } else {
+        fetchTasks();
+      }
+    } catch {
+      fetchTasks();
     } finally {
       movingRef.current = false;
     }
-  }, [persistReorder]);
+  }, [fetchTasks]);
 
   // Move backlog separator one step via +/- buttons (optimistic — no page refresh)
   const separatorMovingRef = useRef(false);
