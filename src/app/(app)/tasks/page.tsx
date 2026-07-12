@@ -283,10 +283,16 @@ export default function TasksPage() {
     }
   }, [fetchTasks]);
 
+  // Guard against concurrent moves (mobile arrows)
+  const movingRef = useRef(false);
+
   // Move a task one position up/down (mobile arrow buttons)
-  const handleMoveTask = useCallback((taskId: string, direction: "up" | "down") => {
+  const handleMoveTask = useCallback(async (taskId: string, direction: "up" | "down") => {
+    if (movingRef.current) return;
+    movingRef.current = true;
+
+    let sectionTasks: Task[] = [];
     setTasks((prev) => {
-      // Find the task in the current list
       const idx = prev.findIndex((t) => t.id === taskId);
       if (idx === -1) return prev;
 
@@ -303,14 +309,17 @@ export default function TasksPage() {
       updated[idx] = taskA;
       updated[targetIdx] = taskB;
 
-      // Persist the new order
-      const sectionTasks = updated
-        .filter((t) => t.status === taskA.status)
-        .sort((a, b) => a.sort_order - b.sort_order);
-      persistReorder(sectionTasks);
-
+      // Collect all tasks sorted by sort_order for server persist
+      sectionTasks = [...updated].sort((a, b) => a.sort_order - b.sort_order);
       return updated;
     });
+
+    // Persist AFTER state update completes (not inside setState)
+    try {
+      await persistReorder(sectionTasks);
+    } finally {
+      movingRef.current = false;
+    }
   }, [persistReorder]);
 
   const handleDragEnd = useCallback(

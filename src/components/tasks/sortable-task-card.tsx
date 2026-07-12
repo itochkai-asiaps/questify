@@ -2,7 +2,7 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
+import { GripVertical, Minus, Plus } from "lucide-react";
 
 import TaskCard from "@/components/tasks/task-card";
 import { cn } from "@/lib/utils";
@@ -67,30 +67,30 @@ export default function SortableTaskCard({
         <GripVertical className="size-4 text-muted-foreground opacity-50 transition-opacity hover:opacity-100" />
       </button>
 
-      {/* Mobile reorder arrows — hidden on desktop */}
+      {/* Mobile reorder buttons — tight to left edge, hidden on desktop */}
       {onMoveUp && onMoveDown && (
-        <div className="absolute left-0 top-0 z-20 flex h-full flex-col items-center justify-center gap-0.5 sm:hidden">
+        <div className="absolute left-0.5 top-0 z-20 flex h-full flex-col items-center justify-center gap-0 sm:hidden">
           <button
             type="button"
             aria-label="Move task up"
             onClick={(e) => { e.stopPropagation(); onMoveUp(); }}
-            className="flex size-5 items-center justify-center rounded-sm text-muted-foreground/60 hover:bg-muted hover:text-foreground"
+            className="flex size-4.5 items-center justify-center rounded-sm text-muted-foreground/50 hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
           >
-            <ChevronUp className="size-3.5" />
+            <Plus className="size-3" />
           </button>
           <button
             type="button"
             aria-label="Move task down"
             onClick={(e) => { e.stopPropagation(); onMoveDown(); }}
-            className="flex size-5 items-center justify-center rounded-sm text-muted-foreground/60 hover:bg-muted hover:text-foreground"
+            className="flex size-4.5 items-center justify-center rounded-sm text-muted-foreground/50 hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
           >
-            <ChevronDown className="size-3.5" />
+            <Minus className="size-3" />
           </button>
         </div>
       )}
 
-      {/* Task card with left padding for the drag handle / arrows */}
-      <div className="pl-8 sm:pl-8">
+      {/* Task card with tight left padding for the buttons */}
+      <div className="pl-5 sm:pl-8">
         <TaskCard
           task={task}
           onDelete={onDelete}
