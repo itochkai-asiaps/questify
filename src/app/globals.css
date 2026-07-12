@@ -135,8 +135,8 @@
     @apply min-h-12 min-w-12;
   }
   .safe-bottom {
-    /* Minimum 16px + iOS safe area (home indicator / Safari toolbar) */
-    padding-bottom: max(env(safe-area-inset-bottom, 16px), 16px);
+    /* Minimum 5px + iOS safe area (home indicator / Safari toolbar) */
+    padding-bottom: max(env(safe-area-inset-bottom, 5px), 5px);
   }
   .safe-top {
     padding-top: env(safe-area-inset-top, 0px);
