@@ -322,6 +322,37 @@ export default function TasksPage() {
     }
   }, [persistReorder]);
 
+  // Move backlog separator one step via +/- buttons
+  const separatorMovingRef = useRef(false);
+  const handleMoveSeparator = useCallback(async (direction: "up" | "down") => {
+    if (separatorMovingRef.current) return;
+    separatorMovingRef.current = true;
+
+    try {
+      if (direction === "up") {
+        // + : move last active task into backlog
+        const lastActive = activeTasks[activeTasks.length - 1];
+        if (!lastActive) return;
+        await bulkUpdateTaskStatuses([{
+          taskId: lastActive.id,
+          newStatus: TaskStatus.Backlog,
+          previousStatus: lastActive.status,
+        }]);
+      } else {
+        // - : move first backlog task out of backlog (restore previous_status)
+        const firstBacklog = backlogTasks[0];
+        if (!firstBacklog) return;
+        await bulkUpdateTaskStatuses([{
+          taskId: firstBacklog.id,
+          newStatus: (firstBacklog.previous_status || TaskStatus.Todo) as string,
+        }]);
+      }
+      fetchTasks();
+    } finally {
+      separatorMovingRef.current = false;
+    }
+  }, [activeTasks, backlogTasks, fetchTasks]);
+
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
       const { active, over } = event;
@@ -663,10 +694,13 @@ export default function TasksPage() {
                       />
                     ))}
                   </SortableContext>
-                  {/* D7: Draggable backlog separator */}
-                  {activeTasks.length > 0 && (
-                    <DraggableSeparator />
-                  )}
+                   {/* D7: Draggable backlog separator */}
+                   {activeTasks.length > 0 && (
+                     <DraggableSeparator
+                       onMoveUp={() => handleMoveSeparator("up")}
+                       onMoveDown={() => handleMoveSeparator("down")}
+                     />
+                   )}
                   {/* D5: Backlog inline create — always visible, above backlog tasks */}
                   <form
                     onSubmit={(e) => { e.preventDefault(); handleBacklogQuickCreate(); }}
