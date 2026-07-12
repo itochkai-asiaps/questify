@@ -5,6 +5,68 @@
 - **Staging**: коммит → немедленный push. Без вопроса. Без подтверждения. Всегда.
 - **Master (прод)**: коммит и push — **только с явного подтверждения пользователя**. Спросить перед любым действием с master.
 
+## Последние изменения (сессия 2026-07-12)
+
+### Багфиксы (8 шт.)
+- ✅ **Wellbeing**: `datetime()` → `datetime({ offset: true })` — Zod принимал только `Z`-суффикс, Supabase отдаёт `+00:00`
+- ✅ **Сердце**: календарный день UTC вместо 24h sliding window — сброс в 00:00
+- ✅ **Сердце**: «?» в пустом состоянии, скрывается при заполнении
+- ✅ **График настроения**: smooth bezier trend line + CSS-точки (вместо SVG-эллипсов)
+- ✅ **Tasks +/-**: debounce + sync sort_order с сервером после каждого перемещения
+- ✅ **Tasks +/-**: кнопки крупнее (size-6), визуальная полоса `bg-muted/30` вне карточки
+- ✅ **Kanban mobile**: D&D отключён на мобиле, стрелки ← → для перемещения между колонками
+- ✅ **Plan create**: `formData.get()` → null → Zod `optional()` — fix `|| undefined`
+
+### UI/UX
+- ✅ **Разделитель беклога**: +/- кнопки слева, вертикально, D&D отключён на мобиле
+- ✅ **Разделитель**: оптимистичное перемещение без перезагрузки страницы
+- ✅ **Safari**: `min-h-dvh` + `safe-bottom: max(env(...), 5px)` — меню не заезжает на тулбар
+- ✅ **Кнопки задач**: визуальная полоса `bg-muted/30 rounded-l-lg` вне карточки
+
+### CI/CD
+- ✅ **Версия с миграцией**: `S v0.2.0-b{N}/00014` — query `MAX(version)` из `supabase_migrations.schema_migrations`
+- ✅ **deploy.yml (prod)**: то же самое
+- ✅ **Мерж в master**: 85 файлов, +9565/-626 строк, fast-forward
+
+### Процесс
+- ✅ **HANDOFF**: ⛔ Sisyphus commit rules — staging auto, master confirm
+
+### Коммиты сессии (13)
+```
+ed00e07 feat: kanban mobile column arrows + disable card D&D on mobile
+3829626 fix: increase button strip padding px-0.5->px-1, card pl-8->pl-9 for no overlap
+532901a fix: mobile task +/- buttons — separate strip with bg-muted/30 outside card edge
+d05fa93 fix: task +/- ordering sync + larger buttons + vertical separator controls
+6a0d8cd fix: plan create/update — convert null formData fields to undefined for Zod optional()
+40990c4 feat: optimistic backlog separator moves — no page refresh on +/-
+0ff85ac fix: move backlog separator controls (+/- and drag handle) to left side of line
+5299739 fix: reduce safe-bottom min padding 16px -> 5px for tighter Safari toolbar fit
+d5a9241 fix: mobile Safari bottom bar overlap — dvh layout + safe-area min padding
+b86e2db feat: +/- buttons for backlog separator + disable separator D&D on mobile
+233f9a8 fix: smooth bezier trend line + visible CSS dots on mood chart
+263c634 fix: calendar-day heart reset + empty-state ? + mood chart trend line
+f0e9f78 docs: add Sisyphus commit rules to HANDOFF — staging auto, master confirm
+e8f5f55 fix: add datetime({offset:true}) to Zod schemas + migration version in deploy CI
+```
+
+### Рекомендации по процессу
+
+> Сессия: 2026-07-12. Характер: багфикс + UI/UX. 3.5 ч (вместо плановых 2 ч).
+
+| Метрика | Значение |
+|---|---|
+| Коммитов | 13 |
+| fix:feat:docs | 8:3:2 |
+| Гейты | Lefthook × 13, vitest 280/280, tsc --noEmit ✅ |
+| Багов исправлено | 8 |
+| Мерж в прод | ✅ (fast-forward, 85 файлов) |
+
+**Рекомендация на следующую сессию:**
+1. Проверить прод — график настроения, сердце, бэкапы (теперь должны работать)
+2. Ручное тестирование по тест-плану (DAO + Auth)
+3. K1 (оценка времени) или K2 (кастомные теги) — пора начинать
+4. Светлая тема — редизайн
+
 ## Подготовка
 
 ```bash
@@ -318,16 +380,15 @@ bf7ecca fix: wellbeing 24h window, plans hide completed, separator doubling
 | 0003 | type колонка ideas | ✅ | ✅ |
 | 0004 | kanban_columns | ✅ | ✅ |
 | 0005 | fix tasks_completed | ✅ | ✅ |
-| 0006 | backlog_status | ✅ | ⬜ |
-| 0007 | wellbeing_entries | ✅ | ⬜ |
-| 0008 | focus_tasks | ✅ | ⬜ |
-| 0009 | mood_score_0_100 | ✅ | ⬜ |
-| 0010 | normalize_task_ordering | ⏳ | ⬜ |
-| 0011 | telegram_chats_rls | ⬜ | ⬜ |
-| 0012 | with_check_rls | ⬜ | ⬜ |
-| 0012 | with_check_rls | ⬜ | ⬜ |
-| 0013 | add_previous_status | ⬜ | ⬜ |
-| 0014 | get_dashboard_data_rpc | ⬜ | ⬜ |
+| 0006 | backlog_status | ✅ | ⏳ (merge 2026-07-12) |
+| 0007 | wellbeing_entries | ✅ | ⏳ (merge 2026-07-12) |
+| 0008 | focus_tasks | ✅ | ⏳ (merge 2026-07-12) |
+| 0009 | mood_score_0_100 | ✅ | ⏳ (merge 2026-07-12) |
+| 0010 | normalize_task_ordering | ✅ | ⏳ (merge 2026-07-12) |
+| 0011 | telegram_chats_rls | ✅ | ⏳ (merge 2026-07-12) |
+| 0012 | with_check_rls | ✅ | ⏳ (merge 2026-07-12) |
+| 0013 | add_previous_status | ✅ | ⏳ (merge 2026-07-12) |
+| 0014 | get_dashboard_data_rpc | ✅ | ⏳ (merge 2026-07-12) |
 
 ## Планы и требования
 - `.omo/plans/roadmap.md`
