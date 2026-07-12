@@ -67,30 +67,32 @@ export default function SortableTaskCard({
         <GripVertical className="size-4 text-muted-foreground opacity-50 transition-opacity hover:opacity-100" />
       </button>
 
-      {/* Mobile reorder buttons — tight to left edge, hidden on desktop */}
+      {/* Mobile reorder buttons — separate strip outside card, hidden on desktop */}
       {onMoveUp && onMoveDown && (
-        <div className="absolute left-0.5 top-0 z-20 flex h-full flex-col items-center justify-center gap-0 sm:hidden">
-          <button
-            type="button"
-            aria-label="Move task up"
-            onClick={(e) => { e.stopPropagation(); onMoveUp(); }}
-            className="flex size-6 items-center justify-center rounded-sm text-muted-foreground/50 hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
-          >
-            <Plus className="size-4" />
-          </button>
-          <button
-            type="button"
-            aria-label="Move task down"
-            onClick={(e) => { e.stopPropagation(); onMoveDown(); }}
-            className="flex size-6 items-center justify-center rounded-sm text-muted-foreground/50 hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
-          >
-            <Minus className="size-4" />
-          </button>
+        <div className="absolute left-0 top-0 z-20 flex h-full flex-col items-center justify-center gap-0 sm:hidden">
+          <div className="flex h-full flex-col items-center justify-center gap-0 rounded-l-lg bg-muted/30 px-0.5">
+            <button
+              type="button"
+              aria-label="Move task up"
+              onClick={(e) => { e.stopPropagation(); onMoveUp(); }}
+              className="flex size-6 items-center justify-center rounded-sm text-muted-foreground/60 hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
+            >
+              <Plus className="size-4" />
+            </button>
+            <button
+              type="button"
+              aria-label="Move task down"
+              onClick={(e) => { e.stopPropagation(); onMoveDown(); }}
+              className="flex size-6 items-center justify-center rounded-sm text-muted-foreground/60 hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
+            >
+              <Minus className="size-4" />
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Task card with tight left padding for the buttons */}
-      <div className="pl-7 sm:pl-8">
+      {/* Task card with left padding — gap + button strip width */}
+      <div className="pl-8 sm:pl-8">
         <TaskCard
           task={task}
           onDelete={onDelete}
