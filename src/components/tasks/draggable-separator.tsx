@@ -27,11 +27,21 @@ export default function DraggableSeparator({ onMoveUp, onMoveDown }: DraggableSe
       className={`flex items-center gap-2 py-3 select-none ${isDragging ? "opacity-50" : ""}`}
       role="separator"
     >
-      <div className="h-px flex-1 bg-border" />
-      <span className="text-xs font-medium text-muted-foreground shrink-0">Backlog</span>
-      <div className="h-px flex-1 bg-border" />
+      {/* Desktop: drag handle (left side) */}
+      <div
+        {...listeners}
+        {...attributes}
+        className="hidden sm:flex items-center shrink-0 cursor-grab active:cursor-grabbing"
+        aria-label="Drag to move backlog boundary"
+      >
+        <div className="flex flex-col gap-px">
+          <div className="h-0.5 w-3 rounded-full bg-muted-foreground/30" />
+          <div className="h-0.5 w-3 rounded-full bg-muted-foreground/30" />
+          <div className="h-0.5 w-3 rounded-full bg-muted-foreground/30" />
+        </div>
+      </div>
 
-      {/* +/- buttons — always visible */}
+      {/* +/- buttons — always visible (left side) */}
       <div className="flex items-center gap-0 shrink-0">
         <button
           type="button"
@@ -51,19 +61,9 @@ export default function DraggableSeparator({ onMoveUp, onMoveDown }: DraggableSe
         </button>
       </div>
 
-      {/* Desktop: drag handle */}
-      <div
-        {...listeners}
-        {...attributes}
-        className="hidden sm:flex items-center shrink-0 cursor-grab active:cursor-grabbing"
-        aria-label="Drag to move backlog boundary"
-      >
-        <div className="flex flex-col gap-px">
-          <div className="h-0.5 w-3 rounded-full bg-muted-foreground/30" />
-          <div className="h-0.5 w-3 rounded-full bg-muted-foreground/30" />
-          <div className="h-0.5 w-3 rounded-full bg-muted-foreground/30" />
-        </div>
-      </div>
+      <div className="h-px flex-1 bg-border" />
+      <span className="text-xs font-medium text-muted-foreground shrink-0">Backlog</span>
+      <div className="h-px flex-1 bg-border" />
     </div>
   );
 }
