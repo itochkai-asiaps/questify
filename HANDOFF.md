@@ -77,12 +77,68 @@ SSH-ключ: `C:\Users\user\.ssh\questify-deploy`
 - ⬜ Груминг: приоритезация оставшихся блоков (F, G, J, K, L, M, N, O, Z)
 - 🟡 E0: Быстродействие дашборда (RPC get_dashboard_data, < 500ms)
 - 🔴 Баг: график настроения пропал на проде — wellbeing не смержен в master (65 коммитов отставание)
-- 🟢 Баг: сердце не показывает последний уровень за сегодня — ✅ fixed (24h sliding window вместо UTC-даты + surface ошибок в UI)
+- 🟢 Баг: сердце не показывает последний уровень за сегодня — ✅ fixed (24h sliding window + safeParse)
+- 🟡 Проверить сердце на стейджинге после деплоя — safeParse должен показать причину ошибки
 - ✅ Планы: завершённые скрыты по умолчанию, кнопка "Show completed (N)" в хедере
 - ✅ Баг: разделитель backlog удваивал задачи и терял порядок — fixed (реконструкция массивов в исходном порядке)
 - ⬜ Редизайн светлой темы — слишком блёклая и невыразительная
 - ⬜ **K1 — Оценка времени**: `estimated_minutes` + `actual_minutes` на все сущности (tasks, ideas, problems, plans, plan_items). При создании — estimated, при закрытии — actual
 - ⬜ **K2 — Кастомные теги**: таблица `tags` (name, color, user_id), связь many-to-many с tasks/ideas/problems/plans. Фильтрация по тегам
+
+## Последние изменения (сессия 2026-07-09)
+
+### Багфиксы (5 шт.)
+- ✅ **Сердце — timezone**: 24h sliding window вместо UTC-даты в `getTodaysLatestEntry` + `createWellbeingEntry`
+- ✅ **Сердце — surface ошибок**: `WellbeingHeart` показывает текст ошибки вместо молчаливого «Click to set mood»
+- ✅ **Сердце — safeParse**: `.parse()` → `.safeParse()` везде в `wellbeing.ts` — ZodError больше не throw
+- ✅ **Планы — hide completed**: кнопка «Show completed (N)» в хедере, по умолчанию скрыты
+- ✅ **Разделитель backlog**: удвоение задач + потеря порядка — реконструкция массивов в исходном порядке
+
+### Процесс и документация
+- ✅ AGENTS.md: ⛔ КОММИТ = НЕМЕДЛЕННЫЙ ПУШ STAGING (без вопроса)
+- ✅ HANDOFF: QA на стейджинге `v881545.hosted-by-vdsina.com`, не на локалхосте
+- ✅ AGENTS.md: после каждого пуша — версия `S v0.2.0-bN` для проверки
+- ✅ `.omo/specs/E3-wellbeing-heart.md` — полная спецификация сердца (FR, NFR, AC, схема БД)
+
+### CI/CD
+- ✅ `deploy-staging.yml`: `continue-on-error` на миграциях + retry psql 3x
+- ✅ `backup-staging.yml` + `backup.yml`: `set -e`, проверка размера дампа, retry pg_dump 3x
+
+### Бэклог (новая сессия)
+- ⬜ K1 — Оценка времени (estimated + actual на все сущности)
+- ⬜ K2 — Кастомные теги (name + color, many-to-many, фильтрация)
+- ⬜ Редизайн светлой темы
+- 🔴 Баг: график настроения на проде (wellbeing не в master)
+- 🟡 Проверить сердце на стейджинге — safeParse фикс (ждёт деплоя после runner)
+
+### Коммиты сессии
+```
+cd1af00 docs: add K1 time estimation + K2 custom tags to backlog
+5cf7241 fix: make backups and deploy resilient to Supabase transient 500s
+fc0fa6a docs: report version after each push to staging
+384af92 fix: replace Zod .parse() with .safeParse() in wellbeing actions
+f27fc43 docs: commit = immediate push staging, QA on staging not localhost
+bf7ecca fix: wellbeing 24h window, plans hide completed, separator doubling
+```
+
+### Рекомендации по процессу
+
+> Сессия: 2026-07-09. Характер: багфикс + процесс.
+
+| Метрика | Значение |
+|---|---|
+| Коммитов | 6 |
+| fix:docs | 3:3 |
+| Гейты | Lefthook × 6, vitest 280/280, tsc --noEmit ✅ |
+| Багов исправлено | 5 |
+
+**Рекомендация на следующую сессию:**
+1. 🔴 **Сначала** — проверить деплой стейджинга (runner issue). Версия должна быть ≥ `b222`
+2. Проверить сердце на стейджинге — safeParse должен показывать конкретную ошибку вместо «Failed to save mood»
+3. Если сердце работает — чинь заметку (PATCH вместо INSERT-дубликата)
+4. Если нет — разбираться с корнем ошибки (Supabase коннект, схема, auth)
+
+---
 
 ## Последние изменения (сессия 2026-07-08)
 
