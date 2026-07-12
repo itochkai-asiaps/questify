@@ -78,6 +78,30 @@ export function MoodChart() {
   const maxY = 100;
   const chartHeight = 130;
 
+  // Build smooth bezier path from scored days
+  const scoredDays = days
+    .map((d, i) => (d.score !== null ? { i, score: d.score } : null))
+    .filter((x): x is { i: number; score: number } => x !== null);
+
+  const smoothPath =
+    scoredDays.length >= 2
+      ? (() => {
+          const tension = 0.35;
+          const pts = scoredDays.map((d) => ({
+            x: d.i + 0.5,
+            y: ((maxY - d.score) / maxY) * chartHeight,
+          }));
+          let d = `M ${pts[0].x} ${pts[0].y}`;
+          for (let i = 0; i < pts.length - 1; i++) {
+            const p0 = pts[i];
+            const p1 = pts[i + 1];
+            const dx = p1.x - p0.x;
+            d += ` C ${p0.x + dx * tension} ${p0.y} ${p1.x - dx * tension} ${p1.y} ${p1.x} ${p1.y}`;
+          }
+          return d;
+        })()
+      : "";
+
   return (
     <Card>
       <CardHeader>
@@ -87,7 +111,7 @@ export function MoodChart() {
       </CardHeader>
       <CardContent className="overflow-visible">
         {/* Chart */}
-        <div className="relative mb-6 overflow-visible" style={{ height: chartHeight }}>
+        <div className="relative mb-8 overflow-visible" style={{ height: chartHeight }}>
           {/* Y-axis labels */}
           <div className="absolute inset-y-0 left-0 flex w-6 flex-col justify-between text-[10px] text-muted-foreground">
             <span>100</span>
@@ -102,44 +126,35 @@ export function MoodChart() {
               style={{ top: `${((maxY - y) / maxY) * 100}%` }}
             />
           ))}
-          {/* Data points + trend line */}
-          <svg
-            className="absolute left-6 right-0 top-0"
-            viewBox={`0 0 7 ${chartHeight}`}
-            preserveAspectRatio="none"
-            style={{ width: "100%", height: chartHeight, overflow: "visible" }}
-          >
-            {/* Trend polyline */}
-            {scores.length >= 2 && (
-              <polyline
-                points={days
-                  .map((d, i) =>
-                    d.score !== null
-                      ? `${i + 0.5},${((maxY - d.score) / maxY) * chartHeight}`
-                      : null,
-                  )
-                  .filter(Boolean)
-                  .join(" ")}
+          {/* Smooth trend line (SVG) */}
+          {smoothPath && (
+            <svg
+              className="absolute left-6 right-0 top-0"
+              viewBox={`0 0 7 ${chartHeight}`}
+              preserveAspectRatio="none"
+              style={{ width: "100%", height: chartHeight, overflow: "visible" }}
+            >
+              <path
+                d={smoothPath}
                 fill="none"
-                className="stroke-primary/60"
-                strokeWidth="0.08"
+                className="stroke-primary/70"
+                strokeWidth="0.09"
                 strokeLinecap="round"
-                strokeLinejoin="round"
               />
-            )}
-            {/* Data point dots */}
-            {days.map((d, i) =>
-              d.score !== null ? (
-                <circle
-                  key={i}
-                  cx={i + 0.5}
-                  cy={((maxY - d.score) / maxY) * chartHeight}
-                  r="0.12"
-                  className="fill-primary"
-                />
-              ) : null,
-            )}
-          </svg>
+            </svg>
+          )}
+          {/* Data point dots (CSS — perfectly round, no viewBox distortion) */}
+          {scoredDays.map((d) => (
+            <div
+              key={d.i}
+              className="absolute size-[10px] rounded-full border-[2.5px] border-background bg-primary shadow-sm"
+              style={{
+                left: `calc(${((d.i + 0.5) / 7) * 100}% + 1.5rem)`,
+                top: `${((maxY - d.score) / maxY) * 100}%`,
+                transform: "translate(-50%, -50%)",
+              }}
+            />
+          ))}
           {/* X-axis labels */}
           <div className="absolute bottom-0 left-6 right-0 flex justify-between">
             {days.map((day, i) => (
