@@ -36,7 +36,7 @@ export default function FocusPage() {
 
   const fetchFocus = useCallback(async () => {
     const result = await getFocusTask();
-    if (result.data) {
+    if ("data" in result && result.data) {
       setFocusTask(result.data);
     } else {
       // No focus task — redirect back

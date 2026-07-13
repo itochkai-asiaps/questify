@@ -15,7 +15,7 @@ export function MoodChart() {
   const fetchHistory = useCallback(async () => {
     try {
       const result = await getWellbeingHistory(7);
-      if (result.data) setHistory(result.data);
+      if ("data" in result && result.data) setHistory(result.data);
     } catch (e) {
       console.error("MoodChart: failed to fetch history", e);
     } finally {

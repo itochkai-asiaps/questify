@@ -501,8 +501,8 @@ export default function DashboardPage() {
         getAchievements(user.id),
       ]);
 
-      const tasks = (tasksResult.data ?? []) as TaskItem[];
-      const plansData = (plansResult.data ?? []) as Array<{
+      const tasks = ("data" in tasksResult ? (tasksResult.data ?? []) : []) as TaskItem[];
+      const plansData = ("data" in plansResult ? (plansResult.data ?? []) : []) as Array<{
         id: string;
         title: string;
         items?: Array<{ completed: boolean }>;

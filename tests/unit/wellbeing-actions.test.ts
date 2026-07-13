@@ -113,7 +113,7 @@ describe("createWellbeingEntry", () => {
     const result = await createWellbeingEntry(75, "Feeling good");
 
     expect(result.error).toBeUndefined();
-    expect(result.data).toEqual(entry);
+    expect("data" in result ? result.data : undefined).toEqual(entry);
   });
 
   it("calls revalidatePath for /dashboard layout on success", async () => {
@@ -131,7 +131,8 @@ describe("createWellbeingEntry", () => {
 
     await createWellbeingEntry(80);
 
-    const insertCall = mockSupabase.insert.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
+    const insertCall = mockSupabase.insert.mock.calls[0]?.[0] as
+      Record<string, unknown> | undefined;
     expect(insertCall).toBeDefined();
     expect(insertCall?.note).toBeNull();
   });
@@ -179,7 +180,7 @@ describe("createWellbeingEntry", () => {
     const result = await createWellbeingEntry(0);
 
     expect(result.error).toBeUndefined();
-    expect(result.data?.mood_score).toBe(0);
+    expect(("data" in result ? result.data : undefined)?.mood_score).toBe(0);
   });
 
   it("accepts edge score of 100", async () => {
@@ -189,7 +190,7 @@ describe("createWellbeingEntry", () => {
     const result = await createWellbeingEntry(100);
 
     expect(result.error).toBeUndefined();
-    expect(result.data?.mood_score).toBe(100);
+    expect(("data" in result ? result.data : undefined)?.mood_score).toBe(100);
   });
 
   // -- Auth -----------------------------------------------------------------
@@ -251,7 +252,7 @@ describe("getTodaysLatestEntry", () => {
     const result = await getTodaysLatestEntry();
 
     expect(result.error).toBeUndefined();
-    expect(result.data).toEqual(entry);
+    expect("data" in result ? result.data : undefined).toEqual(entry);
   });
 
   it("returns null when no entry exists for today", async () => {
@@ -260,7 +261,7 @@ describe("getTodaysLatestEntry", () => {
     const result = await getTodaysLatestEntry();
 
     expect(result.error).toBeUndefined();
-    expect(result.data).toBeNull();
+    expect("data" in result ? result.data : undefined).toBeNull();
   });
 
   it("queries with descending order and limit 1", async () => {
@@ -316,8 +317,8 @@ describe("getWellbeingHistory", () => {
     const result = await getWellbeingHistory(14);
 
     expect(result.error).toBeUndefined();
-    expect(result.data).toEqual(entries);
-    expect(result.data).toHaveLength(2);
+    expect("data" in result ? result.data : undefined).toEqual(entries);
+    expect("data" in result ? result.data : undefined).toHaveLength(2);
   });
 
   it("defaults to 7 days when no argument provided", async () => {
@@ -327,7 +328,7 @@ describe("getWellbeingHistory", () => {
     const result = await getWellbeingHistory();
 
     expect(result.error).toBeUndefined();
-    expect(result.data).toEqual(entries);
+    expect("data" in result ? result.data : undefined).toEqual(entries);
   });
 
   it("returns empty array when no entries found", async () => {
@@ -336,7 +337,7 @@ describe("getWellbeingHistory", () => {
     const result = await getWellbeingHistory(7);
 
     expect(result.error).toBeUndefined();
-    expect(result.data).toEqual([]);
+    expect("data" in result ? result.data : undefined).toEqual([]);
   });
 
   it("queries with ascending order", async () => {

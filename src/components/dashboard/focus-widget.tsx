@@ -34,8 +34,8 @@ export function FocusWidget({ tasks }: FocusWidgetProps) {
   const fetchFocus = useCallback(async () => {
     try {
       const result = await getFocusTask();
-      if (result.error) {
-        setError(result.error);
+      if (!("data" in result)) {
+        if ("error" in result && result.error) setError(result.error);
       } else if (result.data) {
         setFocusTaskState(result.data);
       }
@@ -55,7 +55,7 @@ export function FocusWidget({ tasks }: FocusWidgetProps) {
     async (taskId: string) => {
       setSetting(true);
       const result = await setFocusTask(taskId);
-      if (result.data) {
+      if ("data" in result && result.data) {
         const task = tasks.find((t) => t.id === taskId);
         setFocusTaskState({ task_id: taskId, task_title: task?.title });
       }

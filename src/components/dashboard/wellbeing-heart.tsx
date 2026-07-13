@@ -26,8 +26,8 @@ export function WellbeingHeart() {
   const fetchLatest = useCallback(async () => {
     try {
       const result = await getTodaysLatestEntry();
-      if (result.error) {
-        setError(result.error);
+      if (!("data" in result)) {
+        if ("error" in result && result.error) setError(result.error);
       } else if (result.data) {
         setLatestEntry(result.data);
         setSavedPct(result.data.mood_score);
@@ -84,8 +84,8 @@ export function WellbeingHeart() {
       setSaving(true);
       try {
         const result = await createWellbeingEntry(pct, note || undefined);
-        if (result.error) {
-          setError(result.error);
+        if (!("data" in result)) {
+          if ("error" in result && result.error) setError(result.error);
         } else if (result.data) {
           setLatestEntry(result.data as WellbeingEntry);
           setSavedPct(pct);

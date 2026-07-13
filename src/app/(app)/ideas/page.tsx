@@ -79,8 +79,8 @@ export default function IdeasPage() {
     setLoading(true);
     setError(null);
     const result = await getIdeas();
-    if (result.error) {
-      setError(result.error);
+    if (!("data" in result)) {
+      if ("error" in result && result.error) setError(result.error);
     } else {
       setIdeas((result.data ?? []) as Idea[]);
     }
@@ -125,8 +125,8 @@ export default function IdeasPage() {
     formData.set("type", quickType);
     const result = await createIdea(formData);
 
-    if (result.error) {
-      setQuickError(result.error);
+    if (!("data" in result)) {
+      if ("error" in result && result.error) setQuickError(result.error);
     } else {
       setQuickTitle("");
       if (result.data) {

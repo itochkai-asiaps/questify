@@ -109,19 +109,20 @@ describe("getKanbanColumns", () => {
     });
 
     const result = await getKanbanColumns();
+    const columns = "data" in result ? (result.data ?? []) : [];
 
-    expect(Array.isArray(result)).toBe(true);
-    expect(result).toHaveLength(2);
-    expect(result[0]).toEqual(validColumns[0]);
-    expect(result[1]).toEqual(validColumns[1]);
+    expect(columns).toHaveLength(2);
+    expect(columns[0]).toEqual(validColumns[0]);
+    expect(columns[1]).toEqual(validColumns[1]);
   });
 
   it("returns empty array when no columns exist", async () => {
     mockSupabase.order.mockResolvedValueOnce({ data: null, error: null });
 
     const result = await getKanbanColumns();
+    const columns = "data" in result ? (result.data ?? []) : [];
 
-    expect(result).toEqual([]);
+    expect(columns).toEqual([]);
   });
 
   it("queries kanban_columns ordered by position for the authenticated user", async () => {
@@ -148,7 +149,7 @@ describe("getKanbanColumns", () => {
     });
 
     const result = await getKanbanColumns();
-    expect(result).toEqual([]);
+    expect(result).toEqual({ data: [] });
   });
 
   it("returns empty array when position is not a number", async () => {
@@ -164,7 +165,7 @@ describe("getKanbanColumns", () => {
     });
 
     const result = await getKanbanColumns();
-    expect(result).toEqual([]);
+    expect(result).toEqual({ data: [] });
   });
 
   it("returns empty array when title is missing", async () => {
@@ -174,12 +175,12 @@ describe("getKanbanColumns", () => {
     });
 
     const result = await getKanbanColumns();
-    expect(result).toEqual([]);
+    expect(result).toEqual({ data: [] });
   });
 
   // -- Auth ----------------------------------------------------------------
 
-  it("returns empty array when not authenticated", async () => {
+  it("returns error when not authenticated", async () => {
     mockRequireUser.mockResolvedValue({
       supabase: mockSupabase as any,
       user: null,
@@ -187,7 +188,7 @@ describe("getKanbanColumns", () => {
 
     const result = await getKanbanColumns();
 
-    expect(result).toEqual([]);
+    expect(result).toEqual({ error: "Not authenticated" });
   });
 });
 
@@ -214,7 +215,7 @@ describe("createKanbanColumn", () => {
 
     const result = await createKanbanColumn("In Progress");
 
-    expect(result.data).toEqual(createdColumn);
+    expect("data" in result ? result.data : undefined).toEqual(createdColumn);
     expect(result.error).toBeUndefined();
     expect(result).toHaveProperty("data");
     // When no error, the object should not have an "error" key at all
@@ -231,7 +232,7 @@ describe("createKanbanColumn", () => {
 
     const result = await createKanbanColumn("New Col");
 
-    expect(result.data!.position).toBe(4);
+    expect("data" in result ? result.data!.position : undefined).toBe(4);
     const insertPayload = mockSupabase.insert.mock.calls[0][0] as Record<string, unknown>;
     expect(insertPayload.position).toBe(4);
   });
@@ -245,7 +246,7 @@ describe("createKanbanColumn", () => {
 
     const result = await createKanbanColumn("First Col");
 
-    expect(result.data!.position).toBe(0);
+    expect("data" in result ? result.data!.position : undefined).toBe(0);
   });
 
   it("calls revalidatePath for /kanban after creation", async () => {
@@ -263,7 +264,7 @@ describe("createKanbanColumn", () => {
   it("returns Zod error when title is empty", async () => {
     const result = await createKanbanColumn("");
 
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
     expect(result.error).toBeDefined();
     expect(result.error).not.toBe("Not authenticated");
   });
@@ -273,7 +274,7 @@ describe("createKanbanColumn", () => {
 
     const result = await createKanbanColumn(longTitle);
 
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
     expect(result.error).toBeDefined();
   });
 
@@ -289,7 +290,7 @@ describe("createKanbanColumn", () => {
     const result = await createKanbanColumn(exactTitle);
 
     expect(result.error).toBeUndefined();
-    expect(result.data).toBeDefined();
+    expect("data" in result ? result.data : undefined).toBeDefined();
   });
 
   // -- Auth check -----------------------------------------------------------
@@ -303,7 +304,7 @@ describe("createKanbanColumn", () => {
     const result = await createKanbanColumn("My Column");
 
     expect(result.error).toBe("Not authenticated");
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
   });
 
   // -- Supabase error propagation -------------------------------------------
@@ -319,7 +320,7 @@ describe("createKanbanColumn", () => {
     const result = await createKanbanColumn("Dupe");
 
     expect(result.error).toBe("Unique constraint violation");
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
   });
 });
 
@@ -344,7 +345,7 @@ describe("updateKanbanColumn", () => {
 
     const result = await updateKanbanColumn(TEST_COL_ID_1, "Updated Title");
 
-    expect(result.data).toEqual(updatedColumn);
+    expect("data" in result ? result.data : undefined).toEqual(updatedColumn);
     expect(result.error).toBeUndefined();
     expect(mockSupabase.update).toHaveBeenCalledWith({ title: "Updated Title" });
     expect(mockSupabase.eq).toHaveBeenCalledWith("id", TEST_COL_ID_1);
@@ -366,14 +367,14 @@ describe("updateKanbanColumn", () => {
   it("returns Zod error when title is empty", async () => {
     const result = await updateKanbanColumn(TEST_COL_ID_1, "");
 
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
     expect(result.error).toBeDefined();
   });
 
   it("returns Zod error when title exceeds 100 characters", async () => {
     const result = await updateKanbanColumn(TEST_COL_ID_1, "x".repeat(101));
 
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
     expect(result.error).toBeDefined();
   });
 
@@ -390,7 +391,7 @@ describe("updateKanbanColumn", () => {
     const result = await updateKanbanColumn(TEST_COL_ID_1, "Valid Title");
 
     expect(result.error).toBeDefined();
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
   });
 
   // -- Auth check -----------------------------------------------------------
@@ -404,7 +405,7 @@ describe("updateKanbanColumn", () => {
     const result = await updateKanbanColumn(TEST_COL_ID_1, "Valid Title");
 
     expect(result.error).toBe("Not authenticated");
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
   });
 
   // -- Supabase error propagation -------------------------------------------
@@ -418,7 +419,7 @@ describe("updateKanbanColumn", () => {
     const result = await updateKanbanColumn(TEST_COL_ID_1, "Valid Title");
 
     expect(result.error).toBe("Column not found");
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
   });
 });
 
@@ -441,10 +442,10 @@ describe("reorderKanbanColumns", () => {
     expect(mockSupabase.update.mock.calls[1][0]).toEqual({ position: 1 });
   });
 
-  it("returns empty object on success", async () => {
+  it("returns success object on success", async () => {
     const result = await reorderKanbanColumns(ids);
 
-    expect(result).toEqual({});
+    expect(result).toEqual({ success: true });
     expect(result.error).toBeUndefined();
   });
 
@@ -497,7 +498,7 @@ describe("reorderKanbanColumns", () => {
 // ===========================================================================
 
 describe("deleteKanbanColumn", () => {
-  it("deletes a column and returns empty object on success", async () => {
+  it("deletes a column and returns success object on success", async () => {
     mockSupabase.single.mockResolvedValueOnce({
       data: { id: TEST_COL_ID_2 },
       error: null,
@@ -505,7 +506,7 @@ describe("deleteKanbanColumn", () => {
 
     const result = await deleteKanbanColumn(TEST_COL_ID_1);
 
-    expect(result).toEqual({});
+    expect(result).toEqual({ success: true });
     expect(result.error).toBeUndefined();
   });
 
@@ -587,7 +588,7 @@ describe("deleteKanbanColumn", () => {
     const result = await deleteKanbanColumn(TEST_COL_ID_1);
 
     // The code does not check fallback fetch errors, so it proceeds
-    expect(result).toEqual({});
+    expect(result).toEqual({ success: true });
     expect(result.error).toBeUndefined();
   });
 
@@ -596,7 +597,7 @@ describe("deleteKanbanColumn", () => {
 
     const result = await deleteKanbanColumn(TEST_COL_ID_1);
 
-    expect(result).toEqual({});
+    expect(result).toEqual({ success: true });
     expect(mockSupabase.delete).toHaveBeenCalled();
   });
 });

@@ -28,8 +28,8 @@ export default function EditTaskPage() {
 
     const result = await getTaskById(taskId);
 
-    if (result.error) {
-      setError(result.error);
+    if (!("data" in result)) {
+      if ("error" in result && result.error) setError(result.error);
       setLoading(false);
       return;
     }

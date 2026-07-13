@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod/v4";
 
-import { requireUser } from "@/lib/auth/requireUser";
+import { withAuth } from "@/lib/auth/withAuth";
 import { CreatePlanInputSchema, UpdatePlanInputSchema } from "@/types/plan";
 import { awardXp, checkAndAwardAchievements } from "@/lib/gamification/engine";
 import { XP_REWARDS } from "@/lib/gamification/levels";
@@ -29,13 +29,7 @@ function computeProgress(items: { completed: boolean }[]): PlanProgress {
   };
 }
 
-export async function createPlan(formData: FormData): Promise<{ data?: unknown; error?: string }> {
-  const { supabase, user } = await requireUser();
-
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
-
+export const createPlan = withAuth(async ({ supabase, user }, formData: FormData) => {
   const rawData = {
     title: formData.get("title") as string,
     description: (formData.get("description") as string) || undefined,
@@ -95,18 +89,9 @@ export async function createPlan(formData: FormData): Promise<{ data?: unknown; 
   revalidatePath("/plans", "layout");
   revalidatePath("/dashboard", "layout");
   return { data: plan };
-}
+});
 
-export async function updatePlan(
-  planId: string,
-  formData: FormData,
-): Promise<{ data?: unknown; error?: string }> {
-  const { supabase, user } = await requireUser();
-
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
-
+export const updatePlan = withAuth(async ({ supabase }, planId: string, formData: FormData) => {
   const rawData = {
     title: (formData.get("title") as string) || undefined,
     description: (formData.get("description") as string) || undefined,
@@ -141,15 +126,9 @@ export async function updatePlan(
   revalidatePath(`/plans/${planId}`, "layout");
   revalidatePath("/dashboard", "layout");
   return { data: plan };
-}
+});
 
-export async function deletePlan(planId: string): Promise<{ error?: string }> {
-  const { supabase, user } = await requireUser();
-
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
-
+export const deletePlan = withAuth(async ({ supabase }, planId: string) => {
   const { error } = await supabase.from("plans").delete().eq("id", planId);
 
   if (error) {
@@ -159,18 +138,9 @@ export async function deletePlan(planId: string): Promise<{ error?: string }> {
   revalidatePath("/plans", "layout");
   revalidatePath("/dashboard", "layout");
   return {};
-}
+});
 
-export async function getPlans(): Promise<{
-  data?: unknown[];
-  error?: string;
-}> {
-  const { supabase, user } = await requireUser();
-
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
-
+export const getPlans = withAuth(async ({ supabase }) => {
   const { data: plans, error } = await supabase
     .from("plans")
     .select("*, items:plan_items(*)")
@@ -187,15 +157,9 @@ export async function getPlans(): Promise<{
   });
 
   return { data };
-}
+});
 
-export async function getPlanById(planId: string): Promise<{ data?: unknown; error?: string }> {
-  const { supabase, user } = await requireUser();
-
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
-
+export const getPlanById = withAuth(async ({ supabase }, planId: string) => {
   const { data: plan, error } = await supabase
     .from("plans")
     .select("*, items:plan_items(*)")
@@ -210,18 +174,9 @@ export async function getPlanById(planId: string): Promise<{ data?: unknown; err
   const progress = computeProgress(items);
 
   return { data: { ...plan, ...progress } };
-}
+});
 
-export async function addPlanItem(
-  planId: string,
-  formData: FormData,
-): Promise<{ data?: unknown; error?: string }> {
-  const { supabase, user } = await requireUser();
-
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
-
+export const addPlanItem = withAuth(async ({ supabase }, planId: string, formData: FormData) => {
   const rawData = {
     title: formData.get("title") as string,
     estimated_minutes: formData.get("estimated_minutes")
@@ -267,15 +222,9 @@ export async function addPlanItem(
   revalidatePath(`/plans/${planId}`, "layout");
   revalidatePath("/dashboard", "layout");
   return { data: item };
-}
+});
 
-export async function togglePlanItem(itemId: string): Promise<{ data?: unknown; error?: string }> {
-  const { supabase, user } = await requireUser();
-
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
-
+export const togglePlanItem = withAuth(async ({ supabase, user }, itemId: string) => {
   // Get current completed state
   const { data: current, error: fetchError } = await supabase
     .from("plan_items")
@@ -342,15 +291,9 @@ export async function togglePlanItem(itemId: string): Promise<{ data?: unknown; 
   revalidatePath(`/plans/${current.plan_id}`, "layout");
   revalidatePath("/dashboard", "layout");
   return { data: item };
-}
+});
 
-export async function deletePlanItem(itemId: string): Promise<{ error?: string }> {
-  const { supabase, user } = await requireUser();
-
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
-
+export const deletePlanItem = withAuth(async ({ supabase }, itemId: string) => {
   // Get plan_id for revalidation
   const { data: item, error: fetchError } = await supabase
     .from("plan_items")
@@ -372,4 +315,4 @@ export async function deletePlanItem(itemId: string): Promise<{ error?: string }
   revalidatePath(`/plans/${item.plan_id}`, "layout");
   revalidatePath("/dashboard", "layout");
   return {};
-}
+});

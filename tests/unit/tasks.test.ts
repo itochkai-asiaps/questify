@@ -81,13 +81,13 @@ describe("bulkUpdateTaskStatuses", () => {
   it("rejects non-array input", async () => {
     // @ts-expect-error testing runtime validation
     const result = await bulkUpdateTaskStatuses("not-an-array");
-    expect(result.success).toBe(false);
+    expect("success" in result ? result.success : undefined).toBe(false);
     expect(result.error).toBe("No updates provided");
   });
 
   it("rejects empty array", async () => {
     const result = await bulkUpdateTaskStatuses([]);
-    expect(result.success).toBe(false);
+    expect("success" in result ? result.success : undefined).toBe(false);
     expect(result.error).toBe("No updates provided");
   });
 
@@ -97,15 +97,13 @@ describe("bulkUpdateTaskStatuses", () => {
       newStatus: "todo",
     }));
     const result = await bulkUpdateTaskStatuses(updates);
-    expect(result.success).toBe(false);
+    expect("success" in result ? result.success : undefined).toBe(false);
     expect(result.error).toBe("Too many tasks (max 500)");
   });
 
   it("rejects invalid UUID task IDs", async () => {
-    const result = await bulkUpdateTaskStatuses([
-      { taskId: "not-a-uuid", newStatus: "todo" },
-    ]);
-    expect(result.success).toBe(false);
+    const result = await bulkUpdateTaskStatuses([{ taskId: "not-a-uuid", newStatus: "todo" }]);
+    expect("success" in result ? result.success : undefined).toBe(false);
     expect(result.error).toContain("Invalid task ID");
   });
 
@@ -117,7 +115,6 @@ describe("bulkUpdateTaskStatuses", () => {
     const result = await bulkUpdateTaskStatuses([
       { taskId: "550e8400-e29b-41d4-a716-446655440001", newStatus: "todo" },
     ]);
-    expect(result.success).toBe(false);
     expect(result.error).toBe("Not authenticated");
   });
 
@@ -131,7 +128,7 @@ describe("bulkUpdateTaskStatuses", () => {
         previousStatus: "todo",
       },
     ]);
-    expect(result.success).toBe(true);
+    expect("success" in result ? result.success : undefined).toBe(true);
 
     const updateCall = mockSupabase.update.mock.calls[0][0] as Record<string, unknown>;
     expect(updateCall.status).toBe("backlog");
@@ -146,7 +143,7 @@ describe("bulkUpdateTaskStatuses", () => {
         newStatus: "todo",
       },
     ]);
-    expect(result.success).toBe(true);
+    expect("success" in result ? result.success : undefined).toBe(true);
 
     const updateCall = mockSupabase.update.mock.calls[0][0] as Record<string, unknown>;
     expect(updateCall.status).toBe("todo");
@@ -162,7 +159,7 @@ describe("bulkUpdateTaskStatuses", () => {
         // no previousStatus
       },
     ]);
-    expect(result.success).toBe(true);
+    expect("success" in result ? result.success : undefined).toBe(true);
 
     const updateCall = mockSupabase.update.mock.calls[0][0] as Record<string, unknown>;
     expect(updateCall.status).toBe("backlog");
@@ -196,7 +193,7 @@ describe("bulkUpdateTaskStatuses", () => {
     const result = await bulkUpdateTaskStatuses([
       { taskId: "550e8400-e29b-41d4-a716-446655440001", newStatus: "todo" },
     ]);
-    expect(result.success).toBe(false);
+    expect("success" in result ? result.success : undefined).toBe(false);
     expect(result.error).toBe("DB constraint violation");
   });
 });

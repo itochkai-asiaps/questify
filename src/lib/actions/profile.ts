@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod/v4";
 
-import { requireUser } from "@/lib/auth/requireUser";
+import { withAuth } from "@/lib/auth/withAuth";
 
 const updateProfileSchema = z.object({
   displayName: z.string().min(1, "Display name is required").max(100),
@@ -11,58 +11,51 @@ const updateProfileSchema = z.object({
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
-export async function updateProfile(
-  userId: string,
-  input: UpdateProfileInput,
-): Promise<{ data?: unknown; error?: string }> {
-  const parsed = updateProfileSchema.safeParse(input);
-  if (!parsed.success) {
-    const firstError = parsed.error.issues[0]?.message ?? "Invalid input";
-    return { error: firstError };
-  }
+export const updateProfile = withAuth(
+  async (
+    { supabase, user },
+    userId: string,
+    input: UpdateProfileInput,
+  ): Promise<{ data?: unknown; error?: string }> => {
+    const parsed = updateProfileSchema.safeParse(input);
+    if (!parsed.success) {
+      const firstError = parsed.error.issues[0]?.message ?? "Invalid input";
+      return { error: firstError };
+    }
 
-  const { supabase, user } = await requireUser();
+    if (user.id !== userId) {
+      return { error: "Unauthorized" };
+    }
 
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({ display_name: parsed.data.displayName })
+      .eq("id", userId)
+      .select()
+      .single();
 
-  if (user.id !== userId) {
-    return { error: "Unauthorized" };
-  }
+    if (error) {
+      return { error: error.message };
+    }
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .update({ display_name: parsed.data.displayName })
-    .eq("id", userId)
-    .select()
-    .single();
+    revalidatePath("/profile", "layout");
+    revalidatePath("/dashboard", "layout");
+    return { data };
+  },
+);
 
-  if (error) {
-    return { error: error.message };
-  }
+export const getProfile = withAuth(
+  async ({ supabase, user }, userId: string): Promise<{ data?: unknown; error?: string }> => {
+    if (user.id !== userId) {
+      return { error: "Unauthorized" };
+    }
 
-  revalidatePath("/profile", "layout");
-  revalidatePath("/dashboard", "layout");
-  return { data };
-}
+    const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
 
-export async function getProfile(userId: string): Promise<{ data?: unknown; error?: string }> {
-  const { supabase, user } = await requireUser();
+    if (error) {
+      return { error: error.message };
+    }
 
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
-
-  if (user.id !== userId) {
-    return { error: "Unauthorized" };
-  }
-
-  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  return { data };
-}
+    return { data };
+  },
+);

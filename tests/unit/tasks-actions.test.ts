@@ -132,7 +132,7 @@ describe("createTask", () => {
 
     const result = await createTask(fd);
     expect(result.error).toBeUndefined();
-    expect(result.data).toEqual(createdTask);
+    expect("data" in result ? result.data : undefined).toEqual(createdTask);
 
     // Verify insert was called with correct data
     const insertCall = mockSupabase.insert.mock.calls[0][0] as Record<string, unknown>;
@@ -148,7 +148,7 @@ describe("createTask", () => {
     const fd = mockFormData({ title: "" });
     const result = await createTask(fd);
     expect(result.error).toBe("Title is required");
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
   });
 
   it("returns error when not authenticated", async () => {
@@ -264,7 +264,7 @@ describe("updateTask", () => {
     const result = await updateTask(taskId, fd);
 
     expect(result.error).toBeUndefined();
-    expect(result.data).toBeDefined();
+    expect("data" in result ? result.data : undefined).toBeDefined();
 
     const updateCall = mockSupabase.update.mock.calls[0][0] as Record<string, unknown>;
     expect(updateCall.status).toBe("in_progress");
@@ -399,7 +399,7 @@ describe("updateTask", () => {
 
     // Gamification failure should NOT block the task update
     expect(result.error).toBeUndefined();
-    expect(result.data).toBeDefined();
+    expect("data" in result ? result.data : undefined).toBeDefined();
   });
 
   it("returns error when not authenticated", async () => {
@@ -490,7 +490,7 @@ describe("deleteTask", () => {
     const taskId = "550e8400-e29b-41d4-a716-4466554400bb";
     const result = await deleteTask(taskId);
 
-    expect(result.success).toBe(true);
+    expect("success" in result ? result.success : undefined).toBe(true);
     expect(result.error).toBeUndefined();
 
     // Verify update was called with deleted_at
@@ -511,7 +511,6 @@ describe("deleteTask", () => {
     mockRequireUser.mockResolvedValue({ supabase: mockSupabase as any, user: null });
 
     const result = await deleteTask("550e8400-e29b-41d4-a716-4466554400cc");
-    expect(result.success).toBe(false);
     expect(result.error).toBe("Not authenticated");
   });
 
@@ -519,7 +518,7 @@ describe("deleteTask", () => {
     mockSupabase.error = { message: "DB constraint violation" };
 
     const result = await deleteTask("550e8400-e29b-41d4-a716-4466554400dd");
-    expect(result.success).toBe(false);
+    expect("success" in result ? result.success : undefined).toBe(false);
     expect(result.error).toBe("DB constraint violation");
   });
 });
@@ -538,7 +537,7 @@ describe("reorderTasks", () => {
     ];
 
     const result = await reorderTasks(taskIds);
-    expect(result.success).toBe(true);
+    expect("success" in result ? result.success : undefined).toBe(true);
 
     expect(mockSupabase.rpc).toHaveBeenCalledWith("reorder_tasks", {
       p_task_ids: taskIds,
@@ -547,13 +546,13 @@ describe("reorderTasks", () => {
 
   it("rejects empty array", async () => {
     const result = await reorderTasks([]);
-    expect(result.success).toBe(false);
+    expect("success" in result ? result.success : undefined).toBe(false);
     expect(result.error).toBe("Invalid task IDs");
   });
 
   it("rejects non-UUID values", async () => {
     const result = await reorderTasks(["not-a-uuid"]);
-    expect(result.success).toBe(false);
+    expect("success" in result ? result.success : undefined).toBe(false);
     expect(result.error).toBe("Invalid task IDs");
   });
 
@@ -562,7 +561,7 @@ describe("reorderTasks", () => {
     mockRequireUser.mockResolvedValue({ supabase: mockSupabase as any, user: null });
 
     const result = await reorderTasks(validUuids);
-    expect(result.success).toBe(false);
+    expect("success" in result ? result.success : undefined).toBe(false);
     expect(result.error).toBe("Not authenticated");
   });
 
@@ -574,7 +573,7 @@ describe("reorderTasks", () => {
 
     const taskIds = ["550e8400-e29b-41d4-a716-446655440001"];
     const result = await reorderTasks(taskIds);
-    expect(result.success).toBe(false);
+    expect("success" in result ? result.success : undefined).toBe(false);
     expect(result.error).toBe("RPC failed");
   });
 
@@ -605,7 +604,7 @@ describe("getTasks", () => {
     const result = await getTasks();
 
     expect(result.error).toBeUndefined();
-    expect(result.data).toEqual(tasks);
+    expect("data" in result ? result.data : undefined).toEqual(tasks);
 
     // Verify soft-delete filter
     expect(mockSupabase.is).toHaveBeenCalledWith("deleted_at", null);
@@ -624,9 +623,7 @@ describe("getTasks", () => {
 
     // Should only order by created_at, not sort_order
     const orderCalls = mockSupabase.order.mock.calls;
-    const hasSortOrderCall = orderCalls.some(
-      (call: any[]) => call[0] === "sort_order",
-    );
+    const hasSortOrderCall = orderCalls.some((call: any[]) => call[0] === "sort_order");
     expect(hasSortOrderCall).toBe(false);
   });
 
@@ -636,7 +633,7 @@ describe("getTasks", () => {
 
     const result = await getTasks();
     expect(result.error).toBeUndefined();
-    expect(result.data).toEqual([]);
+    expect("data" in result ? result.data : undefined).toEqual([]);
   });
 
   it("filters out soft-deleted tasks", async () => {
@@ -652,7 +649,7 @@ describe("getTasks", () => {
 
     const result = await getTasks();
     expect(result.error).toBe("Not authenticated");
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
   });
 
   it("propagates Supabase query error", async () => {
@@ -678,7 +675,7 @@ describe("getTaskById", () => {
     const result = await getTaskById(taskId);
 
     expect(result.error).toBeUndefined();
-    expect(result.data).toEqual(task);
+    expect("data" in result ? result.data : undefined).toEqual(task);
   });
 
   it("returns error when task not found", async () => {
@@ -689,7 +686,7 @@ describe("getTaskById", () => {
 
     const result = await getTaskById(taskId);
     expect(result.error).toBe("No rows found");
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
   });
 
   it("returns error when not authenticated", async () => {

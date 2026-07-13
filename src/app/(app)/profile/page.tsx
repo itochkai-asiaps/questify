@@ -415,7 +415,10 @@ export default function ProfilePage() {
         ]);
 
       // Resolve display name
-      const profileData = profileResult.data as { display_name?: string } | undefined;
+      const profileData =
+        "data" in profileResult
+          ? (profileResult.data as { display_name?: string } | undefined)
+          : undefined;
       const profileName = profileData?.display_name;
       const metaName =
         (user.user_metadata?.display_name as string) ?? (user.user_metadata?.full_name as string);
@@ -430,8 +433,8 @@ export default function ProfilePage() {
       setAchievements(achievementsResult);
 
       // Task/Plan counts
-      const tasks = (tasksResult.data ?? []) as TaskItem[];
-      const plans = (plansResult.data ?? []) as PlanItem[];
+      const tasks = ("data" in tasksResult ? (tasksResult.data ?? []) : []) as TaskItem[];
+      const plans = ("data" in plansResult ? (plansResult.data ?? []) : []) as PlanItem[];
 
       setTasksCompleted(tasks.filter((t) => t.status === "done").length);
       setPlansCompleted(plans.filter((p) => p.progress >= 100).length);
@@ -638,8 +641,10 @@ export default function ProfilePage() {
               size="sm"
               onClick={async () => {
                 setSeeding(true);
-                const { count, error } = await seedRoadmap();
+                const sResult = await seedRoadmap();
                 setSeeding(false);
+                const count = "count" in sResult ? sResult.count : 0;
+                const error = "error" in sResult ? sResult.error : undefined;
                 setSeedResult(error ? `Error: ${error}` : `${count} tasks created`);
               }}
               disabled={seeding}

@@ -106,7 +106,7 @@ describe("convertIdeaToTask", () => {
     const result = await convertIdeaToTask(TEST_IDEA_ID);
 
     expect(result.error).toBeUndefined();
-    expect(result.data).toEqual(taskData);
+    expect("data" in result ? result.data : undefined).toEqual(taskData);
   });
 
   // -- Idea not found -------------------------------------------------------
@@ -120,7 +120,7 @@ describe("convertIdeaToTask", () => {
     const result = await convertIdeaToTask(TEST_IDEA_ID);
 
     expect(result.error).toBe("Idea not found");
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
   });
 
   it("returns error when idea fetch returns null data", async () => {
@@ -142,7 +142,7 @@ describe("convertIdeaToTask", () => {
     const result = await convertIdeaToTask(TEST_IDEA_ID);
 
     expect(result.error).toContain("Validation failed");
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
   });
 
   // -- xp_reward derived from priority --------------------------------------
@@ -154,10 +154,7 @@ describe("convertIdeaToTask", () => {
 
     await convertIdeaToTask(TEST_IDEA_ID);
 
-    const insertPayload = mockSupabase.insert.mock.calls[0][0] as Record<
-      string,
-      unknown
-    >;
+    const insertPayload = mockSupabase.insert.mock.calls[0][0] as Record<string, unknown>;
     expect(insertPayload.xp_reward).toBe(15);
     expect(insertPayload.priority).toBe("p3");
     expect(insertPayload.status).toBe("todo");
@@ -170,10 +167,7 @@ describe("convertIdeaToTask", () => {
 
     await convertIdeaToTask(TEST_IDEA_ID);
 
-    const insertPayload = mockSupabase.insert.mock.calls[0][0] as Record<
-      string,
-      unknown
-    >;
+    const insertPayload = mockSupabase.insert.mock.calls[0][0] as Record<string, unknown>;
     expect(insertPayload).toHaveProperty("xp_reward");
     expect(insertPayload.xp_reward).toBeGreaterThan(0);
   });
@@ -191,14 +185,10 @@ describe("convertIdeaToTask", () => {
     expect(mockSupabase.delete).toHaveBeenCalled();
     // Verify from("ideas") was called — at least for the delete step
     // (also called for the initial select, so at least 2 times total)
-    const ideasCalls = mockSupabase.from.mock.calls.filter(
-      (call: any[]) => call[0] === "ideas",
-    );
+    const ideasCalls = mockSupabase.from.mock.calls.filter((call: any[]) => call[0] === "ideas");
     expect(ideasCalls.length).toBeGreaterThanOrEqual(2);
     // The final from("ideas") call should be the delete
-    expect(mockSupabase.from.mock.calls[mockSupabase.from.mock.calls.length - 1][0]).toBe(
-      "ideas",
-    );
+    expect(mockSupabase.from.mock.calls[mockSupabase.from.mock.calls.length - 1][0]).toBe("ideas");
   });
 
   it("continues after task creation even if idea was not found", async () => {
@@ -209,7 +199,7 @@ describe("convertIdeaToTask", () => {
       .mockResolvedValueOnce({ data: taskData, error: null });
 
     const result = await convertIdeaToTask(TEST_IDEA_ID);
-    expect(result.data).toEqual(taskData);
+    expect("data" in result ? result.data : undefined).toEqual(taskData);
   });
 
   // -- revalidatePath calls -------------------------------------------------
@@ -265,7 +255,7 @@ describe("convertIdeaToTask", () => {
     const result = await convertIdeaToTask(TEST_IDEA_ID);
 
     expect(result.error).toBe("DB constraint violation");
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
   });
 });
 
@@ -296,7 +286,7 @@ describe("convertIdeaToPlan", () => {
     const result = await convertIdeaToPlan(TEST_IDEA_ID);
 
     expect(result.error).toBeUndefined();
-    expect(result.data).toEqual(planData);
+    expect("data" in result ? result.data : undefined).toEqual(planData);
   });
 
   it("inserts into the plans table", async () => {
@@ -342,7 +332,7 @@ describe("convertIdeaToPlan", () => {
     const result = await convertIdeaToPlan(TEST_IDEA_ID);
 
     expect(result.error).toContain("Validation failed");
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
   });
 
   // -- Idea not found -------------------------------------------------------
@@ -406,9 +396,7 @@ describe("convertPlanItemToTask", () => {
 
     // Verify the first select call was on "plan_items" with proper columns
     expect(mockSupabase.from).toHaveBeenCalledWith("plan_items");
-    expect(mockSupabase.select).toHaveBeenCalledWith(
-      "title, description, plan_id",
-    );
+    expect(mockSupabase.select).toHaveBeenCalledWith("title, description, plan_id");
   });
 
   it("includes the plan item description in the task insert", async () => {
@@ -418,14 +406,9 @@ describe("convertPlanItemToTask", () => {
 
     await convertPlanItemToTask(TEST_ITEM_ID);
 
-    const insertPayload = mockSupabase.insert.mock.calls[0][0] as Record<
-      string,
-      unknown
-    >;
+    const insertPayload = mockSupabase.insert.mock.calls[0][0] as Record<string, unknown>;
     expect(insertPayload.title).toBe("Do the thing");
-    expect(insertPayload.description).toBe(
-      "Step-by-step instructions for doing the thing",
-    );
+    expect(insertPayload.description).toBe("Step-by-step instructions for doing the thing");
   });
 
   it("handles null description from plan item gracefully", async () => {
@@ -442,10 +425,7 @@ describe("convertPlanItemToTask", () => {
     const result = await convertPlanItemToTask(TEST_ITEM_ID);
 
     expect(result.error).toBeUndefined();
-    const insertPayload = mockSupabase.insert.mock.calls[0][0] as Record<
-      string,
-      unknown
-    >;
+    const insertPayload = mockSupabase.insert.mock.calls[0][0] as Record<string, unknown>;
     // description should be undefined (no key) or an empty-ish value
     expect(insertPayload.description || undefined).toBeUndefined();
   });
@@ -460,7 +440,7 @@ describe("convertPlanItemToTask", () => {
     const result = await convertPlanItemToTask(TEST_ITEM_ID);
 
     expect(result.error).toBeUndefined();
-    expect(result.data).toEqual(taskData);
+    expect("data" in result ? result.data : undefined).toEqual(taskData);
   });
 
   it("sets xp_reward to p3 value (15) in task insert", async () => {
@@ -470,10 +450,7 @@ describe("convertPlanItemToTask", () => {
 
     await convertPlanItemToTask(TEST_ITEM_ID);
 
-    const insertPayload = mockSupabase.insert.mock.calls[0][0] as Record<
-      string,
-      unknown
-    >;
+    const insertPayload = mockSupabase.insert.mock.calls[0][0] as Record<string, unknown>;
     expect(insertPayload.xp_reward).toBe(15);
     expect(insertPayload.status).toBe("todo");
     expect(insertPayload.priority).toBe("p3");
@@ -519,7 +496,7 @@ describe("convertPlanItemToTask", () => {
     const result = await convertPlanItemToTask(TEST_ITEM_ID);
 
     expect(result.error).toContain("Validation failed");
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
   });
 
   // -- Error handling -------------------------------------------------------

@@ -41,8 +41,8 @@ export default function PlansPage() {
     setIsLoading(true);
     setError(null);
     const result = await getPlans();
-    if (result.error) {
-      setError(result.error);
+    if (!("data" in result)) {
+      if ("error" in result && result.error) setError(result.error);
     } else {
       setPlans((result.data ?? []) as PlanWithProgress[]);
     }

@@ -130,7 +130,7 @@ describe("createPlan", () => {
     const result = await createPlan(fd);
 
     expect(result.error).toBeUndefined();
-    expect(result.data).toEqual(createdPlan);
+    expect("data" in result ? result.data : undefined).toEqual(createdPlan);
 
     const insertCall = mockSupabase.insert.mock.calls[0][0] as Record<string, unknown>;
     expect(insertCall.title).toBe("My Plan");
@@ -148,15 +148,12 @@ describe("createPlan", () => {
       title: "Plan with items",
       description: "",
       color: "#6366f1",
-      items: JSON.stringify([
-        { title: "Step 1" },
-        { title: "Step 2" },
-      ]),
+      items: JSON.stringify([{ title: "Step 1" }, { title: "Step 2" }]),
     });
 
     const result = await createPlan(fd);
     expect(result.error).toBeUndefined();
-    expect(result.data).toEqual(createdPlan);
+    expect("data" in result ? result.data : undefined).toEqual(createdPlan);
 
     // Verify items were inserted
     const itemsInsertCall = mockSupabase.insert.mock.calls[1][0] as any[];
@@ -197,7 +194,7 @@ describe("createPlan", () => {
     // Invalid JSON → items defaults to [], plan is still created
     const result = await createPlan(fd);
     expect(result.error).toBeUndefined();
-    expect(result.data).toEqual(createdPlan);
+    expect("data" in result ? result.data : undefined).toEqual(createdPlan);
   });
 
   it("propagates plan insert error", async () => {
@@ -256,7 +253,7 @@ describe("updatePlan", () => {
     const result = await updatePlan(planId, fd);
 
     expect(result.error).toBeUndefined();
-    expect(result.data).toEqual(updatedPlan);
+    expect("data" in result ? result.data : undefined).toEqual(updatedPlan);
 
     const updateCall = mockSupabase.update.mock.calls[0][0] as Record<string, unknown>;
     expect(updateCall.title).toBe("Updated Title");
@@ -355,7 +352,7 @@ describe("addPlanItem", () => {
     const result = await addPlanItem(planId, fd);
 
     expect(result.error).toBeUndefined();
-    expect(result.data).toEqual(newItem);
+    expect("data" in result ? result.data : undefined).toEqual(newItem);
 
     const insertCall = mockSupabase.insert.mock.calls[0][0] as Record<string, unknown>;
     expect(insertCall.title).toBe("New step");
@@ -421,7 +418,7 @@ describe("togglePlanItem", () => {
     const result = await togglePlanItem(itemId);
 
     expect(result.error).toBeUndefined();
-    expect(result.data).toBeDefined();
+    expect("data" in result ? result.data : undefined).toBeDefined();
 
     const updateCall = mockSupabase.update.mock.calls[0][0] as Record<string, unknown>;
     expect(updateCall.completed).toBe(true);
@@ -511,7 +508,7 @@ describe("togglePlanItem", () => {
 
     // Toggle should still succeed despite gamification failure
     expect(result.error).toBeUndefined();
-    expect(result.data).toBeDefined();
+    expect("data" in result ? result.data : undefined).toBeDefined();
   });
 
   it("returns error when item not found", async () => {
@@ -616,14 +613,15 @@ describe("getPlans", () => {
     const result = await getPlans();
 
     expect(result.error).toBeUndefined();
-    expect(result.data).toHaveLength(2);
+    const plansData = "data" in result ? (result.data ?? []) : [];
+    expect(plansData).toHaveLength(2);
 
-    const planA = (result.data as any[])[0];
+    const planA = plansData[0];
     expect(planA.total).toBe(3);
     expect(planA.completed).toBe(2);
     expect(planA.progress).toBe(67); // 2/3 * 100 = 66.67 → rounded to 67
 
-    const planB = (result.data as any[])[1];
+    const planB = plansData[1];
     expect(planB.total).toBe(0);
     expect(planB.completed).toBe(0);
     expect(planB.progress).toBe(0);
@@ -635,7 +633,7 @@ describe("getPlans", () => {
 
     const result = await getPlans();
     expect(result.error).toBeUndefined();
-    expect(result.data).toEqual([]);
+    expect("data" in result ? result.data : undefined).toEqual([]);
   });
 
   it("returns error when not authenticated", async () => {
@@ -643,7 +641,7 @@ describe("getPlans", () => {
 
     const result = await getPlans();
     expect(result.error).toBe("Not authenticated");
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
   });
 
   it("propagates Supabase query error", async () => {
@@ -678,7 +676,7 @@ describe("getPlanById", () => {
     const result = await getPlanById(planId);
 
     expect(result.error).toBeUndefined();
-    const data = result.data as any;
+    const data = "data" in result ? result.data : (undefined as any);
     expect(data.id).toBe(planId);
     expect(data.total).toBe(4);
     expect(data.completed).toBe(2);
@@ -693,7 +691,7 @@ describe("getPlanById", () => {
 
     const result = await getPlanById(planId);
     expect(result.error).toBe("No rows found");
-    expect(result.data).toBeUndefined();
+    expect("data" in result ? result.data : undefined).toBeUndefined();
   });
 
   it("returns error when not authenticated", async () => {

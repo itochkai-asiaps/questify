@@ -91,13 +91,18 @@ export default function KanbanPage() {
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    const [c, t] = await Promise.all([getKanbanColumns(), getTasks()]);
-    if (t.error) {
-      setError(t.error);
+    const [colResult, t] = await Promise.all([getKanbanColumns(), getTasks()]);
+    if (!("data" in t)) {
+      if ("error" in t && t.error) setError(t.error);
       setIsLoading(false);
       return;
     }
-    setColumns(c);
+    if (!("data" in colResult)) {
+      if ("error" in colResult && colResult.error) setError(colResult.error);
+      setIsLoading(false);
+      return;
+    }
+    setColumns(colResult.data ?? []);
     setAllTasks((t.data ?? []) as Task[]);
     setTasksByColumn(groupByColumn((t.data ?? []) as Task[]));
     setIsLoading(false);
@@ -114,8 +119,9 @@ export default function KanbanPage() {
     const title = newTitle.trim();
     if (!title) return;
     const result = await createKanbanColumn(title);
-    if (result.data) {
-      setColumns((p) => [...p, result.data!]);
+    const colData = "data" in result ? result.data : undefined;
+    if (colData) {
+      setColumns((p) => [...p, colData]);
       setNewTitle("");
       setAdding(false);
     }
@@ -159,7 +165,7 @@ export default function KanbanPage() {
       fd.set("kanban_column_id", columnId);
     }
     const r = await createTask(fd);
-    if (r.data) {
+    if ("data" in r && r.data) {
       const newTask = r.data as Task;
       setAllTasks((prev) => [newTask, ...prev]);
       setTasksByColumn((prev) => {

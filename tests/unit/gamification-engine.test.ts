@@ -133,9 +133,7 @@ describe("getQualifyingSlugs (achievement logic)", () => {
   });
 
   it("unlocks first_task at 1 task", () => {
-    expect(getQualifyingSlugs({ ...EMPTY_STATS, tasks_completed: 1 })).toEqual([
-      "first_task",
-    ]);
+    expect(getQualifyingSlugs({ ...EMPTY_STATS, tasks_completed: 1 })).toEqual(["first_task"]);
   });
 
   it("unlocks first_task + getting_started at 10 tasks", () => {
@@ -150,27 +148,19 @@ describe("getQualifyingSlugs (achievement logic)", () => {
   });
 
   it("unlocks week_warrior at 7-day streak", () => {
-    expect(
-      getQualifyingSlugs({ ...EMPTY_STATS, longest_streak: 7 }),
-    ).toContain("week_warrior");
+    expect(getQualifyingSlugs({ ...EMPTY_STATS, longest_streak: 7 })).toContain("week_warrior");
   });
 
   it("unlocks monthly_master at 30-day streak", () => {
-    expect(
-      getQualifyingSlugs({ ...EMPTY_STATS, longest_streak: 30 }),
-    ).toContain("monthly_master");
+    expect(getQualifyingSlugs({ ...EMPTY_STATS, longest_streak: 30 })).toContain("monthly_master");
   });
 
   it("unlocks perfect_day at 10 tasks today", () => {
-    expect(
-      getQualifyingSlugs({ ...EMPTY_STATS, tasks_today: 10 }),
-    ).toContain("perfect_day");
+    expect(getQualifyingSlugs({ ...EMPTY_STATS, tasks_today: 10 })).toContain("perfect_day");
   });
 
   it("unlocks planner at 5 plans", () => {
-    expect(
-      getQualifyingSlugs({ ...EMPTY_STATS, plans_completed: 5 }),
-    ).toContain("planner");
+    expect(getQualifyingSlugs({ ...EMPTY_STATS, plans_completed: 5 })).toContain("planner");
   });
 
   it("unlocks multiple achievements simultaneously", () => {
@@ -528,10 +518,7 @@ describe("checkAndAwardAchievements", () => {
    * Other tables (user_stats, tasks) flow through the default mockSupabase.
    * Returns the table mocks so tests can customize errors on them.
    */
-  function mockTableAwareFrom(
-    achievementsData: any[],
-    uaData: any[],
-  ) {
+  function mockTableAwareFrom(achievementsData: any[], uaData: any[]) {
     const achMock = createTableMock(achievementsData);
     const uaMock = createTableMock(uaData);
     mockSupabase.from.mockImplementation((table: string) => {
@@ -571,10 +558,7 @@ describe("checkAndAwardAchievements", () => {
     });
     mockSupabase.count = 0;
     // achievements: one row for first_task; user_achievements: empty (none unlocked yet)
-    mockTableAwareFrom(
-      [{ id: "ach-first", slug: "first_task" }],
-      [],
-    );
+    mockTableAwareFrom([{ id: "ach-first", slug: "first_task" }], []);
 
     const result = await checkAndAwardAchievements("user");
     expect(result).toContain("first_task");
@@ -630,10 +614,7 @@ describe("checkAndAwardAchievements", () => {
         { id: "a1", slug: "first_task" },
         { id: "a2", slug: "getting_started" },
       ],
-      [
-        { achievement_id: "a1" },
-        { achievement_id: "a2" },
-      ],
+      [{ achievement_id: "a1" }, { achievement_id: "a2" }],
     );
 
     const result = await checkAndAwardAchievements("user");
@@ -761,7 +742,10 @@ describe("checkAndAwardAchievements", () => {
     });
     mockSupabase.count = 0;
     const { uaMock } = mockTableAwareFrom(
-      [{ id: "a1", slug: "first_task" }, { id: "a2", slug: "getting_started" }],
+      [
+        { id: "a1", slug: "first_task" },
+        { id: "a2", slug: "getting_started" },
+      ],
       [],
     );
     // Achievements query succeeds, user_achievements query fails
@@ -784,7 +768,10 @@ describe("checkAndAwardAchievements", () => {
     });
     mockSupabase.count = 0;
     const { uaMock } = mockTableAwareFrom(
-      [{ id: "a1", slug: "first_task" }, { id: "a2", slug: "getting_started" }],
+      [
+        { id: "a1", slug: "first_task" },
+        { id: "a2", slug: "getting_started" },
+      ],
       [{ achievement_id: "a1" }], // first_task already unlocked
     );
     // Select succeeds (error = null), but insert fails
@@ -811,9 +798,7 @@ describe("getAchievements", () => {
         description: "Complete your first task",
         icon_url: null,
         xp_reward: 10,
-        user_achievements: [
-          { unlocked_at: "2024-01-01T00:00:00Z", user_id: "user-1" },
-        ],
+        user_achievements: [{ unlocked_at: "2024-01-01T00:00:00Z", user_id: "user-1" }],
       },
       {
         slug: "getting_started",
@@ -829,9 +814,7 @@ describe("getAchievements", () => {
         description: "Complete 50 tasks",
         icon_url: null,
         xp_reward: 50,
-        user_achievements: [
-          { unlocked_at: "2024-01-02T00:00:00Z", user_id: "other-user" },
-        ],
+        user_achievements: [{ unlocked_at: "2024-01-02T00:00:00Z", user_id: "other-user" }],
       },
     ];
 

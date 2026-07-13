@@ -52,8 +52,8 @@ export default function MatrixPage() {
     setIsLoading(true);
     setError(null);
     const result = await getTasks();
-    if (result.error) {
-      setError(result.error);
+    if (!("data" in result)) {
+      if ("error" in result && result.error) setError(result.error);
       setIsLoading(false);
       return;
     }

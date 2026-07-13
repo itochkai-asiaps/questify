@@ -12,12 +12,12 @@ export default function SeedPage() {
 
   const handleSeed = async () => {
     setLoading(true);
-    const { count, error } = await seedRoadmap();
+    const result = await seedRoadmap();
     setLoading(false);
-    if (error) {
-      setResult(`Error: ${error}`);
-    } else {
-      setResult(`${count} tasks created! Check Kanban or Tasks.`);
+    if ("error" in result && result.error) {
+      setResult(`Error: ${result.error}`);
+    } else if ("count" in result) {
+      setResult(`${result.count} tasks created! Check Kanban or Tasks.`);
     }
   };
 

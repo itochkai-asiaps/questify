@@ -74,8 +74,8 @@ export default function TaskCard({ task, onDelete, onSelect, isSelected }: TaskC
 
     const result = await deleteTask(task.id);
 
-    if (!result.success) {
-      setDeleteError(result.error ?? "Failed to delete task");
+    if (!("success" in result) || !result.success) {
+      setDeleteError(("error" in result && result.error) || "Failed to delete task");
       setIsDeleting(false);
       return;
     }

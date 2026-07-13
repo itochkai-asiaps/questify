@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod/v4";
 
 import { createClient } from "@/lib/supabase/server";
-import { requireUser } from "@/lib/auth/requireUser";
+import { withAuth } from "@/lib/auth/withAuth";
 
 const createIdeaSchema = z.object({
   title: z.string().min(1, "Title is required").max(500),
@@ -14,125 +14,109 @@ const createIdeaSchema = z.object({
   estimated_minutes: z.number().int().nonnegative().optional(),
 });
 
-export async function createIdea(formData: FormData): Promise<{ data?: unknown; error?: string }> {
-  const { supabase, user } = await requireUser();
+export const createIdea = withAuth(
+  async ({ supabase, user }, formData: FormData): Promise<{ data?: unknown; error?: string }> => {
+    const rawData = {
+      title: formData.get("title") as string,
+      description: (formData.get("description") as string) || undefined,
+      source: (formData.get("source") as string) || "web",
+      type: (formData.get("type") as string) || "idea",
+      estimated_minutes: formData.get("estimated_minutes")
+        ? Number(formData.get("estimated_minutes"))
+        : undefined,
+    };
 
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
+    const parsed = createIdeaSchema.safeParse(rawData);
+    if (!parsed.success) {
+      const firstError = parsed.error.issues[0]?.message ?? "Invalid input";
+      return { error: firstError };
+    }
 
-  const rawData = {
-    title: formData.get("title") as string,
-    description: (formData.get("description") as string) || undefined,
-    source: (formData.get("source") as string) || "web",
-    type: (formData.get("type") as string) || "idea",
-    estimated_minutes: formData.get("estimated_minutes")
-      ? Number(formData.get("estimated_minutes"))
-      : undefined,
-  };
+    const { title, description, source, type, estimated_minutes } = parsed.data;
 
-  const parsed = createIdeaSchema.safeParse(rawData);
-  if (!parsed.success) {
-    const firstError = parsed.error.issues[0]?.message ?? "Invalid input";
-    return { error: firstError };
-  }
+    const { data, error } = await supabase
+      .from("ideas")
+      .insert({
+        user_id: user.id,
+        title,
+        description: description || null,
+        source,
+        type,
+        estimated_minutes: estimated_minutes ?? null,
+      })
+      .select()
+      .single();
 
-  const { title, description, source, type, estimated_minutes } = parsed.data;
+    if (error) {
+      return { error: error.message };
+    }
 
-  const { data, error } = await supabase
-    .from("ideas")
-    .insert({
-      user_id: user.id,
-      title,
-      description: description || null,
-      source,
-      type,
-      estimated_minutes: estimated_minutes ?? null,
-    })
-    .select()
-    .single();
+    revalidatePath("/ideas", "layout");
+    return { data };
+  },
+);
 
-  if (error) {
-    return { error: error.message };
-  }
+export const toggleIdeaType = withAuth(
+  async ({ supabase, user }, ideaId: string): Promise<{ data?: unknown; error?: string }> => {
+    // Get current type
+    const { data: idea, error: fetchError } = await supabase
+      .from("ideas")
+      .select("type")
+      .eq("id", ideaId)
+      .eq("user_id", user.id)
+      .single();
 
-  revalidatePath("/ideas", "layout");
-  return { data };
-}
+    if (fetchError || !idea) {
+      return { error: fetchError?.message ?? "Idea not found" };
+    }
 
-export async function toggleIdeaType(ideaId: string): Promise<{ data?: unknown; error?: string }> {
-  const { supabase, user } = await requireUser();
+    const newType = idea.type === "idea" ? "problem" : "idea";
 
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
+    const { data, error } = await supabase
+      .from("ideas")
+      .update({ type: newType })
+      .eq("id", ideaId)
+      .select()
+      .single();
 
-  // Get current type
-  const { data: idea, error: fetchError } = await supabase
-    .from("ideas")
-    .select("type")
-    .eq("id", ideaId)
-    .eq("user_id", user.id)
-    .single();
+    if (error) {
+      return { error: error.message };
+    }
 
-  if (fetchError || !idea) {
-    return { error: fetchError?.message ?? "Idea not found" };
-  }
+    revalidatePath("/ideas", "layout");
+    return { data };
+  },
+);
 
-  const newType = idea.type === "idea" ? "problem" : "idea";
+export const deleteIdea = withAuth(
+  async ({ supabase, user }, ideaId: string): Promise<{ success: boolean; error?: string }> => {
+    const { error } = await supabase.from("ideas").delete().eq("id", ideaId).eq("user_id", user.id);
 
-  const { data, error } = await supabase
-    .from("ideas")
-    .update({ type: newType })
-    .eq("id", ideaId)
-    .select()
-    .single();
+    if (error) {
+      return { success: false, error: error.message };
+    }
 
-  if (error) {
-    return { error: error.message };
-  }
+    revalidatePath("/ideas", "layout");
+    return { success: true };
+  },
+);
 
-  revalidatePath("/ideas", "layout");
-  return { data };
-}
+export const getIdeas = withAuth(
+  async ({ supabase, user }): Promise<{ data?: unknown[]; error?: string }> => {
+    const { data, error } = await supabase
+      .from("ideas")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .order("type", { ascending: true }); // problems before ideas
 
-export async function deleteIdea(ideaId: string): Promise<{ success: boolean; error?: string }> {
-  const { supabase, user } = await requireUser();
+    if (error) {
+      return { error: error.message };
+    }
 
-  if (!user) {
-    return { success: false, error: "Not authenticated" };
-  }
-
-  const { error } = await supabase.from("ideas").delete().eq("id", ideaId).eq("user_id", user.id);
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-
-  revalidatePath("/ideas", "layout");
-  return { success: true };
-}
-
-export async function getIdeas(): Promise<{ data?: unknown[]; error?: string }> {
-  const { supabase, user } = await requireUser();
-
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
-
-  const { data, error } = await supabase
-    .from("ideas")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .order("type", { ascending: true }); // problems before ideas
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  return { data };
-}
+    return { data };
+  },
+);
 
 const createIdeaFromTelegramInputSchema = z.object({
   userId: z.string().min(1, "User ID is required").uuid(),
@@ -212,7 +196,7 @@ export async function getUserIdByTelegramChatId(chatId: number): Promise<string 
 export async function linkTelegramChat(
   userId: string,
   chatId: number,
-): Promise<{ error?: string }> {
+): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
 
   const { error } = await supabase
@@ -220,9 +204,9 @@ export async function linkTelegramChat(
     .upsert({ user_id: userId, chat_id: chatId, linked_at: new Date().toISOString() });
 
   if (error) {
-    return { error: error.message };
+    return { success: false, error: error.message };
   }
 
   revalidatePath("/profile", "layout");
-  return {};
+  return { success: true };
 }

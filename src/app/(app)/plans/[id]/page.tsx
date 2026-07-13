@@ -60,8 +60,8 @@ export default function PlanDetailPage() {
     setIsLoading(true);
     setError(null);
     const result = await getPlanById(planId);
-    if (result.error) {
-      setError(result.error);
+    if (!("data" in result)) {
+      if ("error" in result && result.error) setError(result.error);
     } else {
       const data = result.data as Plan;
       setPlan(data);

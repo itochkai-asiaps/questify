@@ -144,8 +144,8 @@ export default function TasksPage() {
     setLoadState("loading");
     setError(null);
     const result = await getTasks();
-    if (result.error) {
-      setError(result.error);
+    if (!("data" in result)) {
+      if ("error" in result && result.error) setError(result.error);
       setLoadState("error");
       return;
     }
@@ -162,7 +162,7 @@ export default function TasksPage() {
     setSelectedTaskId(id);
     setDetailLoading(true);
     const result = await getTaskById(id);
-    if (result.data) {
+    if ("data" in result && result.data) {
       setSelectedTask(result.data as Task);
     }
     setDetailLoading(false);
@@ -185,7 +185,7 @@ export default function TasksPage() {
     if (!selectedTaskId) return;
     setDeleting(true);
     const result = await deleteTask(selectedTaskId);
-    if (result.success) {
+    if ("success" in result && result.success) {
       setSelectedTaskId(null);
       setSelectedTask(null);
       setDeleteOpen(false);
@@ -202,8 +202,8 @@ export default function TasksPage() {
     const formData = new FormData();
     formData.set("title", title);
     const result = await createTask(formData);
-    if (result.error) {
-      setQuickError(result.error);
+    if (!("data" in result)) {
+      if ("error" in result && result.error) setQuickError(result.error);
     } else {
       setQuickTitle("");
       if (result.data) {
@@ -221,12 +221,12 @@ export default function TasksPage() {
     formData.set("title", title);
     formData.set("status", "backlog");
     const result = await createTask(formData);
-    if (!result.error) {
+    if ("data" in result) {
       setBacklogQuickTitle("");
       if (result.data) {
         setTasks((prev) => [result.data as Task, ...prev]);
       }
-    } else {
+    } else if ("error" in result && result.error) {
       console.error("Backlog quick create failed:", result.error);
     }
     setBacklogQuickAdding(false);
@@ -465,8 +465,11 @@ export default function TasksPage() {
 
         // Persist to server
         const result = await bulkUpdateTaskStatuses(updates);
-        if (!result.success) {
-          console.error("Separator drag failed:", result.error);
+        if (!("success" in result) || !result.success) {
+          console.error(
+            "Separator drag failed:",
+            ("error" in result && result.error) ?? "Unknown error",
+          );
           fetchTasks();
         }
 

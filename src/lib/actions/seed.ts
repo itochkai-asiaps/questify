@@ -1,6 +1,6 @@
 "use server";
 
-import { requireUser } from "@/lib/auth/requireUser";
+import { withAuth } from "@/lib/auth/withAuth";
 import { revalidatePath } from "next/cache";
 import { CreateTaskInputSchema } from "@/types/task";
 
@@ -55,30 +55,29 @@ const ROADMAP_TASKS = [
   { title: "#2 DeepSeek API-ключ — для OMA-агентов", status: "todo", priority: "p1" },
 ];
 
-export async function seedRoadmap(): Promise<{ count: number; error?: string }> {
-  const { supabase, user } = await requireUser();
-  if (!user) return { count: 0, error: "Not authenticated" };
+export const seedRoadmap = withAuth(
+  async ({ supabase, user }): Promise<{ count: number; error?: string }> => {
+    for (const task of ROADMAP_TASKS) {
+      const validated = CreateTaskInputSchema.safeParse({
+        title: task.title,
+        priority: task.priority,
+      });
+      if (!validated.success) {
+        console.error("seedRoadmap: invalid task", task.title, validated.error);
+        continue;
+      }
 
-  for (const task of ROADMAP_TASKS) {
-    const validated = CreateTaskInputSchema.safeParse({
-      title: task.title,
-      priority: task.priority,
-    });
-    if (!validated.success) {
-      console.error("seedRoadmap: invalid task", task.title, validated.error);
-      continue;
+      await supabase.from("tasks").insert({
+        user_id: user.id,
+        title: validated.data.title,
+        status: task.status,
+        priority: validated.data.priority,
+        xp_reward: 0,
+      });
     }
 
-    await supabase.from("tasks").insert({
-      user_id: user.id,
-      title: validated.data.title,
-      status: task.status,
-      priority: validated.data.priority,
-      xp_reward: 0,
-    });
-  }
-
-  revalidatePath("/kanban", "layout");
-  revalidatePath("/tasks", "layout");
-  return { count: ROADMAP_TASKS.length };
-}
+    revalidatePath("/kanban", "layout");
+    revalidatePath("/tasks", "layout");
+    return { count: ROADMAP_TASKS.length };
+  },
+);

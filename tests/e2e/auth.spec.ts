@@ -118,14 +118,7 @@ test.describe("Logout", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("Protected routes", () => {
-  const protectedPaths = [
-    "/dashboard",
-    "/tasks",
-    "/kanban",
-    "/matrix",
-    "/plans",
-    "/profile",
-  ];
+  const protectedPaths = ["/dashboard", "/tasks", "/kanban", "/matrix", "/plans", "/profile"];
 
   for (const path of protectedPaths) {
     test(`should redirect unauthenticated users from ${path} to login`, async ({ page }) => {
@@ -214,7 +207,10 @@ test.describe("Form validation", () => {
 
     // Either HTML5 validation catches it (browser stays on page) or the
     // server returns an error message.
-    const errorVisible = await page.locator("text=Invalid email").isVisible().catch(() => false);
+    const errorVisible = await page
+      .locator("text=Invalid email")
+      .isVisible()
+      .catch(() => false);
     const stillOnLogin = page.url().includes("/login");
     expect(errorVisible || stillOnLogin).toBe(true);
   });
@@ -240,8 +236,6 @@ test.describe("Form validation", () => {
 
     // The client-side validation checks password.length < 8 and returns
     // { error: "Password must be at least 8 characters" }.
-    await expect(
-      page.locator("text=Password must be at least 8 characters"),
-    ).toBeVisible();
+    await expect(page.locator("text=Password must be at least 8 characters")).toBeVisible();
   });
 });

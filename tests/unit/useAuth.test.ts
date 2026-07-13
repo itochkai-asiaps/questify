@@ -73,15 +73,13 @@ function deferredGetSession() {
   });
   mockGetSession.mockReturnValue(promise);
   return {
-    resolve: (session: Session | null) =>
-      resolve!({ data: { session }, error: null }),
+    resolve: (session: Session | null) => resolve!({ data: { session }, error: null }),
   };
 }
 
 /** Capture the callback passed to onAuthStateChange so the test can fire auth events. */
 function captureAuthCallback() {
-  let callback: ((event: string, session: Session | null) => void) | null =
-    null;
+  let callback: ((event: string, session: Session | null) => void) | null = null;
   mockOnAuthStateChange.mockImplementation(
     (cb: (event: string, session: Session | null) => void) => {
       callback = cb;
