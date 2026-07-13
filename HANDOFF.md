@@ -23,6 +23,44 @@ DeepSeek вводит **двойной тариф** в «горячее врем
 
 ## Последние изменения (сессия 2026-07-13)
 
+### Инструменты разработки — аудит и установка (#1–9)
+
+- ✅ **Prettier** + eslint-config-prettier: `.prettierrc`, `eslint.config.mjs` (flat config)
+- ✅ **.editorconfig**: root config (lf, utf-8, 2 spaces)
+- ✅ **Lefthook**: sequential pre-commit (Prettier → Gitleaks → Lint → Type-check)
+- ✅ **codegraph**: `.gitignore` готов, ожидает `codegraph init` (OpenCode-bundled CLI)
+- ✅ **Gitleaks** v8.30.1: `.gitleaks.toml`, pre-commit secret scanning
+- ✅ **Env validation**: `src/lib/env.ts` (Zod v4 server/client split) + `src/instrumentation.ts`
+- ✅ **Knip**: `knip.config.ts` (Next.js App Router exceptions)
+- ✅ **Bundle analyzer**: `next.config.ts` (ANALYZE=true), `@next/bundle-analyzer`
+- ✅ **Lighthouse CI**: `lighthouserc.js`, `deploy-staging.yml` (soft fail, runs after deploy)
+
+### LSP-серверы
+
+- ✅ Установлены: `typescript`, `eslint`, `yaml-ls` (через npm global)
+- ⬜ `codegraph init` — CLI не найден (требуется OpenCode session)
+
+### AGENTS.md
+
+- ✅ Planning #0: проверка инструментов (LSP + MCP) перед разработкой
+- ✅ VALIDATION RULES: pre-commit checklist + agent rules
+
+## Tooling Status (added 2026-07-13)
+
+| Tool                  | Status        | Config                   | Notes                                               |
+| --------------------- | ------------- | ------------------------ | --------------------------------------------------- |
+| ESLint 9              | ✅ Configured | `eslint.config.mjs`      | core-web-vitals + typescript + prettier             |
+| Prettier              | ✅ Installed  | `.prettierrc`            | Sequential pre-commit                               |
+| .editorconfig         | ✅ Created    | `.editorconfig`          | Root config                                         |
+| Lefthook              | ✅ Updated    | `lefthook.yml`           | Sequential: Prettier → Gitleaks → Lint → Type-check |
+| codegraph             | ⬜ Pending    | `.gitignore`             | CLI needs OpenCode session to run                   |
+| Gitleaks              | ✅ Installed  | `.gitleaks.toml`         | v8.30.1, pre-commit                                 |
+| Zod env validation    | ✅ Created    | `src/lib/env.ts`         | Server/client separated                             |
+| instrumentation.ts    | ✅ Created    | `src/instrumentation.ts` | Startup env validation                              |
+| Knip                  | ✅ Installed  | `knip.config.ts`         | Dead code detection                                 |
+| @next/bundle-analyzer | ✅ Installed  | `next.config.ts`         | `ANALYZE=true npm run build`                        |
+| Lighthouse CI         | ✅ Added      | `lighthouserc.js`        | deploy-staging.yml (soft fail)                      |
+
 ### K1 — Оценка времени + missed статус
 
 - ✅ **Миграция 00015**: `estimated_minutes` + `actual_minutes` на tasks, plan_items, plans, ideas + CHECK `tasks.status` расширен до `'missed'`

@@ -111,3 +111,10 @@ jobs:
             pm2 save
             echo "=== Staging deploy complete ==="
             pm2 status
+
+      - name: Lighthouse CI
+        if: always()
+        continue-on-error: true
+        run: |
+          npm install -g @lhci/cli@0.15.x
+          lhci autorun

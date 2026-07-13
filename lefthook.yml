@@ -5,13 +5,27 @@
 # Run manually: npx lefthook run pre-commit
 #
 # Rules enforced before every commit:
-#   1. ESLint — zero errors (warnings allowed, fixed in separate pass)
-#   2. TypeScript — zero type errors (tsc --noEmit)
-#   3. Both run in parallel for speed (~5-8 seconds total)
+#   1. Prettier — format check
+#   2. Gitleaks — secret scanning
+#   3. ESLint — zero errors
+#   4. TypeScript — zero type errors (tsc --noEmit)
+#   Sequential execution — each step gates the next
 
 pre-commit:
-  parallel: true
+  parallel: false
   commands:
+    prettier:
+      glob: "*.{ts,tsx,js,jsx,json,css,md}"
+      run: npx prettier --check {staged_files}
+      fail_text: "Prettier formatting issues. Run `npx prettier --write <file>`."
+    gitleaks:
+      run: |
+        if command -v gitleaks >/dev/null 2>&1; then
+          gitleaks protect --staged --verbose
+        else
+          echo skip: gitleaks not installed
+        fi
+      fail_text: "Gitleaks detected secrets. Remove before committing."
     lint:
       glob: "*.{ts,tsx,js,jsx}"
       run: npm run lint

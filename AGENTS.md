@@ -12,20 +12,20 @@ Kanban-доска, Eisenhower Matrix, планы с чеклистами.
 
 ## STACK
 
-| Слой | Технология | Версия |
-|---|---|---|
-| Фреймворк | Next.js (App Router) | 16.2.9 |
-| UI | React + Tailwind CSS + shadcn/ui | 19.2.4 / 4 / base-nova |
-| Анимации | Framer Motion | 12 |
-| Стейт | Zustand | 5 |
-| Drag & Drop | @dnd-kit | 6 / 10 |
-| Бэкенд | Next.js Server Actions | — |
-| База данных | Supabase (PostgreSQL) | — |
-| Аутентификация | Supabase Auth (email + Google OAuth) | — |
-| Валидация | Zod | 4 |
-| Тесты | Vitest (unit) + Playwright (e2e) | 4 / 1.61 |
-| Линтер | ESLint 9 + next-config | — |
-| Деплой | VPS (nginx + pm2 + Let's Encrypt) | — |
+| Слой           | Технология                           | Версия                 |
+| -------------- | ------------------------------------ | ---------------------- |
+| Фреймворк      | Next.js (App Router)                 | 16.2.9                 |
+| UI             | React + Tailwind CSS + shadcn/ui     | 19.2.4 / 4 / base-nova |
+| Анимации       | Framer Motion                        | 12                     |
+| Стейт          | Zustand                              | 5                      |
+| Drag & Drop    | @dnd-kit                             | 6 / 10                 |
+| Бэкенд         | Next.js Server Actions               | —                      |
+| База данных    | Supabase (PostgreSQL)                | —                      |
+| Аутентификация | Supabase Auth (email + Google OAuth) | —                      |
+| Валидация      | Zod                                  | 4                      |
+| Тесты          | Vitest (unit) + Playwright (e2e)     | 4 / 1.61               |
+| Линтер         | ESLint 9 + next-config               | —                      |
+| Деплой         | VPS (nginx + pm2 + Let's Encrypt)    | —                      |
 
 ## COMMANDS
 
@@ -75,12 +75,14 @@ questify/
 ## CONVENTIONS
 
 ### Next.js
+
 - **Только App Router**. Никаких `pages/`. Все роуты — через `src/app/`.
 - **Server Actions** для мутаций. Никаких API Routes (`route.ts`) без крайней необходимости.
 - **Серверные компоненты по умолчанию**. `'use client'` — только когда реально нужен браузерный API.
 - **Loading + Error states** всегда. Каждая страница должна обрабатывать загрузку и ошибки.
 
 ### Supabase
+
 - **RLS на всех таблицах**. Без исключений. Миграции через Supabase CLI.
 - **Server-side auth**. Supabase client создаётся через `@supabase/ssr`, не через клиентский SDK.
 - **Миграции атомарные**. Одна миграция = одно изменение схемы. Не смешивать.
@@ -92,16 +94,19 @@ questify/
   - Функции: `CREATE OR REPLACE FUNCTION`
 
 ### Стили
+
 - **Tailwind utility-first**. Никаких CSS modules, никаких inline styles кроме динамических значений.
 - **shadcn/ui компоненты** — основа UI. Кастомизация через CSS-переменные, не через пропсы.
 - **Мобильные first**. Все компоненты должны работать на mobile (max-width: 768px).
 
 ### Типы
+
 - **Zod на границах**. Все Server Actions парсят вход через Zod-схему.
 - **Строгие типы**. `any`, `as`, `@ts-ignore` — запрещены глобальным AGENTS.md.
 - **Типы в `src/types/`**. Общие интерфейсы — там, а не в компонентах.
 
 ### Git
+
 - Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`.
 - Ветки: `staging` → PR → `master`. Feature-бранчи от `staging`.
 - **Рабочий процесс**: `.omo/` → план → реализация → тесты → коммит — см. workflow в `.omo/`.
@@ -109,6 +114,7 @@ questify/
 - **После каждого пуша — сообщать версию для проверки.** Формат: `S v{package.json version}-b{GitHub run number}`. Версия отображается в левом нижнем углу на стейджинге (клик — копирует). Если run ещё не завершён — указать хеш коммита и ссылку на Actions.
 
 ### HANDOFF
+
 - **Файл**: `HANDOFF.md` в корне репо. Не писать на рабочий стол, не создавать `HANDOFF.txt` в других местах.
 - **Содержание**: статус блоков, таблица миграций (с пометками Staging/Prod), последние изменения с датой, важные решения.
 - **Анализ стиля работы**: при каждом обновлении HANDOFF агент анализирует паттерны сессии (fix:feat ratio, каскады, длительность, покрытие тестами) и добавляет блок «Рекомендации по процессу» — конкретные предложения по оптимизации, аналогично блоку «Режим работы» в роадмапе.
@@ -130,6 +136,7 @@ questify/
 ### Документация — всегда Context7
 
 **Всегда** используй Context7 для получения актуальной документации по стеку проекта:
+
 - **Supabase** (`/supabase/supabase`) — SSR, RLS, миграции, realtime
 - **Next.js** (`/vercel/next.js`) — App Router, Server Actions, middleware
 - **Tailwind CSS** + **shadcn/ui** — utility-классы, компоненты
@@ -139,41 +146,43 @@ questify/
 
 ### До кода (планирование)
 
-| Когда | Агент | Что делает |
-|---|---|---|
-| Любая фича (2+ шагов, неясные требования) | `metis` | Pre-planning анализ: скрытые намерения, ambiguity, точки отказа AI |
-| Сложная фича (2+ модуля, новый UI, архитектурный риск) | `hyperplan` | 5 adversarial агентов атакуют план → список проблем ДО написания кода |
-| План готов, нужна формальная верификация | `momus` | Безжалостная проверка плана на полноту, проверяемость, ясность |
-| План утверждён, нужно исполнение | `prometheus` + `/start-work` | Prometheus строит исполняемый план → `/start-work` передаёт Atlas для исполнения |
+| Когда                                                  | Агент                        | Что делает                                                                       |
+| ------------------------------------------------------ | ---------------------------- | -------------------------------------------------------------------------------- |
+| Любая фича (2+ шагов, неясные требования)              | `metis`                      | Pre-planning анализ: скрытые намерения, ambiguity, точки отказа AI               |
+| Сложная фича (2+ модуля, новый UI, архитектурный риск) | `hyperplan`                  | 5 adversarial агентов атакуют план → список проблем ДО написания кода            |
+| План готов, нужна формальная верификация               | `momus`                      | Безжалостная проверка плана на полноту, проверяемость, ясность                   |
+| План утверждён, нужно исполнение                       | `prometheus` + `/start-work` | Prometheus строит исполняемый план → `/start-work` передаёт Atlas для исполнения |
 
 **Полная цепочка для сложной фичи:**
+
 ```
 metis (gap-анализ) → hyperplan (адверсариальная критика) → momus (формальная верификация) → prometheus (исполняемый план) → /start-work (Atlas исполняет)
 ```
 
 ### Во время реализации
 
-| Тип задачи | Агент | Правило |
-|---|---|---|
-| **Вёрстка, стили, анимация, UI** | `visual-engineering` (GPT-4.1) | **Всегда.** Не пиши JSX+Tailwind вручную — делегируй |
-| **Сложная логика, алгоритмы** | `ultrabrain` (DeepSeek R1) | Задачи с нетривиальной логикой |
-| **Исследование, поиск по коду** | `explore` / `librarian` | Параллельно, в фоне |
-| **Архитектурные решения** | `oracle` | После 2+ неудачных попыток или перед крупным рефакторингом |
-| **Длинная многошаговая задача** | `/ralph-loop` | Агент сам продолжает до завершения, не ждёт ручного перезапуска |
+| Тип задачи                       | Агент                          | Правило                                                         |
+| -------------------------------- | ------------------------------ | --------------------------------------------------------------- |
+| **Вёрстка, стили, анимация, UI** | `visual-engineering` (GPT-4.1) | **Всегда.** Не пиши JSX+Tailwind вручную — делегируй            |
+| **Сложная логика, алгоритмы**    | `ultrabrain` (DeepSeek R1)     | Задачи с нетривиальной логикой                                  |
+| **Исследование, поиск по коду**  | `explore` / `librarian`        | Параллельно, в фоне                                             |
+| **Архитектурные решения**        | `oracle`                       | После 2+ неудачных попыток или перед крупным рефакторингом      |
+| **Длинная многошаговая задача**  | `/ralph-loop`                  | Агент сам продолжает до завершения, не ждёт ручного перезапуска |
 
 ### После кода (верификация) — MANDATORY GATES
 
-| Когда | Инструмент | Что делает |
-|---|---|---|
-| **После любого визуального изменения** | `/visual-qa` | Скриншот → два oracle pass (design system + visual fidelity) → вердикт pass/fail |
-| **После каждого блока (перед /review-work)** | `/remove-ai-slops` | Чистка AI-сгенерированных паттернов (10 категорий): избыточная сложность, oversized модули, performance equivalences |
-| **После закрытия блока** | `/review-work` | 5 параллельных проверок: архитектура, код, безопасность, QA, контекст |
-| **Перед каждым коммитом** | Lefthook (автомат) | `lint` + `type-check` параллельно. Ошибка → коммит блокирован |
-| **В CI (на каждый PR/push)** | Playwright visual snapshots | `toHaveScreenshot()` для дашборда, mood chart, HP-бара. Ловит визуальные регрессии |
+| Когда                                        | Инструмент                  | Что делает                                                                                                           |
+| -------------------------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **После любого визуального изменения**       | `/visual-qa`                | Скриншот → два oracle pass (design system + visual fidelity) → вердикт pass/fail                                     |
+| **После каждого блока (перед /review-work)** | `/remove-ai-slops`          | Чистка AI-сгенерированных паттернов (10 категорий): избыточная сложность, oversized модули, performance equivalences |
+| **После закрытия блока**                     | `/review-work`              | 5 параллельных проверок: архитектура, код, безопасность, QA, контекст                                                |
+| **Перед каждым коммитом**                    | Lefthook (автомат)          | `lint` + `type-check` параллельно. Ошибка → коммит блокирован                                                        |
+| **В CI (на каждый PR/push)**                 | Playwright visual snapshots | `toHaveScreenshot()` для дашборда, mood chart, HP-бара. Ловит визуальные регрессии                                   |
 
 ### Правило трёх ошибок (3-fix-stop)
 
 **3 fix-коммита подряд на одну задачу → СТОП.**
+
 - Не коммитить четвёртый fix
 - Запустить `/debugging` — hypothesis-driven анализ (≥3 гипотезы → параллельная проверка → root cause)
 - Root cause analysis: почему баг не был пойман раньше?
@@ -184,32 +193,38 @@ metis (gap-анализ) → hyperplan (адверсариальная крит�
 ### Порядок для типовых сценариев
 
 **Визуальная фича:**
+
 ```
 metis → hyperplan → momus → prometheus → visual-engineering (вёрстка) → /visual-qa → /remove-ai-slops → Lefthook → commit → CI snapshots
 ```
 
 **Логическая фича:**
+
 ```
 metis → hyperplan → momus → prometheus → ultrabrain/deep (реализация) → /remove-ai-slops → Lefthook → commit → CI tests
 ```
 
 **Закрытие блока:**
+
 ```
 /remove-ai-slops → /review-work → fix findings → Lefthook → commit → push
 ```
 
 **Длинная многошаговая задача (автономно):**
+
 ```
 /ralph-loop "описание задачи" → (агент работает автономно) → /remove-ai-slops → /review-work → Lefthook → commit → push
 ```
 
 ### Цветовая система
+
 - **Стейджинг**: amber-акценты (`#ea580c` фон, `#eab308` хедер)
 - **Прод**: indigo-акценты (`#6366f1`)
 - **Тёмная тема**: через `next-themes`, class-based (`dark:` префикс)
 - **Проблемы/ошибки**: оранжевый в светлой (`orange-500`), фиолетовый в тёмной (`purple-400`)
 
 ### Требования к UI
+
 - Контрастность текста ≥ 4.5:1 (WCAG AA)
 - Все интерактивные элементы: hover, focus, active, disabled
 - Тёмная тема: проверять ВСЕ компоненты в обоих режимах
@@ -225,12 +240,30 @@ metis → hyperplan → momus → prometheus → ultrabrain/deep (реализа
 - ❌ **`any` / `as` / `@ts-ignore`**. Нарушает правило #6 глобального AGENTS.md.
 - ❌ **Прямые манипуляции с DOM**. Используй React-рефы или Framer Motion.
 
+## VALIDATION RULES (agents must check before every commit)
+
+### Pre-commit checklist (automated via Lefthook, sequential):
+
+1. **Prettier** — `npx prettier --check {staged_files}` (formatting)
+2. **Gitleaks** — `gitleaks protect --staged` (secrets scan)
+3. **ESLint** — `npm run lint` (zero errors)
+4. **TypeScript** — `npm run type-check` (tsc --noEmit, zero errors)
+
+### Agent validation rules:
+
+- ✅ **Env vars**: Never commit `process.env.X!` without a fallback or validation. All new env vars must be added to `src/lib/env.ts`.
+- ✅ **Dead code**: Run `npx knip` before closing a block. Remove or document unused exports.
+- ✅ **Secrets**: Never hardcode tokens, keys, or passwords. Use `.env` files + Gitleaks check.
+- ✅ **Bundle size**: Run `ANALYZE=true npm run build` for any change that adds a dependency.
+- ✅ **Type strictness**: No `any`, no `as`, no `@ts-ignore`, no `@ts-expect-error`.
+- ✅ **Formatting**: Code must pass Prettier check. Run `npx prettier --write` on changed files.
+
 ## DEPLOYMENT
 
-| Среда | URL | Ветка | Деплой |
-|---|---|---|---|
-| Staging | `staging.questify.itochka.xyz` | `staging` | Автоматический (push) |
-| Production | `questify.itochka.xyz` | `master` | Ручной (approval) |
+| Среда      | URL                            | Ветка     | Деплой                |
+| ---------- | ------------------------------ | --------- | --------------------- |
+| Staging    | `staging.questify.itochka.xyz` | `staging` | Автоматический (push) |
+| Production | `questify.itochka.xyz`         | `master`  | Ручной (approval)     |
 
 Инфраструктура: VPS → nginx reverse proxy → pm2 → Next.js. SSL через Let's Encrypt.  
 CI/CD: GitHub Actions (`.github/workflows/`).

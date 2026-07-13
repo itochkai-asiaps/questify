@@ -1,0 +1,23 @@
+title = "Questify Gitleaks Configuration"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Test and example files"
+paths = [
+  '''(^|/)test(s)?/''',
+  '''(^|/)__tests__/''',
+  '''(^|/)fixtures/''',
+  '''\.test\.(ts|tsx)$''',
+]
+
+[[allowlists]]
+description = "Placeholder/fake credentials"
+regexTarget = "line"
+regexes = [
+  '''(example|placeholder|test)_(key|secret|token|password)''',
+  '''(EXAMPLE|PLACEHOLDER).*''',
+  '''000000''',
+  '''not-a-real-secret''',
+]
