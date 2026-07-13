@@ -37,7 +37,7 @@ DeepSeek вводит **двойной тариф** в «горячее врем
 
 ### Коммиты сессии
 ```
-(будут после коммита)
+19b58b0 feat: K1 — time estimation (estimated_minutes + actual_minutes) + missed status
 ```
 
 ### Метрики
