@@ -43,10 +43,11 @@ const STATUS_CONFIG: Record<
   todo: { label: "Todo", variant: "secondary" },
   in_progress: { label: "In Progress", variant: "default" },
   done: { label: "Done", variant: "outline" },
+  missed: { label: "Missed", variant: "outline" },
 };
 
 function isOverdue(dueDate: string | null | undefined, status: string): boolean {
-  if (!dueDate || status === "done") return false;
+  if (!dueDate || status === "done" || status === "missed") return false;
   return new Date(dueDate) < new Date();
 }
 
@@ -123,6 +124,7 @@ export default function TaskCard({ task, onDelete, onSelect, isSelected }: TaskC
           // DESIGN.md §5: Card — shadow on hover, ring on select, opacity-70 when done
           "cursor-pointer transition-shadow duration-200 hover:shadow-md",
           task.status === "done" && "opacity-70 bg-muted/50",
+          task.status === "missed" && "opacity-70 bg-muted/50",
           isSelected && "ring-2 ring-primary/50 shadow-md",
         )}
         onClick={handleClick}
@@ -133,7 +135,7 @@ export default function TaskCard({ task, onDelete, onSelect, isSelected }: TaskC
               className={cn(
                 // DESIGN.md §3: Card title — text-base (16px)
                 "line-clamp-2 text-base leading-snug",
-                task.status === "done" && "line-through",
+                (task.status === "done" || task.status === "missed") && "line-through",
               )}
             >
               {task.title}

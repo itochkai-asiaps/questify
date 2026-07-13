@@ -54,7 +54,7 @@ export function FocusWidget({ tasks }: FocusWidgetProps) {
   const priorityOrder: Record<string, number> = { p1: 0, p2: 1, p3: 2, p4: 3 };
 
   const activeTasks = tasks
-    .filter((t) => t.status !== "done")
+    .filter((t) => t.status !== "done" && t.status !== "missed")
     .sort((a, b) => {
       const pa = priorityOrder[a.priority] ?? 99;
       const pb = priorityOrder[b.priority] ?? 99;

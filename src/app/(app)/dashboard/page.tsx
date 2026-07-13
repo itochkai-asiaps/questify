@@ -382,7 +382,7 @@ function TodaysTasks({ tasks }: { tasks: TaskItem[] }) {
   const todayStr = new Date().toISOString().slice(0, 10);
 
   const todaysTasks = tasks.filter((t) => {
-    if (t.status === "done") return false;
+    if (t.status === "done" || t.status === "missed") return false;
     if (!t.due_date) return true; // tasks without due date are always shown
     return t.due_date.slice(0, 10) <= todayStr;
   });
@@ -435,7 +435,7 @@ function TodaysTasks({ tasks }: { tasks: TaskItem[] }) {
                 <div
                   className={cn(
                     "size-2 shrink-0 rounded-full",
-                    task.status === "done"
+                    task.status === "done" || task.status === "missed"
                       ? "bg-green-500"
                       : task.status === "in_progress"
                         ? "bg-blue-500"

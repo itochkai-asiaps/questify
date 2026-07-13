@@ -363,7 +363,7 @@ export default function KanbanPage() {
     if (showCompleted) return tasksByColumn;
     const f: TasksByColumn = {};
     for (const [cId, ts] of Object.entries(tasksByColumn)) {
-      const v = ts.filter((t) => t.status !== "done");
+      const v = ts.filter((t) => t.status !== "done" && t.status !== "missed");
       if (v.length > 0) f[cId] = v;
     }
     return f;

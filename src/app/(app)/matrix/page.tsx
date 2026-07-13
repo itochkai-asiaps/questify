@@ -126,7 +126,7 @@ export default function MatrixPage() {
     if (showCompleted) return tasksByPriority;
     const filtered = { ...EMPTY_MATRIX };
     for (const priority of ALL_PRIORITIES) {
-      filtered[priority] = tasksByPriority[priority].filter((t) => t.status !== "done");
+      filtered[priority] = tasksByPriority[priority].filter((t) => t.status !== "done" && t.status !== "missed");
     }
     return filtered;
   }, [tasksByPriority, showCompleted]);

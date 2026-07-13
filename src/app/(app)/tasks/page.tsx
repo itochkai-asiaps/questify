@@ -80,6 +80,7 @@ const STATUS_FILTER_OPTIONS = [
   { value: TaskStatus.Todo, label: "Todo" },
   { value: TaskStatus.InProgress, label: "In Progress" },
   { value: TaskStatus.Done, label: "Done" },
+  { value: TaskStatus.Missed, label: "Missed" },
 ] as const;
 
 const PRIORITY_CONFIG: Record<string, { label: string; variant: "destructive" | "secondary" | "outline" | "ghost" }> = {
@@ -185,7 +186,7 @@ export default function TasksPage() {
       }
       if (priorityFilter && task.priority !== priorityFilter) return false;
       if (statusFilter && task.status !== statusFilter) return false;
-      if (!showCompleted && task.status === "done") return false;
+      if (!showCompleted && (task.status === "done" || task.status === "missed")) return false;
       return true;
     });
   }, [tasks, search, priorityFilter, statusFilter, showCompleted]);
@@ -793,7 +794,7 @@ export default function TasksPage() {
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <CardTitle className={cn("text-lg", selectedTask.status === "done" && "line-through")}>
+                      <CardTitle className={cn("text-lg", (selectedTask.status === "done" || selectedTask.status === "missed") && "line-through")}>
                         {selectedTask.title}
                       </CardTitle>
                       <CardDescription className="mt-1">
