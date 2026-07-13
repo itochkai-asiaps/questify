@@ -3,13 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  ArrowLeft,
-  Check,
-  Pencil,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { ArrowLeft, Check, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -88,35 +82,26 @@ export default function PlanDetailPage() {
   const planColor = plan?.color ?? "#6366f1";
 
   // Toggle a checklist item (optimistic)
-  const handleToggle = useCallback(
-    async (itemId: string) => {
-      // Optimistic update
-      setItems((prev) =>
-        prev.map((item) =>
-          item.id === itemId ? { ...item, completed: !item.completed } : item,
-        ),
-      );
-      setTogglingItems((prev) => new Set(prev).add(itemId));
+  const handleToggle = useCallback(async (itemId: string) => {
+    // Optimistic update
+    setItems((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, completed: !item.completed } : item)),
+    );
+    setTogglingItems((prev) => new Set(prev).add(itemId));
 
-      const result = await togglePlanItem(itemId);
-      if (result.error) {
-        // Revert on failure
-        setItems((prev) =>
-          prev.map((item) =>
-            item.id === itemId
-              ? { ...item, completed: !item.completed }
-              : item,
-          ),
-        );
-      }
-      setTogglingItems((prev) => {
-        const next = new Set(prev);
-        next.delete(itemId);
-        return next;
-      });
-    },
-    [],
-  );
+    const result = await togglePlanItem(itemId);
+    if (result.error) {
+      // Revert on failure
+      setItems((prev) =>
+        prev.map((item) => (item.id === itemId ? { ...item, completed: !item.completed } : item)),
+      );
+    }
+    setTogglingItems((prev) => {
+      const next = new Set(prev);
+      next.delete(itemId);
+      return next;
+    });
+  }, []);
 
   // Delete an item (optimistic)
   const handleDeleteItem = useCallback(
@@ -221,10 +206,7 @@ export default function PlanDetailPage() {
       <div className="mb-6">
         <div className="flex items-center gap-2">
           {/* Color indicator */}
-          <div
-            className="size-3 shrink-0 rounded-full"
-            style={{ backgroundColor: planColor }}
-          />
+          <div className="size-3 shrink-0 rounded-full" style={{ backgroundColor: planColor }} />
 
           {/* Editable title */}
           {isEditingTitle ? (
@@ -248,9 +230,7 @@ export default function PlanDetailPage() {
             </div>
           ) : (
             <div className="flex flex-1 items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">
-                {plan.title}
-              </h1>
+              <h1 className="text-2xl font-bold tracking-tight">{plan.title}</h1>
               <Button
                 variant="ghost"
                 size="icon-xs"
@@ -267,20 +247,13 @@ export default function PlanDetailPage() {
         </div>
 
         {plan.description && (
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            {plan.description}
-          </p>
+          <p className="mt-1.5 text-sm text-muted-foreground">{plan.description}</p>
         )}
       </div>
 
       {/* Progress bar */}
       <div className="mb-8">
-        <PlanProgressBar
-          completed={completed}
-          total={total}
-          color={planColor}
-          className="mb-1.5"
-        />
+        <PlanProgressBar completed={completed} total={total} color={planColor} className="mb-1.5" />
         <p className="text-xs text-muted-foreground">
           {completed} of {total} steps completed ({percentage}%)
         </p>
@@ -335,9 +308,7 @@ export default function PlanDetailPage() {
                       ? { backgroundColor: planColor, borderColor: planColor }
                       : undefined
                   }
-                  aria-label={
-                    item.completed ? "Mark incomplete" : "Mark complete"
-                  }
+                  aria-label={item.completed ? "Mark incomplete" : "Mark complete"}
                 >
                   <Check className="size-3" />
                 </motion.button>
@@ -345,9 +316,7 @@ export default function PlanDetailPage() {
                 {/* Title */}
                 <span
                   className={`flex-1 text-sm ${
-                    item.completed
-                      ? "text-muted-foreground line-through"
-                      : ""
+                    item.completed ? "text-muted-foreground line-through" : ""
                   }`}
                 >
                   {item.title}
@@ -362,7 +331,10 @@ export default function PlanDetailPage() {
                     onClick={async () => {
                       const r = await convertPlanItemToTask(item.id);
                       if (r.error) toast.error(r.error);
-                      else { toast.success("Converted to Task"); setItems((p) => p.filter((i) => i.id !== item.id)); }
+                      else {
+                        toast.success("Converted to Task");
+                        setItems((p) => p.filter((i) => i.id !== item.id));
+                      }
                     }}
                     aria-label="Convert to task"
                   >
@@ -386,10 +358,7 @@ export default function PlanDetailPage() {
       </div>
 
       {/* Add item form */}
-      <form
-        onSubmit={handleAddItem}
-        className="mt-4 flex items-center gap-2"
-      >
+      <form onSubmit={handleAddItem} className="mt-4 flex items-center gap-2">
         <Input
           placeholder="Add a step..."
           value={newItemTitle}

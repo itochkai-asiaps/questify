@@ -34,16 +34,8 @@ export default function SeedPage() {
           <p className="text-sm text-muted-foreground">
             Create all roadmap items as tasks in your account. Existing tasks are not affected.
           </p>
-          <Button
-            onClick={handleSeed}
-            disabled={loading}
-            className="w-full"
-          >
-            {loading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              "Seed Tasks"
-            )}
+          <Button onClick={handleSeed} disabled={loading} className="w-full">
+            {loading ? <Loader2 className="size-4 animate-spin" /> : "Seed Tasks"}
           </Button>
           {result && (
             <p className="text-sm text-center text-green-600 flex items-center justify-center gap-1">

@@ -71,7 +71,10 @@ export function QuickActions() {
     setError(null);
   }, []);
 
-  const labels: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string; placeholder: string }> = {
+  const labels: Record<
+    string,
+    { icon: React.ComponentType<{ className?: string }>; label: string; placeholder: string }
+  > = {
     task: { icon: Plus, label: "New Task", placeholder: "Task title..." },
     idea: { icon: Lightbulb, label: "New Idea", placeholder: "Idea title..." },
     plan: { icon: ListChecks, label: "New Plan", placeholder: "Plan title..." },
@@ -99,7 +102,10 @@ export function QuickActions() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") { e.preventDefault(); handleSubmit(); }
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleSubmit();
+                    }
                     if (e.key === "Escape") reset();
                   }}
                   placeholder={labels[action].placeholder}
@@ -107,12 +113,12 @@ export function QuickActions() {
                   autoFocus
                   disabled={loading}
                 />
-                <Button
-                  size="icon-xs"
-                  onClick={handleSubmit}
-                  disabled={!title.trim() || loading}
-                >
-                  {loading ? <Loader2 className="size-3 animate-spin" /> : <Plus className="size-3" />}
+                <Button size="icon-xs" onClick={handleSubmit} disabled={!title.trim() || loading}>
+                  {loading ? (
+                    <Loader2 className="size-3 animate-spin" />
+                  ) : (
+                    <Plus className="size-3" />
+                  )}
                 </Button>
               </div>
               {error && <p className="text-xs text-destructive">{error}</p>}

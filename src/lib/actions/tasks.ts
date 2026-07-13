@@ -13,9 +13,7 @@ import {
 import { completeTask, checkAndAwardAchievements } from "@/lib/gamification/engine";
 import { XP_REWARDS } from "@/lib/gamification/levels";
 
-export async function createTask(
-  formData: FormData,
-): Promise<{ data?: unknown; error?: string }> {
+export async function createTask(formData: FormData): Promise<{ data?: unknown; error?: string }> {
   const { supabase, user } = await requireUser();
 
   if (!user) {
@@ -57,11 +55,7 @@ export async function createTask(
   };
   if (kanbanColumnId) insertData.kanban_column_id = kanbanColumnId;
 
-  const { data, error } = await supabase
-    .from("tasks")
-    .insert(insertData)
-    .select()
-    .single();
+  const { data, error } = await supabase.from("tasks").insert(insertData).select().single();
 
   if (error) {
     return { error: error.message };
@@ -110,9 +104,11 @@ export async function updateTask(
   const sort_order = formData.get("sort_order");
   if (sort_order !== null) rawData.sort_order = Number(sort_order);
   const estimated_minutes = formData.get("estimated_minutes");
-  if (estimated_minutes !== null) rawData.estimated_minutes = estimated_minutes === "" ? null : Number(estimated_minutes);
+  if (estimated_minutes !== null)
+    rawData.estimated_minutes = estimated_minutes === "" ? null : Number(estimated_minutes);
   const actual_minutes = formData.get("actual_minutes");
-  if (actual_minutes !== null) rawData.actual_minutes = actual_minutes === "" ? null : Number(actual_minutes);
+  if (actual_minutes !== null)
+    rawData.actual_minutes = actual_minutes === "" ? null : Number(actual_minutes);
 
   const parsed = UpdateTaskInputSchema.safeParse(rawData);
   if (!parsed.success) {
@@ -128,10 +124,7 @@ export async function updateTask(
 
   // D7a: previous_status management
   // Save previous_status when moving TO backlog
-  if (
-    parsed.data.status === TaskStatus.Backlog &&
-    currentTask?.status !== TaskStatus.Backlog
-  ) {
+  if (parsed.data.status === TaskStatus.Backlog && currentTask?.status !== TaskStatus.Backlog) {
     updateData.previous_status = currentTask?.status ?? TaskStatus.Todo;
   }
   // Clear previous_status when moving OUT of backlog
@@ -157,13 +150,12 @@ export async function updateTask(
 
   // Detect completion: transition to done OR missed
   const wasJustCompleted =
-    currentTask?.status !== "done" && currentTask?.status !== "missed" &&
+    currentTask?.status !== "done" &&
+    currentTask?.status !== "missed" &&
     (parsed.data.status === TaskStatus.Done || parsed.data.status === TaskStatus.Missed);
 
   // Award XP only for actual completion (done), not for missed
-  let wasCompletionAwarded = false;
-  if (wasJustCompleted && parsed.data.status === TaskStatus.Done && !wasCompletionAwarded) {
-    wasCompletionAwarded = true;
+  if (wasJustCompleted && parsed.data.status === TaskStatus.Done) {
     const taskPriority = (currentTask?.priority ?? "p3") as TaskPriority;
     try {
       await completeTask(user.id, taskPriority);
@@ -198,12 +190,11 @@ export async function updateTask(
 
   revalidatePath("/dashboard", "layout");
   revalidatePath("/tasks", "layout");
+  revalidatePath("/kanban", "layout");
   return { data };
 }
 
-export async function deleteTask(
-  taskId: string,
-): Promise<{ success: boolean; error?: string }> {
+export async function deleteTask(taskId: string): Promise<{ success: boolean; error?: string }> {
   const { supabase, user } = await requireUser();
 
   if (!user) {
@@ -251,9 +242,7 @@ export async function reorderTasks(
   return { success: true };
 }
 
-export async function getTasks(
-  orderBy: "created_at" | "sort_order" = "sort_order",
-): Promise<{
+export async function getTasks(orderBy: "created_at" | "sort_order" = "sort_order"): Promise<{
   data?: unknown[];
   error?: string;
 }> {
@@ -263,11 +252,7 @@ export async function getTasks(
     return { error: "Not authenticated" };
   }
 
-  let query = supabase
-    .from("tasks")
-    .select("*")
-    .eq("user_id", user.id)
-    .is("deleted_at", null);
+  let query = supabase.from("tasks").select("*").eq("user_id", user.id).is("deleted_at", null);
 
   if (orderBy === "sort_order") {
     query = query
@@ -286,9 +271,7 @@ export async function getTasks(
   return { data };
 }
 
-export async function getTaskById(
-  taskId: string,
-): Promise<{ data?: unknown; error?: string }> {
+export async function getTaskById(taskId: string): Promise<{ data?: unknown; error?: string }> {
   const { supabase, user } = await requireUser();
 
   if (!user) {
@@ -315,7 +298,7 @@ export async function getTaskById(
  * Handles previous_status save/restore for D7a.
  */
 export async function bulkUpdateTaskStatuses(
-  updates: { taskId: string; newStatus: string; previousStatus?: string }[]
+  updates: { taskId: string; newStatus: string; previousStatus?: string }[],
 ): Promise<{ success: boolean; error?: string }> {
   const { supabase, user } = await requireUser();
   if (!user) return { success: false, error: "Not authenticated" };
@@ -366,5 +349,6 @@ export async function bulkUpdateTaskStatuses(
 
   revalidatePath("/tasks", "layout");
   revalidatePath("/dashboard", "layout");
+  revalidatePath("/kanban", "layout");
   return { success: true };
 }

@@ -4,10 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requireUser } from "@/lib/auth/requireUser";
-import {
-  CreatePlanInputSchema,
-  UpdatePlanInputSchema,
-} from "@/types/plan";
+import { CreatePlanInputSchema, UpdatePlanInputSchema } from "@/types/plan";
 import { awardXp, checkAndAwardAchievements } from "@/lib/gamification/engine";
 import { XP_REWARDS } from "@/lib/gamification/levels";
 
@@ -32,9 +29,7 @@ function computeProgress(items: { completed: boolean }[]): PlanProgress {
   };
 }
 
-export async function createPlan(
-  formData: FormData,
-): Promise<{ data?: unknown; error?: string }> {
+export async function createPlan(formData: FormData): Promise<{ data?: unknown; error?: string }> {
   const { supabase, user } = await requireUser();
 
   if (!user) {
@@ -88,9 +83,7 @@ export async function createPlan(
       estimated_minutes: item.estimated_minutes ?? null,
     }));
 
-    const { error: itemsError } = await supabase
-      .from("plan_items")
-      .insert(planItems);
+    const { error: itemsError } = await supabase.from("plan_items").insert(planItems);
 
     if (itemsError) {
       // Clean up the plan if items fail
@@ -150,19 +143,14 @@ export async function updatePlan(
   return { data: plan };
 }
 
-export async function deletePlan(
-  planId: string,
-): Promise<{ error?: string }> {
+export async function deletePlan(planId: string): Promise<{ error?: string }> {
   const { supabase, user } = await requireUser();
 
   if (!user) {
     return { error: "Not authenticated" };
   }
 
-  const { error } = await supabase
-    .from("plans")
-    .delete()
-    .eq("id", planId);
+  const { error } = await supabase.from("plans").delete().eq("id", planId);
 
   if (error) {
     return { error: error.message };
@@ -201,9 +189,7 @@ export async function getPlans(): Promise<{
   return { data };
 }
 
-export async function getPlanById(
-  planId: string,
-): Promise<{ data?: unknown; error?: string }> {
+export async function getPlanById(planId: string): Promise<{ data?: unknown; error?: string }> {
   const { supabase, user } = await requireUser();
 
   if (!user) {
@@ -259,8 +245,7 @@ export async function addPlanItem(
     .order("position", { ascending: false })
     .limit(1);
 
-  const maxPosition =
-    maxPosResult && maxPosResult.length > 0 ? maxPosResult[0].position : -1;
+  const maxPosition = maxPosResult && maxPosResult.length > 0 ? maxPosResult[0].position : -1;
   const position = maxPosition + 1;
 
   const { data: item, error } = await supabase
@@ -284,9 +269,7 @@ export async function addPlanItem(
   return { data: item };
 }
 
-export async function togglePlanItem(
-  itemId: string,
-): Promise<{ data?: unknown; error?: string }> {
+export async function togglePlanItem(itemId: string): Promise<{ data?: unknown; error?: string }> {
   const { supabase, user } = await requireUser();
 
   if (!user) {
@@ -318,16 +301,10 @@ export async function togglePlanItem(
   // Award XP when item transitions from incomplete → complete
   if (!current.completed) {
     // K1: Auto-capture actual_minutes on completion
-    const finalActual =
-      current?.actual_minutes ??
-      current?.estimated_minutes ??
-      null;
+    const finalActual = current?.actual_minutes ?? current?.estimated_minutes ?? null;
 
     if (finalActual !== null) {
-      await supabase
-        .from("plan_items")
-        .update({ actual_minutes: finalActual })
-        .eq("id", itemId);
+      await supabase.from("plan_items").update({ actual_minutes: finalActual }).eq("id", itemId);
     }
 
     try {
@@ -367,9 +344,7 @@ export async function togglePlanItem(
   return { data: item };
 }
 
-export async function deletePlanItem(
-  itemId: string,
-): Promise<{ error?: string }> {
+export async function deletePlanItem(itemId: string): Promise<{ error?: string }> {
   const { supabase, user } = await requireUser();
 
   if (!user) {
@@ -387,10 +362,7 @@ export async function deletePlanItem(
     return { error: fetchError.message };
   }
 
-  const { error } = await supabase
-    .from("plan_items")
-    .delete()
-    .eq("id", itemId);
+  const { error } = await supabase.from("plan_items").delete().eq("id", itemId);
 
   if (error) {
     return { error: error.message };

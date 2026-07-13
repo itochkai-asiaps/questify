@@ -1,12 +1,7 @@
-"use server";
-
 import { z } from "zod/v4";
 import { createClient } from "@/lib/supabase/server";
 import { TaskPriority } from "@/types/task";
-import {
-  getStreakMultiplier,
-  xpForPriority,
-} from "./levels";
+import { getStreakMultiplier, xpForPriority } from "./levels";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -127,10 +122,7 @@ const ACHIEVEMENT_DEFINITIONS: AchievementDefinition[] = [
 // awardXp
 // ---------------------------------------------------------------------------
 
-export async function awardXp(
-  userId: string,
-  amount: number,
-): Promise<AwardXpResult> {
+export async function awardXp(userId: string, amount: number): Promise<AwardXpResult> {
   const supabase = await createClient();
 
   const { error: incError } = await supabase.rpc("increment_xp", {
@@ -142,10 +134,9 @@ export async function awardXp(
     throw new Error(`Failed to increment XP: ${incError.message}`);
   }
 
-  const { data: newLevel, error: levelError } = await supabase.rpc(
-    "check_level_up",
-    { p_user_id: userId },
-  );
+  const { data: newLevel, error: levelError } = await supabase.rpc("check_level_up", {
+    p_user_id: userId,
+  });
 
   if (levelError) {
     throw new Error(`Failed to check level up: ${levelError.message}`);
@@ -198,10 +189,9 @@ export async function completeTask(
   const { newXp, newLevel, leveledUp } = await awardXp(userId, xpAwarded);
 
   // Update streak
-  const { data: newStreak, error: streakError } = await supabase.rpc(
-    "update_streak",
-    { p_user_id: userId },
-  );
+  const { data: newStreak, error: streakError } = await supabase.rpc("update_streak", {
+    p_user_id: userId,
+  });
 
   if (streakError) {
     throw new Error(`Failed to update streak: ${streakError.message}`);
@@ -220,9 +210,7 @@ export async function completeTask(
 // checkAndAwardAchievements
 // ---------------------------------------------------------------------------
 
-export async function checkAndAwardAchievements(
-  userId: string,
-): Promise<string[]> {
+export async function checkAndAwardAchievements(userId: string): Promise<string[]> {
   const supabase = await createClient();
 
   // Fetch user stats
@@ -251,9 +239,7 @@ export async function checkAndAwardAchievements(
     .lte("updated_at", todayEnd.toISOString());
 
   if (todayError) {
-    throw new Error(
-      `Failed to count today's tasks: ${todayError.message}`,
-    );
+    throw new Error(`Failed to count today's tasks: ${todayError.message}`);
   }
 
   // Determine which achievements the user qualifies for
@@ -276,9 +262,7 @@ export async function checkAndAwardAchievements(
     .in("slug", qualifyingSlugs);
 
   if (achError || !achievements) {
-    throw new Error(
-      `Failed to fetch achievements: ${achError?.message}`,
-    );
+    throw new Error(`Failed to fetch achievements: ${achError?.message}`);
   }
 
   // Fetch already-unlocked achievement slugs for this user
@@ -288,17 +272,13 @@ export async function checkAndAwardAchievements(
     .eq("user_id", userId);
 
   if (existingError) {
-    throw new Error(
-      `Failed to fetch existing achievements: ${existingError.message}`,
-    );
+    throw new Error(`Failed to fetch existing achievements: ${existingError.message}`);
   }
 
   const existingIds = new Set(existing.map((e) => e.achievement_id));
 
   // Filter to only new achievements
-  const newAchievements = achievements.filter(
-    (a) => !existingIds.has(a.id),
-  );
+  const newAchievements = achievements.filter((a) => !existingIds.has(a.id));
 
   if (newAchievements.length === 0) return [];
 
@@ -308,21 +288,15 @@ export async function checkAndAwardAchievements(
     achievement_id: a.id,
   }));
 
-  const { error: insertError } = await supabase
-    .from("user_achievements")
-    .insert(inserts);
+  const { error: insertError } = await supabase.from("user_achievements").insert(inserts);
 
   if (insertError) {
-    throw new Error(
-      `Failed to insert achievements: ${insertError.message}`,
-    );
+    throw new Error(`Failed to insert achievements: ${insertError.message}`);
   }
 
   // Award XP for each new achievement
   for (const achievement of newAchievements) {
-    const def = ACHIEVEMENT_DEFINITIONS.find(
-      (d) => d.slug === achievement.slug,
-    );
+    const def = ACHIEVEMENT_DEFINITIONS.find((d) => d.slug === achievement.slug);
     if (def && def.xpReward > 0) {
       await awardXp(userId, def.xpReward);
     }
@@ -335,9 +309,7 @@ export async function checkAndAwardAchievements(
 // getAchievements
 // ---------------------------------------------------------------------------
 
-export async function getAchievements(
-  userId: string,
-): Promise<AchievementWithStatus[]> {
+export async function getAchievements(userId: string): Promise<AchievementWithStatus[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -362,10 +334,13 @@ export async function getAchievements(
   }
 
   return (data ?? []).map((row) => {
-    const ua = (row.user_achievements as Array<{
-      unlocked_at: string;
-      user_id: string;
-    }> | null)?.filter((ua) => ua.user_id === userId) ?? [];
+    const ua =
+      (
+        row.user_achievements as Array<{
+          unlocked_at: string;
+          user_id: string;
+        }> | null
+      )?.filter((ua) => ua.user_id === userId) ?? [];
 
     return {
       slug: row.slug,
@@ -383,19 +358,17 @@ export async function getAchievements(
 // getOrCreateUserStats
 // ---------------------------------------------------------------------------
 
-export async function getOrCreateUserStats(
-  userId: string,
-): Promise<UserStatsRow> {
+export async function getOrCreateUserStats(userId: string): Promise<UserStatsRow> {
   const supabase = await createClient();
 
-  const { data } = await supabase
-    .from("user_stats")
-    .select("*")
-    .eq("user_id", userId)
-    .single();
+  const { data } = await supabase.from("user_stats").select("*").eq("user_id", userId).single();
 
   if (data) {
-    return UserStatsSchema.parse(data);
+    const parsed = UserStatsSchema.safeParse(data);
+    if (!parsed.success) {
+      throw new Error(`Failed to parse user stats: ${parsed.error.message}`);
+    }
+    return parsed.data;
   }
 
   // Create if missing
@@ -406,38 +379,42 @@ export async function getOrCreateUserStats(
     .single();
 
   if (insertError || !inserted) {
-    throw new Error(
-      `Failed to create user stats: ${insertError?.message}`,
-    );
+    throw new Error(`Failed to create user stats: ${insertError?.message}`);
   }
 
-  return UserStatsSchema.parse(inserted);
+  const parsedInserted = UserStatsSchema.safeParse(inserted);
+  if (!parsedInserted.success) {
+    throw new Error(`Failed to parse inserted user stats: ${parsedInserted.error.message}`);
+  }
+  return parsedInserted.data;
 }
 
 // ---------------------------------------------------------------------------
 // Schemas
 // ---------------------------------------------------------------------------
 
-const UserStatsSchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
-  total_xp: z.number(),
-  level: z.number(),
-  current_streak: z.number(),
-  longest_streak: z.number(),
-  last_completed_date: z.string().nullable(),
-  tasks_completed: z.number(),
-  plans_completed: z.number(),
-  updated_at: z.string(),
-}).transform((data) => ({
-  id: data.id,
-  userId: data.user_id,
-  totalXp: data.total_xp,
-  level: data.level,
-  currentStreak: data.current_streak,
-  longestStreak: data.longest_streak,
-  lastCompletedDate: data.last_completed_date,
-  tasksCompleted: data.tasks_completed,
-  plansCompleted: data.plans_completed,
-  updatedAt: data.updated_at,
-}));
+const UserStatsSchema = z
+  .object({
+    id: z.string().uuid(),
+    user_id: z.string().uuid(),
+    total_xp: z.number(),
+    level: z.number(),
+    current_streak: z.number(),
+    longest_streak: z.number(),
+    last_completed_date: z.string().nullable(),
+    tasks_completed: z.number(),
+    plans_completed: z.number(),
+    updated_at: z.string(),
+  })
+  .transform((data) => ({
+    id: data.id,
+    userId: data.user_id,
+    totalXp: data.total_xp,
+    level: data.level,
+    currentStreak: data.current_streak,
+    longestStreak: data.longest_streak,
+    lastCompletedDate: data.last_completed_date,
+    tasksCompleted: data.tasks_completed,
+    plansCompleted: data.plans_completed,
+    updatedAt: data.updated_at,
+  }));

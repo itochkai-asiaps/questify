@@ -44,11 +44,7 @@ export default function SortableTaskCard({
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn("relative", isDragging && "opacity-50")}
-    >
+    <div ref={setNodeRef} style={style} className={cn("relative", isDragging && "opacity-50")}>
       {/* Drag handle — the ONLY drag activator (desktop) */}
       <button
         ref={setActivatorNodeRef}
@@ -74,7 +70,10 @@ export default function SortableTaskCard({
             <button
               type="button"
               aria-label="Move task up"
-              onClick={(e) => { e.stopPropagation(); onMoveUp(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveUp();
+              }}
               className="flex size-6 items-center justify-center rounded-sm text-muted-foreground/60 hover:bg-background hover:text-foreground active:scale-90 transition-transform"
             >
               <Plus className="size-4" />
@@ -82,7 +81,10 @@ export default function SortableTaskCard({
             <button
               type="button"
               aria-label="Move task down"
-              onClick={(e) => { e.stopPropagation(); onMoveDown(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveDown();
+              }}
               className="flex size-6 items-center justify-center rounded-sm text-muted-foreground/60 hover:bg-background hover:text-foreground active:scale-90 transition-transform"
             >
               <Minus className="size-4" />
@@ -93,12 +95,7 @@ export default function SortableTaskCard({
 
       {/* Task card with left padding — gap + button strip width */}
       <div className="pl-9 sm:pl-8">
-        <TaskCard
-          task={task}
-          onDelete={onDelete}
-          onSelect={onSelect}
-          isSelected={isSelected}
-        />
+        <TaskCard task={task} onDelete={onDelete} onSelect={onSelect} isSelected={isSelected} />
       </div>
     </div>
   );

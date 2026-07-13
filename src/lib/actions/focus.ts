@@ -25,9 +25,9 @@ export async function getFocusTask(): Promise<{
   if (!focus) return { data: null };
 
   // Extract title from nested join result
-  const taskTitle = Array.isArray(focus.tasks)
-    ? TaskTitleSchema.parse(focus.tasks[0]).title
-    : TaskTitleSchema.parse(focus.tasks).title;
+  const taskObj = Array.isArray(focus.tasks) ? focus.tasks[0] : focus.tasks;
+  const titleParsed = TaskTitleSchema.safeParse(taskObj);
+  const taskTitle = titleParsed.success ? titleParsed.data.title : "Untitled";
 
   return { data: { task_id: focus.task_id, task_title: taskTitle } };
 }
@@ -46,7 +46,12 @@ export async function setFocusTask(
 
   if (error) return { error: error.message };
   revalidatePath("/dashboard", "layout");
-  return { data: SetFocusResultSchema.parse(data) };
+  const parsedFocus = SetFocusResultSchema.safeParse(data);
+  if (!parsedFocus.success) {
+    console.error("setFocusTask: schema mismatch", parsedFocus.error);
+    return { error: "Invalid data returned from server" };
+  }
+  return { data: parsedFocus.data };
 }
 
 export async function clearFocusTask(): Promise<{
@@ -56,10 +61,7 @@ export async function clearFocusTask(): Promise<{
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Not authenticated", success: false };
 
-  const { error } = await supabase
-    .from("focus_tasks")
-    .delete()
-    .eq("user_id", user.id);
+  const { error } = await supabase.from("focus_tasks").delete().eq("user_id", user.id);
 
   if (error) return { success: false, error: error.message };
   revalidatePath("/dashboard", "layout");

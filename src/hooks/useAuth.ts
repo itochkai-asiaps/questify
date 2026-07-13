@@ -30,13 +30,12 @@ export const useAuthStore = create<AuthState>()(
     {
       name: "questify-auth",
       partialize: (state) => ({ user: state.user, session: state.session }),
-    }
-  )
+    },
+  ),
 );
 
 export function useAuth() {
-  const { user, session, isLoading, setUser, setSession, setLoading } =
-    useAuthStore();
+  const { user, session, isLoading, setUser, setSession, setLoading } = useAuthStore();
 
   // Track user identity to skip spurious updates on TOKEN_REFRESHED
   const lastUserId = useRef<string | null>(null);

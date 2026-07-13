@@ -46,7 +46,10 @@ export default function DraggableSeparator({ onMoveUp, onMoveDown }: DraggableSe
         <button
           type="button"
           aria-label="Move separator up (add to backlog)"
-          onClick={(e) => { e.stopPropagation(); onMoveUp?.(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onMoveUp?.();
+          }}
           className="flex size-6 items-center justify-center rounded-sm text-muted-foreground/50 hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
         >
           <Plus className="size-4" />
@@ -54,7 +57,10 @@ export default function DraggableSeparator({ onMoveUp, onMoveDown }: DraggableSe
         <button
           type="button"
           aria-label="Move separator down (remove from backlog)"
-          onClick={(e) => { e.stopPropagation(); onMoveDown?.(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onMoveDown?.();
+          }}
           className="flex size-6 items-center justify-center rounded-sm text-muted-foreground/50 hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
         >
           <Minus className="size-4" />

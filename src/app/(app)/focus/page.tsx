@@ -125,9 +125,7 @@ export default function FocusPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-lg font-medium">
-              {focusTask?.task_title ?? "Your task"}
-            </p>
+            <p className="text-lg font-medium">{focusTask?.task_title ?? "Your task"}</p>
           </CardContent>
         </Card>
 
@@ -164,9 +162,7 @@ export default function FocusPage() {
                 {formatTime(remaining)}
               </span>
               {isComplete && (
-                <span className="mt-2 text-sm font-medium text-green-500">
-                  Session complete!
-                </span>
+                <span className="mt-2 text-sm font-medium text-green-500">Session complete!</span>
               )}
             </div>
           </div>
@@ -208,7 +204,12 @@ export default function FocusPage() {
                     Resume
                   </Button>
                 ) : (
-                  <Button size="lg" variant="outline" onClick={pauseTimer} className="gap-2 min-w-[120px]">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={pauseTimer}
+                    className="gap-2 min-w-[120px]"
+                  >
                     <Pause className="size-4" />
                     Pause
                   </Button>

@@ -16,9 +16,7 @@ const signInSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-export async function signUp(
-  formData: FormData,
-): Promise<{ error?: string; success?: boolean }> {
+export async function signUp(formData: FormData): Promise<{ error?: string; success?: boolean }> {
   const supabase = await createClient();
 
   const rawData = {
@@ -50,9 +48,7 @@ export async function signUp(
   return { success: true };
 }
 
-export async function signIn(
-  formData: FormData,
-): Promise<{ error?: string; success?: boolean }> {
+export async function signIn(formData: FormData): Promise<{ error?: string; success?: boolean }> {
   const supabase = await createClient();
 
   const rawData = {

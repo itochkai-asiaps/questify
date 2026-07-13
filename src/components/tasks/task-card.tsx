@@ -6,12 +6,7 @@ import { Calendar, Tag, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
@@ -51,10 +46,7 @@ function isOverdue(dueDate: string | null | undefined, status: string): boolean 
   return new Date(dueDate) < new Date();
 }
 
-function formatDueDate(
-  dueDate: string | null | undefined,
-  status: string,
-): string | null {
+function formatDueDate(dueDate: string | null | undefined, status: string): string | null {
   if (!dueDate) return null;
   const date = new Date(dueDate);
   const now = new Date();
@@ -157,26 +149,16 @@ export default function TaskCard({ task, onDelete, onSelect, isSelected }: TaskC
                   <DialogHeader>
                     <DialogTitle>Delete task?</DialogTitle>
                     <DialogDescription>
-                      This will permanently delete &ldquo;{task.title}&rdquo;.
-                      This action cannot be undone.
+                      This will permanently delete &ldquo;{task.title}&rdquo;. This action cannot be
+                      undone.
                     </DialogDescription>
                   </DialogHeader>
-                  {deleteError && (
-                    <p className="text-sm text-destructive">{deleteError}</p>
-                  )}
+                  {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
                   <DialogFooter>
-                    <DialogClose
-                      render={
-                        <Button variant="outline" disabled={isDeleting} />
-                      }
-                    >
+                    <DialogClose render={<Button variant="outline" disabled={isDeleting} />}>
                       Cancel
                     </DialogClose>
-                    <Button
-                      variant="destructive"
-                      onClick={handleDelete}
-                      disabled={isDeleting}
-                    >
+                    <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
                       {isDeleting ? "Deleting..." : "Delete"}
                     </Button>
                   </DialogFooter>

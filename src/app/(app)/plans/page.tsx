@@ -85,9 +85,7 @@ export default function PlansPage() {
   }, []);
 
   // Filter: hide completed plans unless toggle is on
-  const visiblePlans = showCompleted
-    ? plans
-    : plans.filter((p) => p.total > 0 && p.progress < 100);
+  const visiblePlans = showCompleted ? plans : plans.filter((p) => p.total > 0 && p.progress < 100);
 
   const completedCount = plans.filter((p) => p.total > 0 && p.progress >= 100).length;
 
@@ -129,10 +127,7 @@ export default function PlansPage() {
       {isLoading && (
         <div className="grid gap-4 sm:grid-cols-2">
           {[0, 1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-40 animate-pulse rounded-xl bg-muted/50"
-            />
+            <div key={i} className="h-40 animate-pulse rounded-xl bg-muted/50" />
           ))}
         </div>
       )}
@@ -155,11 +150,7 @@ export default function PlansPage() {
               ? "Create your first plan to start breaking down your goals into manageable steps."
               : `You have ${completedCount} completed plan${completedCount > 1 ? "s" : ""}. Toggle "Show completed" to see them.`}
           </p>
-          <Button
-            onClick={() => router.push("/plans/new")}
-            className="mt-6"
-            size="lg"
-          >
+          <Button onClick={() => router.push("/plans/new")} className="mt-6" size="lg">
             <Plus className="size-4" />
             Create your first plan
           </Button>
@@ -184,11 +175,7 @@ export default function PlansPage() {
 
       {/* FAB for mobile */}
       <div className="fixed bottom-6 right-6 sm:hidden">
-        <Button
-          onClick={() => router.push("/plans/new")}
-          size="icon-lg"
-          className="shadow-lg"
-        >
+        <Button onClick={() => router.push("/plans/new")} size="icon-lg" className="shadow-lg">
           <Plus className="size-5" />
         </Button>
       </div>
@@ -204,8 +191,8 @@ export default function PlansPage() {
           <DialogHeader>
             <DialogTitle>Delete Plan</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{deleteTarget?.title}&quot;?
-              This action cannot be undone and all steps will be removed.
+              Are you sure you want to delete &quot;{deleteTarget?.title}&quot;? This action cannot
+              be undone and all steps will be removed.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

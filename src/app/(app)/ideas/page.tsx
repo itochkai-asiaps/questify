@@ -41,9 +41,17 @@ type Idea = {
   created_at: string;
 };
 
-const TYPE_BADGE: Record<string, { label: string; variant: "secondary" | "outline" | "destructive"; className: string }> = {
+const TYPE_BADGE: Record<
+  string,
+  { label: string; variant: "secondary" | "outline" | "destructive"; className: string }
+> = {
   idea: { label: "Idea", variant: "outline", className: "" },
-  problem: { label: "Problem", variant: "secondary", className: "bg-orange-500/15 text-orange-700 border-orange-500/20 dark:bg-purple-500/25 dark:text-purple-200 dark:border-purple-400/30" },
+  problem: {
+    label: "Problem",
+    variant: "secondary",
+    className:
+      "bg-orange-500/15 text-orange-700 border-orange-500/20 dark:bg-purple-500/25 dark:text-purple-200 dark:border-purple-400/30",
+  },
 };
 
 const sourceBadge = (source: string) =>
@@ -159,10 +167,7 @@ export default function IdeasPage() {
               </DialogDescription>
             </DialogHeader>
 
-            <form
-              action={handleSubmit}
-              className="space-y-4"
-            >
+            <form action={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label>Type</Label>
                 <div className="flex gap-2">
@@ -170,14 +175,13 @@ export default function IdeasPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className={cn(
-                      "flex-1 gap-1.5",
-                      "focus:ring-2 focus:ring-ring"
-                    )}
+                    className={cn("flex-1 gap-1.5", "focus:ring-2 focus:ring-ring")}
                     onClick={(e) => {
                       const form = (e.target as HTMLElement).closest("form");
                       const hidden = form?.querySelector<HTMLInputElement>('input[name="type"]');
-                      if (hidden) { hidden.value = "idea"; }
+                      if (hidden) {
+                        hidden.value = "idea";
+                      }
                     }}
                   >
                     <Lightbulb className="size-3.5" /> Idea
@@ -188,12 +192,14 @@ export default function IdeasPage() {
                     size="sm"
                     className={cn(
                       "flex-1 gap-1.5",
-                      "bg-orange-500/10 text-orange-600 border-orange-500/20 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20"
+                      "bg-orange-500/10 text-orange-600 border-orange-500/20 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20",
                     )}
                     onClick={(e) => {
                       const form = (e.target as HTMLElement).closest("form");
                       const hidden = form?.querySelector<HTMLInputElement>('input[name="type"]');
-                      if (hidden) { hidden.value = "problem"; }
+                      if (hidden) {
+                        hidden.value = "problem";
+                      }
                     }}
                   >
                     <AlertTriangle className="size-3.5" /> Problem
@@ -225,11 +231,7 @@ export default function IdeasPage() {
               </div>
 
               <DialogFooter>
-                <DialogClose
-                  render={
-                    <Button variant="outline" disabled={isSubmitting} />
-                  }
-                >
+                <DialogClose render={<Button variant="outline" disabled={isSubmitting} />}>
                   Cancel
                 </DialogClose>
                 <Button type="submit" disabled={isSubmitting}>
@@ -271,7 +273,10 @@ export default function IdeasPage() {
             <Button
               variant={quickType === "idea" ? "default" : "outline"}
               size="icon-sm"
-              onClick={() => { setQuickType("idea"); handleQuickCreate(); }}
+              onClick={() => {
+                setQuickType("idea");
+                handleQuickCreate();
+              }}
               disabled={!quickTitle.trim() || quickAdding}
               className="shrink-0 gap-1"
             >
@@ -280,19 +285,21 @@ export default function IdeasPage() {
             <Button
               variant={quickType === "problem" ? "default" : "outline"}
               size="icon-sm"
-              onClick={() => { setQuickType("problem"); handleQuickCreate(); }}
+              onClick={() => {
+                setQuickType("problem");
+                handleQuickCreate();
+              }}
               disabled={!quickTitle.trim() || quickAdding}
               className={cn(
                 "shrink-0 gap-1",
-                quickType === "problem" && "bg-orange-500/10 text-orange-600 border-orange-500/20 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20"
+                quickType === "problem" &&
+                  "bg-orange-500/10 text-orange-600 border-orange-500/20 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20",
               )}
             >
               <AlertTriangle className="size-3.5" />
             </Button>
           </div>
-          {quickError && (
-            <p className="text-xs text-destructive">{quickError}</p>
-          )}
+          {quickError && <p className="text-xs text-destructive">{quickError}</p>}
         </div>
       )}
 
@@ -319,7 +326,8 @@ export default function IdeasPage() {
             <div className="text-center space-y-1">
               <p className="text-lg font-medium">No ideas yet</p>
               <p className="text-sm text-muted-foreground">
-                Capture your thoughts before they disappear. Use the button above or send them via Telegram bot.
+                Capture your thoughts before they disappear. Use the button above or send them via
+                Telegram bot.
               </p>
             </div>
           </CardContent>
@@ -336,21 +344,33 @@ export default function IdeasPage() {
                 exit={{ opacity: 0, x: -50 }}
                 transition={{ duration: 0.2 }}
               >
-                <Card className={cn(
-                  "group hover:ring-1 hover:ring-primary/20 transition-shadow",
-                  idea.type === "problem" && "border-orange-500/20 bg-orange-500/10 dark:border-purple-400/30 dark:bg-purple-500/15"
-                )}>
+                <Card
+                  className={cn(
+                    "group hover:ring-1 hover:ring-primary/20 transition-shadow",
+                    idea.type === "problem" &&
+                      "border-orange-500/20 bg-orange-500/10 dark:border-purple-400/30 dark:bg-purple-500/15",
+                  )}
+                >
                   <CardHeader className="pb-2 relative">
                     {/* Mobile dropdown — top-right corner, hidden on desktop */}
                     <div className="absolute top-3 right-3 md:hidden z-10">
                       <DropdownMenu>
-                        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="More actions"><MoreHorizontal className="size-4" /></Button>} />
+                        <DropdownMenuTrigger
+                          render={
+                            <Button variant="ghost" size="icon-sm" aria-label="More actions">
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          }
+                        />
                         <DropdownMenuContent align="end" sideOffset={4}>
                           <DropdownMenuItem
                             onClick={async () => {
                               const r = await convertIdeaToTask(idea.id);
                               if (r.error) toast.error(r.error);
-                              else { toast.success("Converted to Task"); setIdeas((p) => p.filter((i) => i.id !== idea.id)); }
+                              else {
+                                toast.success("Converted to Task");
+                                setIdeas((p) => p.filter((i) => i.id !== idea.id));
+                              }
                             }}
                           >
                             →T Convert to Task
@@ -359,7 +379,10 @@ export default function IdeasPage() {
                             onClick={async () => {
                               const r = await convertIdeaToPlan(idea.id);
                               if (r.error) toast.error(r.error);
-                              else { toast.success("Converted to Plan"); setIdeas((p) => p.filter((i) => i.id !== idea.id)); }
+                              else {
+                                toast.success("Converted to Plan");
+                                setIdeas((p) => p.filter((i) => i.id !== idea.id));
+                              }
                             }}
                           >
                             →P Convert to Plan
@@ -371,7 +394,13 @@ export default function IdeasPage() {
                                 setIdeas((prev) =>
                                   prev.map((i) =>
                                     i.id === idea.id
-                                      ? { ...i, type: i.type === "idea" ? "problem" : "idea" as "idea" | "problem" }
+                                      ? {
+                                          ...i,
+                                          type:
+                                            i.type === "idea"
+                                              ? "problem"
+                                              : ("idea" as "idea" | "problem"),
+                                        }
                                       : i,
                                   ),
                                 );
@@ -412,7 +441,10 @@ export default function IdeasPage() {
                             onClick={async () => {
                               const r = await convertIdeaToTask(idea.id);
                               if (r.error) toast.error(r.error);
-                              else { toast.success("Converted to Task"); setIdeas((p) => p.filter((i) => i.id !== idea.id)); }
+                              else {
+                                toast.success("Converted to Task");
+                                setIdeas((p) => p.filter((i) => i.id !== idea.id));
+                              }
                             }}
                             aria-label="Convert to task"
                             className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity text-[10px] font-bold px-1"
@@ -425,7 +457,10 @@ export default function IdeasPage() {
                             onClick={async () => {
                               const r = await convertIdeaToPlan(idea.id);
                               if (r.error) toast.error(r.error);
-                              else { toast.success("Converted to Plan"); setIdeas((p) => p.filter((i) => i.id !== idea.id)); }
+                              else {
+                                toast.success("Converted to Plan");
+                                setIdeas((p) => p.filter((i) => i.id !== idea.id));
+                              }
                             }}
                             aria-label="Convert to plan"
                             className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity text-[10px] font-bold px-1"
@@ -441,7 +476,13 @@ export default function IdeasPage() {
                                 setIdeas((prev) =>
                                   prev.map((i) =>
                                     i.id === idea.id
-                                      ? { ...i, type: i.type === "idea" ? "problem" : "idea" as "idea" | "problem" }
+                                      ? {
+                                          ...i,
+                                          type:
+                                            i.type === "idea"
+                                              ? "problem"
+                                              : ("idea" as "idea" | "problem"),
+                                        }
                                       : i,
                                   ),
                                 );
@@ -473,7 +514,10 @@ export default function IdeasPage() {
                         </div>
 
                         {/* Tags — always visible */}
-                        <Badge variant={TYPE_BADGE[idea.type].variant} className={TYPE_BADGE[idea.type].className}>
+                        <Badge
+                          variant={TYPE_BADGE[idea.type].variant}
+                          className={TYPE_BADGE[idea.type].className}
+                        >
                           {TYPE_BADGE[idea.type].label}
                         </Badge>
                         <Badge variant={sourceBadge(idea.source).variant}>

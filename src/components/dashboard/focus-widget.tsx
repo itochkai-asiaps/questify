@@ -12,7 +12,13 @@ import { getFocusTask, setFocusTask, clearFocusTask } from "@/lib/actions/focus"
 import { cn } from "@/lib/utils";
 
 interface FocusWidgetProps {
-  tasks: Array<{ id: string; title: string; status: string; priority: string; due_date: string | null }>;
+  tasks: Array<{
+    id: string;
+    title: string;
+    status: string;
+    priority: string;
+    due_date: string | null;
+  }>;
 }
 
 export function FocusWidget({ tasks }: FocusWidgetProps) {
@@ -33,15 +39,18 @@ export function FocusWidget({ tasks }: FocusWidgetProps) {
     fetchFocus();
   }, [fetchFocus]);
 
-  const handleSetFocus = useCallback(async (taskId: string) => {
-    setSetting(true);
-    const result = await setFocusTask(taskId);
-    if (result.data) {
-      const task = tasks.find((t) => t.id === taskId);
-      setFocusTaskState({ task_id: taskId, task_title: task?.title });
-    }
-    setSetting(false);
-  }, [tasks]);
+  const handleSetFocus = useCallback(
+    async (taskId: string) => {
+      setSetting(true);
+      const result = await setFocusTask(taskId);
+      if (result.data) {
+        const task = tasks.find((t) => t.id === taskId);
+        setFocusTaskState({ task_id: taskId, task_title: task?.title });
+      }
+      setSetting(false);
+    },
+    [tasks],
+  );
 
   const handleClear = useCallback(async () => {
     await clearFocusTask();
@@ -100,29 +109,18 @@ export function FocusWidget({ tasks }: FocusWidgetProps) {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button
-                size="sm"
-                className="gap-1.5 flex-1"
-                render={<Link href="/focus" />}
-              >
+              <Button size="sm" className="gap-1.5 flex-1" render={<Link href="/focus" />}>
                 <Play className="size-3.5" />
                 Start Focus
               </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleClear}
-                className="shrink-0"
-              >
+              <Button size="sm" variant="ghost" onClick={handleClear} className="shrink-0">
                 <X className="size-3.5" />
               </Button>
             </div>
           </motion.div>
         ) : activeTasks.length > 0 ? (
           <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">
-              Pick a task to focus on:
-            </p>
+            <p className="text-xs text-muted-foreground">Pick a task to focus on:</p>
             {activeTasks.map((task) => (
               <button
                 key={task.id}

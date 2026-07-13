@@ -31,7 +31,12 @@ export async function getKanbanColumns(): Promise<KanbanColumn[]> {
     .eq("user_id", user.id)
     .order("position");
 
-  return KanbanColumnSchema.array().parse(data ?? []);
+  const parsed = KanbanColumnSchema.array().safeParse(data ?? []);
+  if (!parsed.success) {
+    console.error("getKanbanColumns: schema mismatch", parsed.error);
+    return [];
+  }
+  return parsed.data;
 }
 
 export async function createKanbanColumn(
@@ -65,7 +70,12 @@ export async function createKanbanColumn(
   if (error) return { error: error.message };
 
   revalidatePath("/kanban", "layout");
-  return { data: KanbanColumnSchema.parse(data) };
+  const parsedCol = KanbanColumnSchema.safeParse(data);
+  if (!parsedCol.success) {
+    console.error("createKanbanColumn: schema mismatch", parsedCol.error);
+    return { error: "Invalid data returned from server" };
+  }
+  return { data: parsedCol.data };
 }
 
 export async function updateKanbanColumn(
@@ -91,15 +101,18 @@ export async function updateKanbanColumn(
     if (error) return { error: error.message };
 
     revalidatePath("/kanban", "layout");
-    return { data: KanbanColumnSchema.parse(data) };
+    const parsedCol = KanbanColumnSchema.safeParse(data);
+    if (!parsedCol.success) {
+      console.error("updateKanbanColumn: schema mismatch", parsedCol.error);
+      return { error: "Invalid data returned from server" };
+    }
+    return { data: parsedCol.data };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to update column" };
   }
 }
 
-export async function reorderKanbanColumns(
-  ids: string[],
-): Promise<{ error?: string }> {
+export async function reorderKanbanColumns(ids: string[]): Promise<{ error?: string }> {
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Not authenticated" };
 
@@ -115,9 +128,7 @@ export async function reorderKanbanColumns(
   return {};
 }
 
-export async function deleteKanbanColumn(
-  id: string,
-): Promise<{ error?: string }> {
+export async function deleteKanbanColumn(id: string): Promise<{ error?: string }> {
   const { supabase, user } = await requireUser();
   if (!user) return { error: "Not authenticated" };
 

@@ -29,7 +29,7 @@ export function MoodChart() {
 
   if (loading) {
     return (
-    <Card className="overflow-visible">
+      <Card className="overflow-visible">
         <CardHeader>
           <Skeleton className="h-5 w-32" />
         </CardHeader>
@@ -52,9 +52,10 @@ export function MoodChart() {
     const dateStr = d.toISOString().split("T")[0];
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const entries = history.filter((e) => e.created_at.split("T")[0] === dateStr);
-    const avgScore = entries.length > 0
-      ? +(entries.reduce((sum, e) => sum + e.mood_score, 0) / entries.length).toFixed(1)
-      : null;
+    const avgScore =
+      entries.length > 0
+        ? +(entries.reduce((sum, e) => sum + e.mood_score, 0) / entries.length).toFixed(1)
+        : null;
     days.push({
       date: dateStr,
       label: dayNames[d.getDay()]!,
@@ -170,17 +171,21 @@ export function MoodChart() {
 
         {/* Stats row */}
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-          <span>
-            Avg: {avg.toFixed(0)}/100
-          </span>
+          <span>Avg: {avg.toFixed(0)}/100</span>
           <span className="flex items-center gap-1">
             Trend:{" "}
             {trend === "up" ? (
-              <><TrendingUp className="size-3 text-green-500" /> Up</>
+              <>
+                <TrendingUp className="size-3 text-green-500" /> Up
+              </>
             ) : trend === "down" ? (
-              <><TrendingDown className="size-3 text-red-500" /> Down</>
+              <>
+                <TrendingDown className="size-3 text-red-500" /> Down
+              </>
             ) : (
-              <><Minus className="size-3" /> Stable</>
+              <>
+                <Minus className="size-3" /> Stable
+              </>
             )}
           </span>
         </div>

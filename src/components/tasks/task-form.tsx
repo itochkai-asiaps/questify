@@ -1,6 +1,14 @@
 "use client";
 
-import { type FormEvent, useActionState, useCallback, useEffect, useId, useRef, useState } from "react";
+import {
+  type FormEvent,
+  useActionState,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 
@@ -54,20 +62,12 @@ export default function TaskForm({ task, onSuccess }: TaskFormProps) {
   const tagsId = useId();
 
   // Controlled fields that don't map 1:1 to native inputs
-  const [priority, setPriority] = useState<string>(
-    task?.priority ?? TaskPriority.P3,
-  );
-  const [status, setStatus] = useState<string>(
-    task?.status ?? TaskStatus.Todo,
-  );
+  const [priority, setPriority] = useState<string>(task?.priority ?? TaskPriority.P3);
+  const [status, setStatus] = useState<string>(task?.status ?? TaskStatus.Todo);
   const [dueDate, setDueDate] = useState<string>(
-    task?.due_date
-      ? new Date(task.due_date).toISOString().slice(0, 10)
-      : "",
+    task?.due_date ? new Date(task.due_date).toISOString().slice(0, 10) : "",
   );
-  const [tagsStr, setTagsStr] = useState<string>(
-    task?.tags?.join(", ") ?? "",
-  );
+  const [tagsStr, setTagsStr] = useState<string>(task?.tags?.join(", ") ?? "");
   const [estimatedMinutes, setEstimatedMinutes] = useState<string>(
     task?.estimated_minutes?.toString() ?? "",
   );
@@ -250,12 +250,7 @@ export default function TaskForm({ task, onSuccess }: TaskFormProps) {
             "Create Task"
           )}
         </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          disabled={isPending}
-          render={<Link href="/tasks" />}
-        >
+        <Button type="button" variant="ghost" disabled={isPending} render={<Link href="/tasks" />}>
           Cancel
         </Button>
       </div>

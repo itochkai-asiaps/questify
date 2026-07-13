@@ -49,7 +49,8 @@ export async function createWellbeingEntry(
 
   if (error) return { error: error.message };
   const entryParsed = WellbeingEntrySchema.safeParse(data);
-  if (!entryParsed.success) return { error: entryParsed.error.issues[0]?.message ?? "Invalid entry data" };
+  if (!entryParsed.success)
+    return { error: entryParsed.error.issues[0]?.message ?? "Invalid entry data" };
   revalidatePath("/dashboard", "layout");
   return { data: entryParsed.data };
 }

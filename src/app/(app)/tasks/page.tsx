@@ -11,11 +11,7 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  arrayMove,
-} from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
@@ -33,13 +29,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
@@ -59,9 +49,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import DraggableSeparator, { DraggableSeparatorOverlay } from "@/components/tasks/draggable-separator";
+import DraggableSeparator, {
+  DraggableSeparatorOverlay,
+} from "@/components/tasks/draggable-separator";
 import SortableTaskCard from "@/components/tasks/sortable-task-card";
-import { getTasks, getTaskById, createTask, deleteTask, reorderTasks, updateTask, bulkUpdateTaskStatuses } from "@/lib/actions/tasks";
+import {
+  getTasks,
+  getTaskById,
+  createTask,
+  deleteTask,
+  reorderTasks,
+  updateTask,
+  bulkUpdateTaskStatuses,
+} from "@/lib/actions/tasks";
 import { cn } from "@/lib/utils";
 import type { Task } from "@/types/task";
 import { TaskPriority, TaskStatus } from "@/types/task";
@@ -83,14 +83,20 @@ const STATUS_FILTER_OPTIONS = [
   { value: TaskStatus.Missed, label: "Missed" },
 ] as const;
 
-const PRIORITY_CONFIG: Record<string, { label: string; variant: "destructive" | "secondary" | "outline" | "ghost" }> = {
+const PRIORITY_CONFIG: Record<
+  string,
+  { label: string; variant: "destructive" | "secondary" | "outline" | "ghost" }
+> = {
   p1: { label: "P1", variant: "destructive" },
   p2: { label: "P2", variant: "secondary" },
   p3: { label: "P3", variant: "outline" },
   p4: { label: "P4", variant: "ghost" },
 };
 
-const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; variant: "default" | "secondary" | "outline" }
+> = {
   backlog: { label: "Backlog", variant: "outline" },
   todo: { label: "Todo", variant: "secondary" },
   in_progress: { label: "In Progress", variant: "default" },
@@ -165,7 +171,9 @@ export default function TasksPage() {
     setLoadState("loaded");
   }, []);
 
-  useEffect(() => { fetchTasks(); }, [fetchTasks]);
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
 
   // Fetch selected task details
   const loadSelectedTask = useCallback(async (id: string) => {
@@ -262,11 +270,7 @@ export default function TasksPage() {
   backlogTasksRef.current = backlogTasks;
 
   // Optimistic reorder within a section
-  function reorderWithinSection(
-    items: Task[],
-    oldIndex: number,
-    newIndex: number,
-  ): Task[] {
+  function reorderWithinSection(items: Task[], oldIndex: number, newIndex: number): Task[] {
     const reordered = arrayMove(items, oldIndex, newIndex);
     return reordered.map((task, i) => ({
       ...task,
@@ -275,126 +279,149 @@ export default function TasksPage() {
   }
 
   // Persist reorder to server
-  const persistReorder = useCallback(async (tasksToPersist: Task[]) => {
-    const taskIds = tasksToPersist.map((t) => t.id);
-    const result = await reorderTasks(taskIds);
-    if (!result.success) {
-      // Rollback: re-fetch from server
-      fetchTasks();
-    }
-  }, [fetchTasks]);
+  const persistReorder = useCallback(
+    async (tasksToPersist: Task[]) => {
+      const taskIds = tasksToPersist.map((t) => t.id);
+      const result = await reorderTasks(taskIds);
+      if (!result.success) {
+        // Rollback: re-fetch from server
+        fetchTasks();
+      }
+    },
+    [fetchTasks],
+  );
 
   // Guard against concurrent moves (mobile arrows)
   const movingRef = useRef(false);
 
   // Move a task one position up/down (mobile arrow buttons)
-  const handleMoveTask = useCallback(async (taskId: string, direction: "up" | "down") => {
-    if (movingRef.current) return;
-    movingRef.current = true;
+  const handleMoveTask = useCallback(
+    async (taskId: string, direction: "up" | "down") => {
+      if (movingRef.current) return;
+      movingRef.current = true;
 
-    let taskIds: string[] = [];
-    setTasks((prev) => {
-      const idx = prev.findIndex((t) => t.id === taskId);
-      if (idx === -1) return prev;
+      let taskIds: string[] = [];
+      setTasks((prev) => {
+        const idx = prev.findIndex((t) => t.id === taskId);
+        if (idx === -1) return prev;
 
-      const targetIdx = direction === "up" ? idx - 1 : idx + 1;
-      if (targetIdx < 0 || targetIdx >= prev.length) return prev;
+        const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+        if (targetIdx < 0 || targetIdx >= prev.length) return prev;
 
-      // Swap sort_order for immediate visual feedback
-      const updated = [...prev];
-      const taskA = { ...updated[idx] };
-      const taskB = { ...updated[targetIdx] };
-      const tempOrder = taskA.sort_order;
-      taskA.sort_order = taskB.sort_order;
-      taskB.sort_order = tempOrder;
-      updated[idx] = taskA;
-      updated[targetIdx] = taskB;
+        // Swap sort_order for immediate visual feedback
+        const updated = [...prev];
+        const taskA = { ...updated[idx] };
+        const taskB = { ...updated[targetIdx] };
+        const tempOrder = taskA.sort_order;
+        taskA.sort_order = taskB.sort_order;
+        taskB.sort_order = tempOrder;
+        updated[idx] = taskA;
+        updated[targetIdx] = taskB;
 
-      // Collect IDs in sort_order for server persist
-      taskIds = [...updated].sort((a, b) => a.sort_order - b.sort_order).map((t) => t.id);
-      return updated;
-    });
+        // Collect IDs in sort_order for server persist
+        taskIds = [...updated].sort((a, b) => a.sort_order - b.sort_order).map((t) => t.id);
+        return updated;
+      });
 
-    if (taskIds.length === 0) { movingRef.current = false; return; }
-
-    try {
-      const result = await reorderTasks(taskIds);
-      if (result.success) {
-        // Sync sort_order to match server calculation (index * 1000)
-        setTasks((prev) => prev.map((t, i, arr) => {
-          const sorted = [...arr].sort((a, b) => a.sort_order - b.sort_order);
-          const serverIdx = sorted.findIndex((st) => st.id === t.id);
-          return serverIdx !== -1 ? { ...t, sort_order: serverIdx * 1000 } : t;
-        }));
-      } else {
-        fetchTasks();
+      if (taskIds.length === 0) {
+        movingRef.current = false;
+        return;
       }
-    } catch {
-      fetchTasks();
-    } finally {
-      movingRef.current = false;
-    }
-  }, [fetchTasks]);
+
+      try {
+        const result = await reorderTasks(taskIds);
+        if (result.success) {
+          // Sync sort_order to match server calculation (index * 1000)
+          setTasks((prev) =>
+            prev.map((t, i, arr) => {
+              const sorted = [...arr].sort((a, b) => a.sort_order - b.sort_order);
+              const serverIdx = sorted.findIndex((st) => st.id === t.id);
+              return serverIdx !== -1 ? { ...t, sort_order: serverIdx * 1000 } : t;
+            }),
+          );
+        } else {
+          fetchTasks();
+        }
+      } catch {
+        fetchTasks();
+      } finally {
+        movingRef.current = false;
+      }
+    },
+    [fetchTasks],
+  );
 
   // Move backlog separator one step via +/- buttons (optimistic — no page refresh)
   const separatorMovingRef = useRef(false);
-  const handleMoveSeparator = useCallback(async (direction: "up" | "down") => {
-    if (separatorMovingRef.current) return;
-    separatorMovingRef.current = true;
+  const handleMoveSeparator = useCallback(
+    async (direction: "up" | "down") => {
+      if (separatorMovingRef.current) return;
+      separatorMovingRef.current = true;
 
-    let snapshot: Task[] = [];
+      let snapshot: Task[] = [];
 
-    try {
-      if (direction === "up") {
-        // + : move last active task into backlog
-        const lastActive = activeTasks[activeTasks.length - 1];
-        if (!lastActive) return;
+      try {
+        if (direction === "up") {
+          // + : move last active task into backlog
+          const lastActive = activeTasks[activeTasks.length - 1];
+          if (!lastActive) return;
 
-        snapshot = tasks;
+          snapshot = tasks;
 
-        // Optimistic local update
-        setTasks((prev) =>
-          prev.map((t) =>
-            t.id === lastActive.id
-              ? { ...t, status: TaskStatus.Backlog as Task["status"], previous_status: lastActive.status as Task["status"] }
-              : t,
-          ),
-        );
+          // Optimistic local update
+          setTasks((prev) =>
+            prev.map((t) =>
+              t.id === lastActive.id
+                ? {
+                    ...t,
+                    status: TaskStatus.Backlog as Task["status"],
+                    previous_status: lastActive.status as Task["status"],
+                  }
+                : t,
+            ),
+          );
 
-        await bulkUpdateTaskStatuses([{
-          taskId: lastActive.id,
-          newStatus: TaskStatus.Backlog,
-          previousStatus: lastActive.status,
-        }]);
-      } else {
-        // - : move first backlog task out of backlog (restore previous_status)
-        const firstBacklog = backlogTasks[0];
-        if (!firstBacklog) return;
+          await bulkUpdateTaskStatuses([
+            {
+              taskId: lastActive.id,
+              newStatus: TaskStatus.Backlog,
+              previousStatus: lastActive.status,
+            },
+          ]);
+        } else {
+          // - : move first backlog task out of backlog (restore previous_status)
+          const firstBacklog = backlogTasks[0];
+          if (!firstBacklog) return;
 
-        const restoredStatus = (firstBacklog.previous_status || TaskStatus.Todo) as Task["status"];
-        snapshot = tasks;
+          const restoredStatus = (firstBacklog.previous_status ||
+            TaskStatus.Todo) as Task["status"];
+          snapshot = tasks;
 
-        // Optimistic local update
-        setTasks((prev) =>
-          prev.map((t) =>
-            t.id === firstBacklog.id
-              ? { ...t, status: restoredStatus, previous_status: null as unknown as undefined }
-              : t,
-          ),
-        );
+          // Optimistic local update
+          setTasks((prev) =>
+            prev.map((t) =>
+              t.id === firstBacklog.id
+                ? { ...t, status: restoredStatus, previous_status: null as unknown as undefined }
+                : t,
+            ),
+          );
 
-        await bulkUpdateTaskStatuses([{
-          taskId: firstBacklog.id,
-          newStatus: restoredStatus,
-        }]);
+          await bulkUpdateTaskStatuses([
+            {
+              taskId: firstBacklog.id,
+              newStatus: restoredStatus,
+            },
+          ]);
+        }
+      } catch {
+        // Rollback on failure
+        if (snapshot.length > 0) setTasks(snapshot);
+      } finally {
+        separatorMovingRef.current = false;
       }
-    } catch {
-      // Rollback on failure
-      if (snapshot.length > 0) setTasks(snapshot);
-    } finally {
-      separatorMovingRef.current = false;
-    }
-  }, [activeTasks, backlogTasks, tasks]);
+    },
+    [activeTasks, backlogTasks, tasks],
+  );
 
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
@@ -406,10 +433,7 @@ export default function TasksPage() {
         const overTaskId = String(over.id);
 
         // Build the combined ordered list from refs (active first, then backlog)
-        const allTasks = [
-          ...activeTasksRef.current,
-          ...backlogTasksRef.current,
-        ];
+        const allTasks = [...activeTasksRef.current, ...backlogTasksRef.current];
         const splitIndex = allTasks.findIndex((t) => t.id === overTaskId);
         if (splitIndex === -1) return;
 
@@ -483,7 +507,9 @@ export default function TasksPage() {
         const reordered = reorderWithinSection(activeTasksRef.current, oldIndex, newIndex);
         setTasks((prev) => {
           const updatedIds = new Set(reordered.map((t) => t.id));
-          return prev.map((t) => (updatedIds.has(t.id) ? reordered.find((r) => r.id === t.id)! : t));
+          return prev.map((t) =>
+            updatedIds.has(t.id) ? reordered.find((r) => r.id === t.id)! : t,
+          );
         });
         persistReorder(reordered);
         return;
@@ -495,7 +521,9 @@ export default function TasksPage() {
         const reordered = reorderWithinSection(backlogTasksRef.current, oldIndex, newIndex);
         setTasks((prev) => {
           const updatedIds = new Set(reordered.map((t) => t.id));
-          return prev.map((t) => (updatedIds.has(t.id) ? reordered.find((r) => r.id === t.id)! : t));
+          return prev.map((t) =>
+            updatedIds.has(t.id) ? reordered.find((r) => r.id === t.id)! : t,
+          );
         });
         persistReorder(reordered);
         return;
@@ -506,10 +534,12 @@ export default function TasksPage() {
         // Dragging from active to backlog
         const oldIndex = activeTasksRef.current.findIndex((t) => t.id === activeTaskId);
         const newIndex = backlogTasksRef.current.findIndex((t) => t.id === overTaskId);
-        const newActive = activeTasksRef.current.filter((t) => t.id !== activeTaskId).map((t, i) => ({
-          ...t,
-          sort_order: i * 1000,
-        }));
+        const newActive = activeTasksRef.current
+          .filter((t) => t.id !== activeTaskId)
+          .map((t, i) => ({
+            ...t,
+            sort_order: i * 1000,
+          }));
         const movedTask = { ...activeTasksRef.current[oldIndex], status: TaskStatus.Backlog };
         const newBacklog = [...backlogTasksRef.current];
         newBacklog.splice(newIndex, 0, movedTask);
@@ -529,10 +559,12 @@ export default function TasksPage() {
         // Dragging from backlog to active
         const oldIndex = backlogTasksRef.current.findIndex((t) => t.id === activeTaskId);
         const newIndex = activeTasksRef.current.findIndex((t) => t.id === overTaskId);
-        const newBacklog = backlogTasksRef.current.filter((t) => t.id !== activeTaskId).map((t, i) => ({
-          ...t,
-          sort_order: i * 1000,
-        }));
+        const newBacklog = backlogTasksRef.current
+          .filter((t) => t.id !== activeTaskId)
+          .map((t, i) => ({
+            ...t,
+            sort_order: i * 1000,
+          }));
         const movedTask = { ...backlogTasksRef.current[oldIndex], status: TaskStatus.Todo };
         const newActive = [...activeTasksRef.current];
         newActive.splice(newIndex, 0, movedTask);
@@ -601,8 +633,10 @@ export default function TasksPage() {
     setCrossSectionDialog(null);
   }, []);
 
-  const priority = selectedTask ? PRIORITY_CONFIG[selectedTask.priority] ?? PRIORITY_CONFIG.p3 : null;
-  const status = selectedTask ? STATUS_CONFIG[selectedTask.status] ?? STATUS_CONFIG.todo : null;
+  const priority = selectedTask
+    ? (PRIORITY_CONFIG[selectedTask.priority] ?? PRIORITY_CONFIG.p3)
+    : null;
+  const status = selectedTask ? (STATUS_CONFIG[selectedTask.status] ?? STATUS_CONFIG.todo) : null;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6">
@@ -624,7 +658,12 @@ export default function TasksPage() {
           <Button render={<Link href="/tasks/new" />}>
             <Plus className="size-4" /> New Task
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setShowCompleted((v) => !v)} className="gap-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowCompleted((v) => !v)}
+            className="gap-1.5"
+          >
             {showCompleted ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
             {showCompleted ? "Hide completed" : "Show completed"}
           </Button>
@@ -632,41 +671,94 @@ export default function TasksPage() {
       </motion.div>
 
       {/* Filter bar */}
-      <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-        className="flex flex-col gap-3 sm:flex-row">
+      <motion.div
+        initial={{ opacity: 0, y: -4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="flex flex-col gap-3 sm:flex-row"
+      >
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search tasks..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8" />
+          <Input
+            placeholder="Search tasks..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-8"
+          />
         </div>
         <Select value={priorityFilter} onValueChange={(v) => setPriorityFilter(v ?? "")}>
-          <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="Priority" /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-40">
+            <SelectValue placeholder="Priority" />
+          </SelectTrigger>
           <SelectContent>
-            {PRIORITY_FILTER_OPTIONS.map((opt) => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+            {PRIORITY_FILTER_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "")}>
-          <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-40">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
           <SelectContent>
-            {STATUS_FILTER_OPTIONS.map((opt) => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+            {STATUS_FILTER_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         {(search || priorityFilter || statusFilter) && (
-          <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setPriorityFilter(""); setStatusFilter(""); }} className="shrink-0">Clear</Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSearch("");
+              setPriorityFilter("");
+              setStatusFilter("");
+            }}
+            className="shrink-0"
+          >
+            Clear
+          </Button>
         )}
       </motion.div>
 
       {/* Quick create */}
       {loadState === "loaded" && (
-        <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="space-y-2">
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+          className="space-y-2"
+        >
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Plus className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Quick add task by name..." value={quickTitle}
+              <Input
+                placeholder="Quick add task by name..."
+                value={quickTitle}
                 onChange={(e) => setQuickTitle(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleQuickCreate(); } }}
-                disabled={quickAdding} className="pl-8" />
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleQuickCreate();
+                  }
+                }}
+                disabled={quickAdding}
+                className="pl-8"
+              />
             </div>
-            <Button size="icon" onClick={handleQuickCreate} disabled={!quickTitle.trim() || quickAdding} className="shrink-0"><Plus className="size-4" /></Button>
+            <Button
+              size="icon"
+              onClick={handleQuickCreate}
+              disabled={!quickTitle.trim() || quickAdding}
+              className="shrink-0"
+            >
+              <Plus className="size-4" />
+            </Button>
           </div>
           {quickError && <p className="text-xs text-destructive">{quickError}</p>}
         </motion.div>
@@ -675,33 +767,76 @@ export default function TasksPage() {
       {/* Split view: list left (md+), detail right (md+) */}
       <div className="flex gap-6 items-start">
         {/* Left: task list */}
-        <div className={cn("min-w-0 flex-1", selectedTaskId && "hidden md:block md:w-1/2 md:flex-none")}>
+        <div
+          className={cn(
+            "min-w-0 flex-1",
+            selectedTaskId && "hidden md:block md:w-1/2 md:flex-none",
+          )}
+        >
           <AnimatePresence mode="wait">
             {loadState === "loading" && <TaskSkeletons key="skeletons" />}
             {loadState === "error" && (
-              <motion.div key="error" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}>
+              <motion.div
+                key="error"
+                initial={{ opacity: 0, scale: 0.97 }}
+                animate={{ opacity: 1, scale: 1 }}
+              >
                 <Card className="border-destructive/40">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base"><AlertCircle className="size-5 text-destructive" />Failed to load tasks</CardTitle>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <AlertCircle className="size-5 text-destructive" />
+                      Failed to load tasks
+                    </CardTitle>
                     <CardDescription>{error ?? "An unexpected error occurred."}</CardDescription>
                   </CardHeader>
-                  <CardContent><Button variant="outline" onClick={fetchTasks}><RefreshCw className="size-4" />Retry</Button></CardContent>
+                  <CardContent>
+                    <Button variant="outline" onClick={fetchTasks}>
+                      <RefreshCw className="size-4" />
+                      Retry
+                    </Button>
+                  </CardContent>
                 </Card>
               </motion.div>
             )}
             {loadState === "loaded" && filteredTasks.length === 0 && (
-              <motion.div key="empty" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}>
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0, scale: 0.97 }}
+                animate={{ opacity: 1, scale: 1 }}
+              >
                 <Card className="border-dashed">
                   <CardContent className="flex flex-col items-center gap-4 py-12">
-                    <div className="flex size-12 items-center justify-center rounded-full bg-muted"><ClipboardList className="size-6 text-muted-foreground" /></div>
+                    <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                      <ClipboardList className="size-6 text-muted-foreground" />
+                    </div>
                     <div className="text-center">
-                      <p className="font-medium">{tasks.length === 0 ? "No tasks yet. Create your first task!" : "No tasks match your filters."}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">{tasks.length === 0 ? "Start by adding a task to get organized." : "Try adjusting your search or filter criteria."}</p>
+                      <p className="font-medium">
+                        {tasks.length === 0
+                          ? "No tasks yet. Create your first task!"
+                          : "No tasks match your filters."}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {tasks.length === 0
+                          ? "Start by adding a task to get organized."
+                          : "Try adjusting your search or filter criteria."}
+                      </p>
                     </div>
                     {tasks.length === 0 ? (
-                      <Button render={<Link href="/tasks/new" />}><Plus className="size-4" />Create Task</Button>
+                      <Button render={<Link href="/tasks/new" />}>
+                        <Plus className="size-4" />
+                        Create Task
+                      </Button>
                     ) : (
-                      <Button variant="outline" onClick={() => { setSearch(""); setPriorityFilter(""); setStatusFilter(""); }}>Clear Filters</Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setSearch("");
+                          setPriorityFilter("");
+                          setStatusFilter("");
+                        }}
+                      >
+                        Clear Filters
+                      </Button>
                     )}
                   </CardContent>
                 </Card>
@@ -714,7 +849,12 @@ export default function TasksPage() {
                 onDragStart={(event) => setActiveDragItem(event.active)}
                 onDragEnd={handleDragEnd}
               >
-                <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-3">
+                <motion.div
+                  key="list"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex flex-col gap-3"
+                >
                   {/* Active (non-backlog) tasks */}
                   <div className="flex items-center justify-between px-1">
                     <span className="text-xs font-medium text-muted-foreground">
@@ -724,7 +864,10 @@ export default function TasksPage() {
                       <span className="text-[11px] text-muted-foreground/60">Drag to reorder</span>
                     )}
                   </div>
-                  <SortableContext items={activeTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                  <SortableContext
+                    items={activeTasks.map((t) => t.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
                     {activeTasks.map((task) => (
                       <SortableTaskCard
                         key={task.id}
@@ -737,16 +880,19 @@ export default function TasksPage() {
                       />
                     ))}
                   </SortableContext>
-                   {/* D7: Draggable backlog separator */}
-                   {activeTasks.length > 0 && (
-                     <DraggableSeparator
-                       onMoveUp={() => handleMoveSeparator("up")}
-                       onMoveDown={() => handleMoveSeparator("down")}
-                     />
-                   )}
+                  {/* D7: Draggable backlog separator */}
+                  {activeTasks.length > 0 && (
+                    <DraggableSeparator
+                      onMoveUp={() => handleMoveSeparator("up")}
+                      onMoveDown={() => handleMoveSeparator("down")}
+                    />
+                  )}
                   {/* D5: Backlog inline create — always visible, above backlog tasks */}
                   <form
-                    onSubmit={(e) => { e.preventDefault(); handleBacklogQuickCreate(); }}
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleBacklogQuickCreate();
+                    }}
                     className="flex items-center gap-2 px-1"
                   >
                     <Input
@@ -756,13 +902,21 @@ export default function TasksPage() {
                       disabled={backlogQuickAdding}
                       className="h-8 text-xs"
                     />
-                    <Button type="submit" size="icon" variant="ghost" className="size-7 shrink-0"
-                      disabled={!backlogQuickTitle.trim() || backlogQuickAdding}>
+                    <Button
+                      type="submit"
+                      size="icon"
+                      variant="ghost"
+                      className="size-7 shrink-0"
+                      disabled={!backlogQuickTitle.trim() || backlogQuickAdding}
+                    >
                       <Plus className="size-3.5" />
                     </Button>
                   </form>
                   {/* Backlog tasks */}
-                  <SortableContext items={backlogTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                  <SortableContext
+                    items={backlogTasks.map((t) => t.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
                     {backlogTasks.map((task) => (
                       <SortableTaskCard
                         key={task.id}
@@ -777,7 +931,9 @@ export default function TasksPage() {
                   </SortableContext>
                 </motion.div>
                 <DragOverlay>
-                  {activeDragItem?.data.current?.type === "separator" && <DraggableSeparatorOverlay />}
+                  {activeDragItem?.data.current?.type === "separator" && (
+                    <DraggableSeparatorOverlay />
+                  )}
                 </DragOverlay>
               </DndContext>
             )}
@@ -788,21 +944,42 @@ export default function TasksPage() {
         {selectedTaskId && (
           <div className="hidden md:block w-1/2 flex-none sticky top-6">
             {detailLoading ? (
-              <Card><CardContent className="py-12"><Skeleton className="h-6 w-3/4 mb-3" /><Skeleton className="h-4 w-full mb-2" /><Skeleton className="h-4 w-2/3" /></CardContent></Card>
+              <Card>
+                <CardContent className="py-12">
+                  <Skeleton className="h-6 w-3/4 mb-3" />
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-2/3" />
+                </CardContent>
+              </Card>
             ) : selectedTask ? (
               <Card>
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <CardTitle className={cn("text-lg", (selectedTask.status === "done" || selectedTask.status === "missed") && "line-through")}>
+                      <CardTitle
+                        className={cn(
+                          "text-lg",
+                          (selectedTask.status === "done" || selectedTask.status === "missed") &&
+                            "line-through",
+                        )}
+                      >
                         {selectedTask.title}
                       </CardTitle>
                       <CardDescription className="mt-1">
-                        Created {new Date(selectedTask.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                        Created{" "}
+                        {new Date(selectedTask.created_at).toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <Button variant="ghost" size="icon-xs" render={<Link href={`/tasks/${selectedTask.id}`} />}>
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        render={<Link href={`/tasks/${selectedTask.id}`} />}
+                      >
                         <Edit className="size-3.5" />
                       </Button>
                       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
@@ -812,11 +989,19 @@ export default function TasksPage() {
                         <DialogContent>
                           <DialogHeader>
                             <DialogTitle>Delete task?</DialogTitle>
-                            <DialogDescription>This will permanently delete &quot;{selectedTask.title}&quot;.</DialogDescription>
+                            <DialogDescription>
+                              This will permanently delete &quot;{selectedTask.title}&quot;.
+                            </DialogDescription>
                           </DialogHeader>
                           <DialogFooter>
-                            <DialogClose render={<Button variant="outline" disabled={deleting} />}>Cancel</DialogClose>
-                            <Button variant="destructive" onClick={handleDeleteSelected} disabled={deleting}>
+                            <DialogClose render={<Button variant="outline" disabled={deleting} />}>
+                              Cancel
+                            </DialogClose>
+                            <Button
+                              variant="destructive"
+                              onClick={handleDeleteSelected}
+                              disabled={deleting}
+                            >
                               {deleting ? "Deleting..." : "Delete"}
                             </Button>
                           </DialogFooter>
@@ -846,7 +1031,11 @@ export default function TasksPage() {
                         <p className="text-xs font-medium text-muted-foreground mb-1">Due date</p>
                         <span className="text-sm inline-flex items-center gap-1">
                           <Calendar className="size-3 text-muted-foreground" />
-                          {new Date(selectedTask.due_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                          {new Date(selectedTask.due_date).toLocaleDateString("en-US", {
+                            month: "long",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
                         </span>
                       </div>
                     )}
@@ -856,8 +1045,12 @@ export default function TasksPage() {
                       <p className="text-xs font-medium text-muted-foreground mb-1">Tags</p>
                       <div className="flex flex-wrap gap-1">
                         {selectedTask.tags.map((tag) => (
-                          <span key={tag} className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs">
-                            <Tag className="size-3" />{tag}
+                          <span
+                            key={tag}
+                            className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs"
+                          >
+                            <Tag className="size-3" />
+                            {tag}
                           </span>
                         ))}
                       </div>
@@ -891,9 +1084,7 @@ export default function TasksPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>
-              Cancel
-            </DialogClose>
+            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
             <Button onClick={confirmCrossSectionDrag}>
               {crossSectionDialog?.toStatus === TaskStatus.Backlog
                 ? "Move to Backlog"
@@ -911,10 +1102,17 @@ function TaskSkeletons() {
     <div className="flex flex-col gap-3">
       {Array.from({ length: 6 }).map((_, i) => (
         <Card key={i}>
-          <CardHeader><Skeleton className="h-4 w-3/4" /></CardHeader>
+          <CardHeader>
+            <Skeleton className="h-4 w-3/4" />
+          </CardHeader>
           <CardContent className="space-y-2">
-            <div className="flex gap-2"><Skeleton className="h-5 w-10 rounded-full" /><Skeleton className="h-5 w-16 rounded-full" /><Skeleton className="h-5 w-20 rounded-full" /></div>
-            <Skeleton className="h-4 w-1/2" /></CardContent>
+            <div className="flex gap-2">
+              <Skeleton className="h-5 w-10 rounded-full" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+              <Skeleton className="h-5 w-20 rounded-full" />
+            </div>
+            <Skeleton className="h-4 w-1/2" />
+          </CardContent>
         </Card>
       ))}
     </div>

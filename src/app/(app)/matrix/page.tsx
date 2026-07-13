@@ -126,7 +126,9 @@ export default function MatrixPage() {
     if (showCompleted) return tasksByPriority;
     const filtered = { ...EMPTY_MATRIX };
     for (const priority of ALL_PRIORITIES) {
-      filtered[priority] = tasksByPriority[priority].filter((t) => t.status !== "done" && t.status !== "missed");
+      filtered[priority] = tasksByPriority[priority].filter(
+        (t) => t.status !== "done" && t.status !== "missed",
+      );
     }
     return filtered;
   }, [tasksByPriority, showCompleted]);
@@ -140,10 +142,7 @@ export default function MatrixPage() {
         </div>
         <div className="grid gap-4 md:grid-cols-2 md:grid-rows-2">
           {[0, 1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="flex flex-col gap-3 rounded-xl border border-border p-4"
-            >
+            <div key={i} className="flex flex-col gap-3 rounded-xl border border-border p-4">
               <Skeleton className="h-5 w-20" />
               <Skeleton className="h-16 w-full" />
               <Skeleton className="h-16 w-full" />
@@ -163,9 +162,7 @@ export default function MatrixPage() {
             <LayoutGrid className="size-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              Eisenhower Matrix
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tight">Eisenhower Matrix</h1>
             <p className="text-sm text-muted-foreground">
               {totalTasks} {totalTasks === 1 ? "task" : "tasks"} across 4 quadrants
             </p>
@@ -173,15 +170,8 @@ export default function MatrixPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleAutoDistribute}
-            className="gap-1.5"
-          >
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <Button variant="outline" size="sm" onClick={handleAutoDistribute} className="gap-1.5">
             <Sparkles className="size-3.5" />
             Auto-distribute
           </Button>
@@ -204,7 +194,10 @@ export default function MatrixPage() {
       </div>
 
       {/* Matrix grid — single grid, columns aligned, mirrored X-axis */}
-      <div className="hidden md:grid gap-2" style={{ gridTemplateColumns: "auto 1fr 1fr", gridTemplateRows: "auto auto auto" }}>
+      <div
+        className="hidden md:grid gap-2"
+        style={{ gridTemplateColumns: "auto 1fr 1fr", gridTemplateRows: "auto auto auto" }}
+      >
         {/* Row 1: X-axis labels */}
         <div />
         <div className="text-center py-1">
@@ -216,7 +209,9 @@ export default function MatrixPage() {
 
         {/* Row 2: Important — P2 | P1 */}
         <div className="flex items-center justify-center py-2">
-          <span className="text-xs font-medium text-muted-foreground [writing-mode:vertical-rl] rotate-180">Important</span>
+          <span className="text-xs font-medium text-muted-foreground [writing-mode:vertical-rl] rotate-180">
+            Important
+          </span>
         </div>
         {([TaskPriority.P2, TaskPriority.P1] as TaskPriority[]).map((priority) => (
           <MatrixQuadrant
@@ -229,7 +224,9 @@ export default function MatrixPage() {
 
         {/* Row 3: Not Important — P4 | P3 */}
         <div className="flex items-center justify-center py-2">
-          <span className="text-xs font-medium text-muted-foreground [writing-mode:vertical-rl] rotate-180">Not Important</span>
+          <span className="text-xs font-medium text-muted-foreground [writing-mode:vertical-rl] rotate-180">
+            Not Important
+          </span>
         </div>
         {([TaskPriority.P4, TaskPriority.P3] as TaskPriority[]).map((priority) => (
           <MatrixQuadrant
@@ -243,7 +240,9 @@ export default function MatrixPage() {
 
       {/* Mobile — simple 2×2 grid */}
       <div className="grid gap-4 md:hidden grid-cols-2 grid-rows-2">
-        {([TaskPriority.P2, TaskPriority.P1, TaskPriority.P4, TaskPriority.P3] as TaskPriority[]).map((priority) => (
+        {(
+          [TaskPriority.P2, TaskPriority.P1, TaskPriority.P4, TaskPriority.P3] as TaskPriority[]
+        ).map((priority) => (
           <MatrixQuadrant
             key={priority}
             priority={priority}

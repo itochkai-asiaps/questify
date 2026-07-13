@@ -2,12 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  animate,
-  motion,
-  useMotionValue,
-  useTransform,
-} from "framer-motion";
+import { animate, motion, useMotionValue, useTransform } from "framer-motion";
 import {
   Star,
   Trophy,
@@ -47,11 +42,7 @@ import {
   type UserStatsRow,
   getOrCreateUserStats,
 } from "@/lib/gamification/engine";
-import {
-  getLevel,
-  xpForLevel,
-  xpToNextLevel,
-} from "@/lib/gamification/levels";
+import { getLevel, xpForLevel, xpToNextLevel } from "@/lib/gamification/levels";
 import { getTasks } from "@/lib/actions/tasks";
 import { getPlans } from "@/lib/actions/plans";
 import { updateProfile, getProfile } from "@/lib/actions/profile";
@@ -172,9 +163,7 @@ function ProfileError({ onRetry }: { onRetry: () => void }) {
       <div className="rounded-full bg-destructive/10 p-4">
         <RefreshCw className="size-8 text-destructive" />
       </div>
-      <h2 className="text-xl font-semibold text-foreground">
-        Unable to load profile
-      </h2>
+      <h2 className="text-xl font-semibold text-foreground">Unable to load profile</h2>
       <p className="text-sm text-muted-foreground">
         Something went wrong while fetching your profile data.
       </p>
@@ -232,8 +221,7 @@ function XpProgressMini({ stats }: { stats: UserStatsRow }) {
   const currentLevelXp = xpForLevel(level);
   const nextLevelXp = xpToNextLevel(level);
   const xpIntoLevel = stats.totalXp - currentLevelXp;
-  const progressPercent =
-    nextLevelXp > 0 ? Math.min((xpIntoLevel / nextLevelXp) * 100, 100) : 100;
+  const progressPercent = nextLevelXp > 0 ? Math.min((xpIntoLevel / nextLevelXp) * 100, 100) : 100;
   const maxLevel = level >= 50;
 
   return (
@@ -328,10 +316,7 @@ function EditProfileDialog({
         </DialogHeader>
 
         <div className="space-y-2">
-          <label
-            htmlFor="display-name"
-            className="text-sm font-medium text-foreground"
-          >
+          <label htmlFor="display-name" className="text-sm font-medium text-foreground">
             Display Name
           </label>
           <Input
@@ -378,16 +363,10 @@ function AchievementCard({ ach, index }: { ach: AchievementWithStatus; index: nu
       <div
         className={cn(
           "flex size-10 shrink-0 items-center justify-center rounded-full",
-          ach.unlocked
-            ? "bg-amber-500/10 text-amber-500"
-            : "bg-muted text-muted-foreground",
+          ach.unlocked ? "bg-amber-500/10 text-amber-500" : "bg-muted text-muted-foreground",
         )}
       >
-        {ach.unlocked ? (
-          <Star className="size-5" />
-        ) : (
-          <Lock className="size-5" />
-        )}
+        {ach.unlocked ? <Star className="size-5" /> : <Lock className="size-5" />}
       </div>
       <div className="min-w-0 flex-1">
         <p
@@ -398,9 +377,7 @@ function AchievementCard({ ach, index }: { ach: AchievementWithStatus; index: nu
         >
           {ach.title}
         </p>
-        <p className="truncate text-xs text-muted-foreground">
-          {ach.description}
-        </p>
+        <p className="truncate text-xs text-muted-foreground">{ach.description}</p>
         {ach.unlocked && ach.unlockedAt && (
           <p className="mt-0.5 text-[11px] text-muted-foreground">
             Unlocked {new Date(ach.unlockedAt).toLocaleDateString()}
@@ -458,8 +435,7 @@ export default function ProfilePage() {
       const profileData = profileResult.data as { display_name?: string } | undefined;
       const profileName = profileData?.display_name;
       const metaName =
-        (user.user_metadata?.display_name as string) ??
-        (user.user_metadata?.full_name as string);
+        (user.user_metadata?.display_name as string) ?? (user.user_metadata?.full_name as string);
       const emailName = user.email?.split("@")[0] ?? "User";
 
       setDisplayName(profileName || metaName || emailName);
@@ -476,13 +452,9 @@ export default function ProfilePage() {
 
       setTasksCompleted(tasks.filter((t) => t.status === "done").length);
       setPlansCompleted(plans.filter((p) => p.progress >= 100).length);
-      setPlansInProgress(
-        plans.filter((p) => p.progress > 0 && p.progress < 100).length,
-      );
+      setPlansInProgress(plans.filter((p) => p.progress > 0 && p.progress < 100).length);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load profile",
-      );
+      setError(err instanceof Error ? err.message : "Failed to load profile");
     } finally {
       setLoading(false);
     }
@@ -539,9 +511,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="min-w-0">
-              <h1 className="truncate text-xl font-bold text-foreground">
-                {displayName}
-              </h1>
+              <h1 className="truncate text-xl font-bold text-foreground">{displayName}</h1>
               <p className="truncate text-sm text-muted-foreground">{email}</p>
               {stats && (
                 <div className="mt-1 flex items-center gap-1">
@@ -557,10 +527,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="flex items-center gap-2 sm:ml-auto">
-            <Button
-              variant="outline"
-              onClick={() => setEditOpen(true)}
-            >
+            <Button variant="outline" onClick={() => setEditOpen(true)}>
               <Pencil className="mr-2 size-4" />
               Edit Profile
             </Button>
@@ -628,24 +595,28 @@ export default function ProfilePage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <svg className="size-4 text-muted-foreground" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.46-1.901-.903-1.056-.692-1.653-1.123-2.678-1.799-1.185-.781-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.015-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.441-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.14.119.098.152.228.168.32.016.093.037.304.019.472z"/>
+              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.46-1.901-.903-1.056-.692-1.653-1.123-2.678-1.799-1.185-.781-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.015-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.009-1.252-.242-1.865-.441-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.023.465.14.119.098.152.228.168.32.016.093.037.304.019.472z" />
             </svg>
             Telegram Bot
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="rounded-lg border border-border p-4 space-y-2">
-            <p className="text-sm text-muted-foreground">
-              Send ideas from Telegram to Questify:
-            </p>
+            <p className="text-sm text-muted-foreground">Send ideas from Telegram to Questify:</p>
             <ol className="text-sm text-muted-foreground list-decimal list-inside space-y-1">
-              <li>Open <b>@questify_test_2_bot</b> in Telegram</li>
-              <li>Send <code className="bg-muted px-1 rounded text-xs">/start</code></li>
+              <li>
+                Open <b>@questify_test_2_bot</b> in Telegram
+              </li>
+              <li>
+                Send <code className="bg-muted px-1 rounded text-xs">/start</code>
+              </li>
               <li>Copy the command below and paste it in the bot</li>
             </ol>
           </div>
           <div className="flex items-center gap-2 rounded-lg border border-border p-3 bg-muted/50">
-            <code className="text-sm font-mono select-all flex-1 truncate">/link {user?.id ?? "Loading..."}</code>
+            <code className="text-sm font-mono select-all flex-1 truncate">
+              /link {user?.id ?? "Loading..."}
+            </code>
             <CopyButton text={`/link ${user?.id ?? ""}`} />
           </div>
         </CardContent>
@@ -692,9 +663,7 @@ export default function ProfilePage() {
             >
               {seeding ? "Seeding..." : "Seed Tasks"}
             </Button>
-            {seedResult && (
-              <p className="text-xs text-muted-foreground">{seedResult}</p>
-            )}
+            {seedResult && <p className="text-xs text-muted-foreground">{seedResult}</p>}
           </div>
           <p className="text-center text-[11px] text-muted-foreground mt-4 select-all cursor-pointer">
             {process.env.NEXT_PUBLIC_APP_VERSION || "v0.2"}

@@ -39,12 +39,8 @@ export function PlanForm({ mode, planId, defaultValues }: PlanFormProps) {
   const router = useRouter();
 
   const [title, setTitle] = useState(defaultValues?.title ?? "");
-  const [description, setDescription] = useState(
-    defaultValues?.description ?? "",
-  );
-  const [color, setColor] = useState(
-    defaultValues?.color ?? PLAN_COLORS[0].value,
-  );
+  const [description, setDescription] = useState(defaultValues?.description ?? "");
+  const [color, setColor] = useState(defaultValues?.color ?? PLAN_COLORS[0].value);
   const [items, setItems] = useState<PlanItem[]>(defaultValues?.items ?? []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -160,10 +156,12 @@ export function PlanForm({ mode, planId, defaultValues }: PlanFormProps) {
                 className={`relative flex size-8 items-center justify-center rounded-full transition-all hover:scale-110 ${
                   isSelected ? "scale-110 ring-2 ring-offset-1 ring-offset-background" : ""
                 }`}
-                style={{
-                  backgroundColor: c.value,
-                  ...(isSelected ? { "--tw-ring-color": c.value } : {}),
-                } as React.CSSProperties}
+                style={
+                  {
+                    backgroundColor: c.value,
+                    ...(isSelected ? { "--tw-ring-color": c.value } : {}),
+                  } as React.CSSProperties
+                }
                 aria-label={c.label}
               >
                 {isSelected && <Check className="size-3.5 text-white" />}
@@ -216,13 +214,7 @@ export function PlanForm({ mode, planId, defaultValues }: PlanFormProps) {
             ))}
           </AnimatePresence>
 
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={addItem}
-            className="w-full"
-          >
+          <Button type="button" variant="outline" size="sm" onClick={addItem} className="w-full">
             <Plus className="size-4" />
             Add step
           </Button>
@@ -230,9 +222,7 @@ export function PlanForm({ mode, planId, defaultValues }: PlanFormProps) {
       )}
 
       {/* Error */}
-      {error && (
-        <p className="text-center text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="text-center text-sm text-destructive">{error}</p>}
 
       {/* Submit */}
       <Button

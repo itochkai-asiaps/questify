@@ -59,13 +59,7 @@ export const MatrixQuadrant = memo(function MatrixQuadrant({
   const config = QUADRANT_CONFIG[priority];
 
   return (
-    <div
-      className={cn(
-        "flex h-full flex-col rounded-xl border",
-        config.bg,
-        config.border,
-      )}
-    >
+    <div className={cn("flex h-full flex-col rounded-xl border", config.bg, config.border)}>
       {/* Quadrant header */}
       <div className="flex items-start gap-3 border-b border-border/40 px-4 py-3">
         <div className={cn("mt-1 size-2.5 shrink-0 rounded-full", config.dotColor)} />

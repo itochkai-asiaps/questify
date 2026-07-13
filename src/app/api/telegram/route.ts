@@ -46,11 +46,11 @@ export async function POST(request: NextRequest) {
       await sendMessage(
         chatId,
         "<b>Questify Ideas Bot</b> 🚀\n\n" +
-        "Send me an idea and I'll save it.\n\n" +
-        "<b>Link your account:</b>\n" +
-        "1. Open Questify → Profile → copy User ID\n" +
-        "2. Send <code>/link YOUR_USER_ID</code>\n\n" +
-        "First line = title\nNext lines = description",
+          "Send me an idea and I'll save it.\n\n" +
+          "<b>Link your account:</b>\n" +
+          "1. Open Questify → Profile → copy User ID\n" +
+          "2. Send <code>/link YOUR_USER_ID</code>\n\n" +
+          "First line = title\nNext lines = description",
       );
       return NextResponse.json({ ok: true });
     }

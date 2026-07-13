@@ -7,13 +7,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import TaskForm from "@/components/tasks/task-form";
 import { getTaskById } from "@/lib/actions/tasks";
@@ -94,10 +88,7 @@ export default function EditTaskPage() {
   return (
     <div className="mx-auto max-w-lg space-y-6 px-4 py-8 sm:px-6">
       {/* Back link */}
-      <motion.div
-        initial={{ opacity: 0, x: -12 }}
-        animate={{ opacity: 1, x: 0 }}
-      >
+      <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}>
         <Button variant="ghost" size="sm" render={<Link href="/tasks" />}>
           <ArrowLeft className="size-4" />
           Back to Tasks
@@ -117,9 +108,7 @@ export default function EditTaskPage() {
               </div>
               <div>
                 <CardTitle>Edit Task</CardTitle>
-                <CardDescription>
-                  Update your task details below.
-                </CardDescription>
+                <CardDescription>Update your task details below.</CardDescription>
               </div>
             </div>
           </CardHeader>

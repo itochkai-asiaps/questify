@@ -69,7 +69,10 @@ export function KanbanColumn({
 
   const handleSave = () => {
     const t = editTitle.trim();
-    if (t) { onRename(id, t); setEditing(false); }
+    if (t) {
+      onRename(id, t);
+      setEditing(false);
+    }
   };
 
   const handleInlineCreate = useCallback(async () => {
@@ -94,22 +97,34 @@ export function KanbanColumn({
               ref={inputRef}
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") setEditing(false); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSave();
+                if (e.key === "Escape") setEditing(false);
+              }}
               className="h-7 text-sm flex-1"
               autoFocus
             />
-            <Button size="icon-xs" variant="ghost" onClick={handleSave}><Check className="size-3" /></Button>
-            <Button size="icon-xs" variant="ghost" onClick={() => setEditing(false)}><X className="size-3" /></Button>
+            <Button size="icon-xs" variant="ghost" onClick={handleSave}>
+              <Check className="size-3" />
+            </Button>
+            <Button size="icon-xs" variant="ghost" onClick={() => setEditing(false)}>
+              <X className="size-3" />
+            </Button>
           </>
         ) : (
           <>
             <h3
               className="flex-1 text-sm font-semibold cursor-pointer px-1 py-0.5 rounded hover:text-primary"
-              onClick={() => { setEditTitle(title); setEditing(true); }}
+              onClick={() => {
+                setEditTitle(title);
+                setEditing(true);
+              }}
             >
               {title}
             </h3>
-            <span className="text-[11px] text-muted-foreground tabular-nums mr-1">{tasks.length}</span>
+            <span className="text-[11px] text-muted-foreground tabular-nums mr-1">
+              {tasks.length}
+            </span>
             {!isBacklog && !isFirst && (
               <Button size="icon-xs" variant="ghost" onClick={() => onMoveLeft(id)}>
                 <ChevronLeft className="size-3.5" />
@@ -136,31 +151,49 @@ export function KanbanColumn({
             <Input
               value={inlineTitle}
               onChange={(e) => setInlineTitle(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleInlineCreate(); } }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleInlineCreate();
+                }
+              }}
               placeholder="Add task..."
               className="h-7 text-xs flex-1 border-0 bg-transparent px-1 focus-visible:ring-0"
               disabled={inlineAdding}
             />
-            {inlineAdding && <Loader2 className="size-3 animate-spin text-muted-foreground shrink-0" />}
+            {inlineAdding && (
+              <Loader2 className="size-3 animate-spin text-muted-foreground shrink-0" />
+            )}
           </div>
         </div>
       ) : (
-        <Link href="/tasks/new" className="block border-b border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/30 transition-colors">
-          <Plus className="inline size-3 mr-1" />Add task
+        <Link
+          href="/tasks/new"
+          className="block border-b border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/30 transition-colors"
+        >
+          <Plus className="inline size-3 mr-1" />
+          Add task
         </Link>
       )}
 
       {/* Card list */}
       <div
         ref={setNodeRef}
-        className={cn("flex min-h-[80px] flex-col gap-2 overflow-y-auto p-3", isOver && "bg-primary/5")}
+        className={cn(
+          "flex min-h-[80px] flex-col gap-2 overflow-y-auto p-3",
+          isOver && "bg-primary/5",
+        )}
       >
         <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
           {tasks.length > 0 ? (
             tasks.map((task) => {
               const colIdx = columnIds.indexOf(id);
-              const canLeft = (isBacklog && columnIds.length > 0) || (colIdx > 0) || (colIdx === 0 && showBacklog);
-              const canRight = (isBacklog && columnIds.length > 0) || (colIdx >= 0 && colIdx < columnIds.length - 1) || (colIdx === columnIds.length - 1 && columnIds.length > 0 && showBacklog);
+              const canLeft =
+                (isBacklog && columnIds.length > 0) || colIdx > 0 || (colIdx === 0 && showBacklog);
+              const canRight =
+                (isBacklog && columnIds.length > 0) ||
+                (colIdx >= 0 && colIdx < columnIds.length - 1) ||
+                (colIdx === columnIds.length - 1 && columnIds.length > 0 && showBacklog);
               return (
                 <KanbanCard
                   key={task.id}

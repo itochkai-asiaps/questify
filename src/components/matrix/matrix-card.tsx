@@ -62,16 +62,11 @@ export function MatrixCard({ task, onReprioritize }: MatrixCardProps) {
     <Card
       size="sm"
       onClick={() => router.push(`/tasks/${task.id}`)}
-      className={cn(
-        "cursor-pointer transition-shadow",
-        "hover:shadow-md hover:ring-foreground/20",
-      )}
+      className={cn("cursor-pointer transition-shadow", "hover:shadow-md hover:ring-foreground/20")}
     >
       <CardContent className="flex flex-col gap-2">
         {/* Title row */}
-        <p className="truncate text-sm font-medium leading-snug">
-          {task.title}
-        </p>
+        <p className="truncate text-sm font-medium leading-snug">{task.title}</p>
 
         {/* Meta row: priority badge (dropdown trigger) + status + due date */}
         <div className="flex flex-wrap items-center gap-1.5" onClick={(e) => e.stopPropagation()}>

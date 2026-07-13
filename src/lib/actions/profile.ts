@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod/v4";
 
-import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth/requireUser";
 
 const updateProfileSchema = z.object({
@@ -22,7 +21,15 @@ export async function updateProfile(
     return { error: firstError };
   }
 
-  const supabase = await createClient();
+  const { supabase, user } = await requireUser();
+
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  if (user.id !== userId) {
+    return { error: "Unauthorized" };
+  }
 
   const { data, error } = await supabase
     .from("profiles")
@@ -40,9 +47,7 @@ export async function updateProfile(
   return { data };
 }
 
-export async function getProfile(
-  userId: string,
-): Promise<{ data?: unknown; error?: string }> {
+export async function getProfile(userId: string): Promise<{ data?: unknown; error?: string }> {
   const { supabase, user } = await requireUser();
 
   if (!user) {
@@ -53,11 +58,7 @@ export async function getProfile(
     return { error: "Unauthorized" };
   }
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", userId)
-    .single();
+  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
 
   if (error) {
     return { error: error.message };

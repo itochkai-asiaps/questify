@@ -20,10 +20,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Avatar,
-  AvatarFallback,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,22 +71,15 @@ export default function AppSidebar() {
   const router = useRouter();
   const { user, signOut } = useAuth();
 
-  const userInitial = getUserInitial(
-    user?.email,
-    user?.user_metadata?.display_name,
-  );
-  const userDisplay = getUserDisplay(
-    user?.email,
-    user?.user_metadata?.display_name,
-  );
+  const userInitial = getUserInitial(user?.email, user?.user_metadata?.display_name);
+  const userDisplay = getUserDisplay(user?.email, user?.user_metadata?.display_name);
 
   // ------------------------------------------------------------------
   // Shared nav link renderer
   // ------------------------------------------------------------------
 
   const renderNavLink = (item: (typeof NAV_ITEMS)[number], iconOnly = false) => {
-    const isActive =
-      pathname === item.href || pathname.startsWith(item.href + "/");
+    const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
     const Icon = item.icon;
 
     return (
@@ -108,20 +98,11 @@ export default function AppSidebar() {
         <Icon
           className={cn(
             "size-5 shrink-0",
-            isActive
-              ? "text-sidebar-primary"
-              : "text-sidebar-foreground/60",
+            isActive ? "text-sidebar-primary" : "text-sidebar-foreground/60",
           )}
         />
         {(!collapsed || iconOnly) && (
-          <span
-            className={cn(
-              "truncate",
-              collapsed && "lg:hidden",
-            )}
-          >
-            {item.label}
-          </span>
+          <span className={cn("truncate", collapsed && "lg:hidden")}>{item.label}</span>
         )}
       </Link>
     );
@@ -147,10 +128,7 @@ export default function AppSidebar() {
           collapsed ? "lg:justify-center" : "lg:justify-between",
         )}
       >
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-2 overflow-hidden"
-        >
+        <Link href="/dashboard" className="flex items-center gap-2 overflow-hidden">
           <Target className="size-6 shrink-0 text-primary" />
           <span
             className={cn(
@@ -168,11 +146,7 @@ export default function AppSidebar() {
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className={cn("shrink-0", collapsed && "lg:hidden")}
         >
-          {collapsed ? (
-            <PanelLeftOpen className="size-4" />
-          ) : (
-            <PanelLeftClose className="size-4" />
-          )}
+          {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
         </Button>
       </div>
 
@@ -204,12 +178,7 @@ export default function AppSidebar() {
       <div className="shrink-0" />
 
       {/* User section */}
-      <div
-        className={cn(
-          "shrink-0 border-t border-sidebar-border p-3",
-          collapsed && "lg:p-2",
-        )}
-      >
+      <div className={cn("shrink-0 border-t border-sidebar-border p-3", collapsed && "lg:p-2")}>
         <DropdownMenu>
           <DropdownMenuTrigger
             className={cn(
@@ -225,20 +194,13 @@ export default function AppSidebar() {
                 <p className="truncate text-sm font-medium text-sidebar-foreground">
                   {userDisplay}
                 </p>
-                <p className="truncate text-xs text-sidebar-foreground/60">
-                  {user?.email}
-                </p>
+                <p className="truncate text-xs text-sidebar-foreground/60">{user?.email}</p>
               </div>
             )}
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            side="top"
-            sideOffset={8}
-            className="w-56"
-          >
+          <DropdownMenuContent align="end" side="top" sideOffset={8} className="w-56">
             <DropdownMenuGroup>
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => router.push("/profile")}>
@@ -246,10 +208,7 @@ export default function AppSidebar() {
               Profile
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() => signOut()}
-            >
+            <DropdownMenuItem variant="destructive" onClick={() => signOut()}>
               <LogOut className="size-4" />
               Sign Out
             </DropdownMenuItem>
@@ -274,8 +233,7 @@ export default function AppSidebar() {
       )}
     >
       {NAV_ITEMS.map((item) => {
-        const isActive =
-          pathname === item.href || pathname.startsWith(item.href + "/");
+        const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
         const Icon = item.icon;
 
         return (
@@ -284,9 +242,7 @@ export default function AppSidebar() {
             href={item.href}
             className={cn(
               "flex flex-col items-center justify-center gap-0.5 px-3 py-1 min-w-0 rounded-lg transition-colors tap-target",
-              isActive
-                ? "text-sidebar-primary"
-                : "text-sidebar-foreground/60",
+              isActive ? "text-sidebar-primary" : "text-sidebar-foreground/60",
             )}
             aria-label={item.label}
           >

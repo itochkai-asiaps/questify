@@ -41,10 +41,17 @@ export function WellbeingHeart() {
     }
   }, []);
 
-  useEffect(() => { fetchLatest(); }, [fetchLatest]);
+  useEffect(() => {
+    fetchLatest();
+  }, [fetchLatest]);
 
   // Cleanup timer on unmount
-  useEffect(() => () => { if (noteTimerRef.current) clearTimeout(noteTimerRef.current); }, []);
+  useEffect(
+    () => () => {
+      if (noteTimerRef.current) clearTimeout(noteTimerRef.current);
+    },
+    [],
+  );
 
   const displayPct = hoverPct ?? savedPct ?? 0;
 
@@ -61,43 +68,46 @@ export function WellbeingHeart() {
     setHoverPct(null);
   }, []);
 
-  const handleClick = useCallback(async (e: React.MouseEvent) => {
-    // Determine percentage: hover position on desktop, click position on mobile
-    let pct = hoverPct ?? savedPct;
-    if (pct === null) {
-      const el = heartRef.current;
-      if (el) {
-        const rect = el.getBoundingClientRect();
-        const y = Math.max(0, Math.min(1, 1 - (e.clientY - rect.top) / rect.height));
-        pct = Math.round(y * 20) * 5;
+  const handleClick = useCallback(
+    async (e: React.MouseEvent) => {
+      // Determine percentage: hover position on desktop, click position on mobile
+      let pct = hoverPct ?? savedPct;
+      if (pct === null) {
+        const el = heartRef.current;
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          const y = Math.max(0, Math.min(1, 1 - (e.clientY - rect.top) / rect.height));
+          pct = Math.round(y * 20) * 5;
+        }
       }
-    }
-    if (pct === null || saving) return;
-    setSaving(true);
-    try {
-      const result = await createWellbeingEntry(pct, note || undefined);
-      if (result.error) {
-        setError(result.error);
-      } else if (result.data) {
-        setLatestEntry(result.data as WellbeingEntry);
-        setSavedPct(pct);
-        setHoverPct(null);
-        setError(null);
-        // Show note input for 5 seconds (timer pauses while focused)
-        setNote("");
-        setNoteSaved(false);
-        setShowNote(true);
-        if (noteTimerRef.current) clearTimeout(noteTimerRef.current);
-        noteTimerRef.current = setTimeout(() => setShowNote(false), 5000);
-        setTimeout(() => noteRef.current?.focus(), 50);
+      if (pct === null || saving) return;
+      setSaving(true);
+      try {
+        const result = await createWellbeingEntry(pct, note || undefined);
+        if (result.error) {
+          setError(result.error);
+        } else if (result.data) {
+          setLatestEntry(result.data as WellbeingEntry);
+          setSavedPct(pct);
+          setHoverPct(null);
+          setError(null);
+          // Show note input for 5 seconds (timer pauses while focused)
+          setNote("");
+          setNoteSaved(false);
+          setShowNote(true);
+          if (noteTimerRef.current) clearTimeout(noteTimerRef.current);
+          noteTimerRef.current = setTimeout(() => setShowNote(false), 5000);
+          setTimeout(() => noteRef.current?.focus(), 50);
+        }
+      } catch (e) {
+        console.error("WellbeingHeart: failed to save entry", e);
+        setError("Failed to save mood");
+      } finally {
+        setSaving(false);
       }
-    } catch (e) {
-      console.error("WellbeingHeart: failed to save entry", e);
-      setError("Failed to save mood");
-    } finally {
-      setSaving(false);
-    }
-  }, [hoverPct, savedPct, saving, note]);
+    },
+    [hoverPct, savedPct, saving, note],
+  );
 
   const handleNoteSubmit = useCallback(async () => {
     if (!note.trim() || !latestEntry) return;
@@ -106,7 +116,10 @@ export function WellbeingHeart() {
     setNote("");
     // Clear timer, hide after showing "Saved" briefly
     if (noteTimerRef.current) clearTimeout(noteTimerRef.current);
-    noteTimerRef.current = setTimeout(() => { setShowNote(false); setNoteSaved(false); }, 1500);
+    noteTimerRef.current = setTimeout(() => {
+      setShowNote(false);
+      setNoteSaved(false);
+    }, 1500);
   }, [note, latestEntry]);
 
   const startNoteTimer = useCallback(() => {
@@ -126,7 +139,8 @@ export function WellbeingHeart() {
   const emptyColor = isProd ? "#7f1d1d22" : "#fde04722";
 
   // Heart shape path
-  const heartPath = "M50 85 C30 70, 5 55, 5 35 C5 20, 20 8, 35 12 C42 14, 48 19, 50 25 C52 19, 58 14, 65 12 C80 8, 95 20, 95 35 C95 55, 70 70, 50 85Z";
+  const heartPath =
+    "M50 85 C30 70, 5 55, 5 35 C5 20, 20 8, 35 12 C42 14, 48 19, 50 25 C52 19, 58 14, 65 12 C80 8, 95 20, 95 35 C95 55, 70 70, 50 85Z";
 
   const latestMood = latestEntry ? getMoodLabel(latestEntry.mood_score) : null;
 
@@ -167,11 +181,7 @@ export function WellbeingHeart() {
           />
 
           {/* Filled portion */}
-          <path
-            d={heartPath}
-            fill="url(#hpGrad)"
-            clipPath="url(#hpClip)"
-          />
+          <path d={heartPath} fill="url(#hpGrad)" clipPath="url(#hpClip)" />
 
           {/* Outline on top */}
           <path
@@ -244,7 +254,9 @@ export function WellbeingHeart() {
                   type="text"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") handleNoteSubmit(); }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleNoteSubmit();
+                  }}
                   onFocus={pauseNoteTimer}
                   onBlur={startNoteTimer}
                   placeholder="Add a note..."

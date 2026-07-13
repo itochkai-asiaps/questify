@@ -141,16 +141,17 @@ describe("getKanbanColumns", () => {
   // -- Zod validation (KanbanColumnSchema) ----------------------------------
   // provide invalid data via order() → .parse() throws
 
-  it("throws ZodError when data has invalid shape (missing uuid id)", async () => {
+  it("returns empty array when data has invalid shape (missing uuid id)", async () => {
     mockSupabase.order.mockResolvedValueOnce({
       data: [{ id: "not-a-uuid", title: "Col", position: 0 }],
       error: null,
     });
 
-    await expect(getKanbanColumns()).rejects.toThrow();
+    const result = await getKanbanColumns();
+    expect(result).toEqual([]);
   });
 
-  it("throws ZodError when position is not a number", async () => {
+  it("returns empty array when position is not a number", async () => {
     mockSupabase.order.mockResolvedValueOnce({
       data: [
         {
@@ -162,16 +163,18 @@ describe("getKanbanColumns", () => {
       error: null,
     });
 
-    await expect(getKanbanColumns()).rejects.toThrow();
+    const result = await getKanbanColumns();
+    expect(result).toEqual([]);
   });
 
-  it("throws ZodError when title is missing", async () => {
+  it("returns empty array when title is missing", async () => {
     mockSupabase.order.mockResolvedValueOnce({
       data: [{ id: TEST_COL_ID_1, position: 0 }],
       error: null,
     });
 
-    await expect(getKanbanColumns()).rejects.toThrow();
+    const result = await getKanbanColumns();
+    expect(result).toEqual([]);
   });
 
   // -- Auth ----------------------------------------------------------------
@@ -229,21 +232,16 @@ describe("createKanbanColumn", () => {
     const result = await createKanbanColumn("New Col");
 
     expect(result.data!.position).toBe(4);
-    const insertPayload = mockSupabase.insert.mock.calls[0][0] as Record<
-      string,
-      unknown
-    >;
+    const insertPayload = mockSupabase.insert.mock.calls[0][0] as Record<string, unknown>;
     expect(insertPayload.position).toBe(4);
   });
 
   it("defaults to position 0 when no existing columns", async () => {
     // last query returns null (no rows)
-    mockSupabase.single
-      .mockResolvedValueOnce({ data: null, error: null })
-      .mockResolvedValueOnce({
-        data: { ...createdColumn, position: 0 },
-        error: null,
-      });
+    mockSupabase.single.mockResolvedValueOnce({ data: null, error: null }).mockResolvedValueOnce({
+      data: { ...createdColumn, position: 0 },
+      error: null,
+    });
 
     const result = await createKanbanColumn("First Col");
 
@@ -522,9 +520,7 @@ describe("deleteKanbanColumn", () => {
     // from() is called for the fallback fetch (kanban_columns), then for
     // the task migration (tasks), then for the delete (kanban_columns).
     // We check that "tasks" was among the from() calls.
-    const fromCalls = mockSupabase.from.mock.calls.map(
-      (call: any[]) => call[0],
-    );
+    const fromCalls = mockSupabase.from.mock.calls.map((call: any[]) => call[0]);
     expect(fromCalls).toContain("tasks");
 
     expect(mockSupabase.update).toHaveBeenCalledWith({
@@ -539,9 +535,7 @@ describe("deleteKanbanColumn", () => {
     await deleteKanbanColumn(TEST_COL_ID_1);
 
     // from() was NOT called with "tasks"
-    const fromCalls = mockSupabase.from.mock.calls.map(
-      (call: any[]) => call[0],
-    );
+    const fromCalls = mockSupabase.from.mock.calls.map((call: any[]) => call[0]);
     expect(fromCalls).not.toContain("tasks");
     // But kanban_columns was called (for fallback fetch and/or delete)
     expect(fromCalls).toContain("kanban_columns");

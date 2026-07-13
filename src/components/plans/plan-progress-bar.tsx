@@ -39,10 +39,7 @@ export function PlanProgressBar({
         />
       </div>
       {percentage > 15 && (
-        <span
-          className="shrink-0 text-xs font-medium tabular-nums"
-          style={{ color }}
-        >
+        <span className="shrink-0 text-xs font-medium tabular-nums" style={{ color }}>
           {percentage}%
         </span>
       )}

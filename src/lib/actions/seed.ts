@@ -17,7 +17,11 @@ const ROADMAP_TASKS = [
   { title: "B2: awardXp в togglePlanItem — XP за планы", status: "done", priority: "p3" },
   { title: "B3: Ачивки — сид, checkAndAwardAchievements", status: "done", priority: "p3" },
   // Block C — in progress
-  { title: "C0: Тип идеи — idea/problem, Telegram-префиксы, цвета", status: "done", priority: "p3" },
+  {
+    title: "C0: Тип идеи — idea/problem, Telegram-префиксы, цвета",
+    status: "done",
+    priority: "p3",
+  },
   { title: "C1: Идея → конвертировать в задачу", status: "in_progress", priority: "p2" },
   { title: "C2: Идея → конвертировать в план", status: "in_progress", priority: "p2" },
   { title: "C3: Элемент плана → конвертировать в задачу", status: "in_progress", priority: "p2" },
@@ -28,7 +32,11 @@ const ROADMAP_TASKS = [
   // Block E — todo
   { title: "E1: Дашборд как центр управления", status: "todo", priority: "p1" },
   // Block F — todo
-  { title: "F1: Вкладка «Прогресс» — скиллбук / дерево технологий", status: "todo", priority: "p1" },
+  {
+    title: "F1: Вкладка «Прогресс» — скиллбук / дерево технологий",
+    status: "todo",
+    priority: "p1",
+  },
   { title: "F2: Вкладка «Время» — трекинг + AI-агент", status: "todo", priority: "p1" },
   // Block G — todo
   { title: "G1: Форма Request Access на лендинге", status: "todo", priority: "p2" },
@@ -52,16 +60,20 @@ export async function seedRoadmap(): Promise<{ count: number; error?: string }> 
   if (!user) return { count: 0, error: "Not authenticated" };
 
   for (const task of ROADMAP_TASKS) {
-    const validated = CreateTaskInputSchema.parse({
+    const validated = CreateTaskInputSchema.safeParse({
       title: task.title,
       priority: task.priority,
     });
+    if (!validated.success) {
+      console.error("seedRoadmap: invalid task", task.title, validated.error);
+      continue;
+    }
 
     await supabase.from("tasks").insert({
       user_id: user.id,
-      title: validated.title,
+      title: validated.data.title,
       status: task.status,
-      priority: validated.priority,
+      priority: validated.data.priority,
       xp_reward: 0,
     });
   }

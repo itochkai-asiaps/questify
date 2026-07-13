@@ -56,11 +56,15 @@ export default function RegisterPage() {
               <div className="text-center space-y-2">
                 <h2 className="text-lg font-semibold">Check your email</h2>
                 <p className="text-sm text-muted-foreground">
-                  We sent a confirmation link to your email address. Click the link to activate your account.
+                  We sent a confirmation link to your email address. Click the link to activate your
+                  account.
                 </p>
               </div>
 
-              <Link href="/login" className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground w-full">
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground w-full"
+              >
                 Go to Sign In
               </Link>
             </motion.div>
@@ -108,15 +112,9 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {state?.error && (
-                <p className="text-sm text-destructive">{state.error}</p>
-              )}
+              {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isPending}
-              >
+              <Button type="submit" className="w-full" disabled={isPending}>
                 {isPending ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
@@ -133,10 +131,7 @@ export default function RegisterPage() {
         {!state?.success && (
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link
-              href="/login"
-              className="font-medium text-primary hover:underline"
-            >
+            <Link href="/login" className="font-medium text-primary hover:underline">
               Sign in
             </Link>
           </p>

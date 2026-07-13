@@ -38,8 +38,8 @@ export default async function Home() {
           Turn your tasks into quests
         </h1>
         <p className="mb-8 max-w-md text-lg text-muted-foreground">
-          Questify transforms your to-do list into an RPG-like adventure. Level
-          up, earn rewards, and conquer your goals.
+          Questify transforms your to-do list into an RPG-like adventure. Level up, earn rewards,
+          and conquer your goals.
         </p>
         <div className="flex gap-4">
           <Link href="/register">

@@ -28,15 +28,14 @@ interface KanbanCardProps {
   canMoveRight?: boolean;
 }
 
-export function KanbanCard({ task, onMoveLeft, onMoveRight, canMoveLeft, canMoveRight }: KanbanCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
+export function KanbanCard({
+  task,
+  onMoveLeft,
+  onMoveRight,
+  canMoveLeft,
+  canMoveRight,
+}: KanbanCardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: { type: "task", task },
     disabled: typeof window !== "undefined" && window.innerWidth < 640, // disable D&D on mobile
@@ -61,10 +60,7 @@ export function KanbanCard({ task, onMoveLeft, onMoveRight, canMoveLeft, canMove
     <div
       ref={setNodeRef}
       style={style}
-      className={cn(
-        "group/card relative",
-        isDragging && "opacity-50",
-      )}
+      className={cn("group/card relative", isDragging && "opacity-50")}
     >
       {/* Desktop drag handle overlay — hidden on mobile */}
       <div
@@ -80,7 +76,11 @@ export function KanbanCard({ task, onMoveLeft, onMoveRight, canMoveLeft, canMove
             <button
               type="button"
               aria-label="Move to previous column"
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMoveLeft?.(); }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onMoveLeft?.();
+              }}
               className="flex size-6 items-center justify-center rounded-sm bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
             >
               <ArrowLeft className="size-3.5" />
@@ -90,7 +90,11 @@ export function KanbanCard({ task, onMoveLeft, onMoveRight, canMoveLeft, canMove
             <button
               type="button"
               aria-label="Move to next column"
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMoveRight?.(); }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onMoveRight?.();
+              }}
               className="flex size-6 items-center justify-center rounded-sm bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground active:scale-90 transition-transform"
             >
               <ArrowRight className="size-3.5" />
@@ -99,63 +103,53 @@ export function KanbanCard({ task, onMoveLeft, onMoveRight, canMoveLeft, canMove
         </div>
       )}
 
-      <Link
-        href={`/tasks/${task.id}`}
-        className={cn(
-          "block",
-          isDragging && "opacity-50",
-        )}
-      >
-      <Card
-        size="sm"
-        className={cn(
-          "cursor-grab transition-shadow active:cursor-grabbing",
-          "hover:shadow-md hover:ring-foreground/20",
-          isDragging && "shadow-lg ring-2 ring-primary/30",
-        )}
-      >
-        <CardContent className="flex flex-col gap-2">
-          {/* Drag handle + title */}
-          <div className="flex items-start gap-2">
-            <GripVertical className="mt-0.5 size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/card:opacity-100" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium leading-snug">
-                {task.title}
-              </p>
+      <Link href={`/tasks/${task.id}`} className={cn("block", isDragging && "opacity-50")}>
+        <Card
+          size="sm"
+          className={cn(
+            "cursor-grab transition-shadow active:cursor-grabbing",
+            "hover:shadow-md hover:ring-foreground/20",
+            isDragging && "shadow-lg ring-2 ring-primary/30",
+          )}
+        >
+          <CardContent className="flex flex-col gap-2">
+            {/* Drag handle + title */}
+            <div className="flex items-start gap-2">
+              <GripVertical className="mt-0.5 size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/card:opacity-100" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium leading-snug">{task.title}</p>
+              </div>
             </div>
-          </div>
 
-          {/* Meta row: priority + tags + due date */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Badge variant={priority.variant} className="text-[10px]">
-              {priority.label}
-            </Badge>
+            {/* Meta row: priority + tags + due date */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Badge variant={priority.variant} className="text-[10px]">
+                {priority.label}
+              </Badge>
 
-            {task.tags.slice(0, 3).map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex items-center rounded-md border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[10px] text-muted-foreground"
-              >
-                {tag}
-              </span>
-            ))}
+              {task.tags.slice(0, 3).map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center rounded-md border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                >
+                  {tag}
+                </span>
+              ))}
 
-            {task.tags.length > 3 && (
-              <span className="text-[10px] text-muted-foreground">
-                +{task.tags.length - 3}
-              </span>
-            )}
+              {task.tags.length > 3 && (
+                <span className="text-[10px] text-muted-foreground">+{task.tags.length - 3}</span>
+              )}
 
-            {dueDate && (
-              <span className="ml-auto inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-                <Calendar className="size-3" />
-                {dueDate}
-              </span>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
+              {dueDate && (
+                <span className="ml-auto inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <Calendar className="size-3" />
+                  {dueDate}
+                </span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
     </div>
   );
 }

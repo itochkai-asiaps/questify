@@ -14,9 +14,7 @@ const createIdeaSchema = z.object({
   estimated_minutes: z.number().int().nonnegative().optional(),
 });
 
-export async function createIdea(
-  formData: FormData,
-): Promise<{ data?: unknown; error?: string }> {
+export async function createIdea(formData: FormData): Promise<{ data?: unknown; error?: string }> {
   const { supabase, user } = await requireUser();
 
   if (!user) {
@@ -62,9 +60,7 @@ export async function createIdea(
   return { data };
 }
 
-export async function toggleIdeaType(
-  ideaId: string,
-): Promise<{ data?: unknown; error?: string }> {
+export async function toggleIdeaType(ideaId: string): Promise<{ data?: unknown; error?: string }> {
   const { supabase, user } = await requireUser();
 
   if (!user) {
@@ -100,20 +96,14 @@ export async function toggleIdeaType(
   return { data };
 }
 
-export async function deleteIdea(
-  ideaId: string,
-): Promise<{ success: boolean; error?: string }> {
+export async function deleteIdea(ideaId: string): Promise<{ success: boolean; error?: string }> {
   const { supabase, user } = await requireUser();
 
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
 
-  const { error } = await supabase
-    .from("ideas")
-    .delete()
-    .eq("id", ideaId)
-    .eq("user_id", user.id);
+  const { error } = await supabase.from("ideas").delete().eq("id", ideaId).eq("user_id", user.id);
 
   if (error) {
     return { success: false, error: error.message };
@@ -205,9 +195,7 @@ export async function createIdeaFromTelegram(
  * Simple approach: store mapping in user_metadata or a separate table.
  * For MVP, we use a hardcoded mapping. Phase 2: proper auth linking.
  */
-export async function getUserIdByTelegramChatId(
-  chatId: number,
-): Promise<string | null> {
+export async function getUserIdByTelegramChatId(chatId: number): Promise<string | null> {
   const supabase = await createClient();
 
   // For MVP: check profiles with telegram_chat_id in raw_user_meta_data
@@ -235,5 +223,6 @@ export async function linkTelegramChat(
     return { error: error.message };
   }
 
+  revalidatePath("/profile", "layout");
   return {};
 }

@@ -4,13 +4,7 @@ import { motion } from "framer-motion";
 import { ListChecks, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlanProgressBar } from "@/components/plans/plan-progress-bar";
 import type { Plan, PlanItem } from "@/types/plan";
 
@@ -64,11 +58,7 @@ export function PlanCard({ plan, onSelect, onDelete }: PlanCardProps) {
               <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
             </Button>
           </div>
-          {description && (
-            <CardDescription className="line-clamp-2">
-              {description}
-            </CardDescription>
-          )}
+          {description && <CardDescription className="line-clamp-2">{description}</CardDescription>}
         </CardHeader>
 
         <CardContent className="space-y-2.5 pb-4">
@@ -79,11 +69,7 @@ export function PlanCard({ plan, onSelect, onDelete }: PlanCardProps) {
             </span>
           </div>
 
-          <PlanProgressBar
-            completed={completed}
-            total={total}
-            color={color}
-          />
+          <PlanProgressBar completed={completed} total={total} color={color} />
         </CardContent>
       </Card>
     </motion.div>

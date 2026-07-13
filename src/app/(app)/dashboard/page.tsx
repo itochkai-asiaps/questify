@@ -3,12 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  animate,
-  motion,
-  useMotionValue,
-  useTransform,
-} from "framer-motion";
+import { animate, motion, useMotionValue, useTransform } from "framer-motion";
 import {
   Flame,
   Trophy,
@@ -25,10 +20,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
-import {
-  getAchievements,
-  getOrCreateUserStats,
-} from "@/lib/gamification/engine";
+import { getAchievements, getOrCreateUserStats } from "@/lib/gamification/engine";
 import { getTasks } from "@/lib/actions/tasks";
 import { getPlans } from "@/lib/actions/plans";
 import { cn } from "@/lib/utils";
@@ -48,7 +40,6 @@ import {
   xpToNextLevel,
   getStreakMultiplier,
 } from "@/lib/gamification/levels";
-
 
 // ---------------------------------------------------------------------------
 // Types
@@ -100,14 +91,20 @@ function AnimatedNumber({ value }: { value: number }) {
 // Priority Badge Config
 // ---------------------------------------------------------------------------
 
-const priorityConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const priorityConfig: Record<
+  string,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
   p1: { label: "P1", variant: "destructive" },
   p2: { label: "P2", variant: "default" },
   p3: { label: "P3", variant: "secondary" },
   p4: { label: "P4", variant: "outline" },
 };
 
-const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
+const statusConfig: Record<
+  string,
+  { label: string; variant: "default" | "secondary" | "outline" }
+> = {
   todo: { label: "Todo", variant: "outline" },
   in_progress: { label: "In Progress", variant: "default" },
   done: { label: "Done", variant: "secondary" },
@@ -213,9 +210,7 @@ function DashboardError({ onRetry }: { onRetry: () => void }) {
       <div className="rounded-full bg-destructive/10 p-4">
         <RefreshCw className="size-8 text-destructive" />
       </div>
-      <h2 className="text-xl font-semibold text-foreground">
-        Unable to load dashboard
-      </h2>
+      <h2 className="text-xl font-semibold text-foreground">Unable to load dashboard</h2>
       <p className="text-sm text-muted-foreground">
         Something went wrong while fetching your data. Please try again.
       </p>
@@ -236,8 +231,7 @@ function XpProgressBar({ stats }: { stats: UserStatsRow }) {
   const currentLevelXp = xpForLevel(level);
   const nextLevelXp = xpToNextLevel(level);
   const xpIntoLevel = stats.totalXp - currentLevelXp;
-  const progressPercent =
-    nextLevelXp > 0 ? Math.min((xpIntoLevel / nextLevelXp) * 100, 100) : 100;
+  const progressPercent = nextLevelXp > 0 ? Math.min((xpIntoLevel / nextLevelXp) * 100, 100) : 100;
   const maxLevel = level >= 50;
   const nextLevel = level + 1;
 
@@ -249,23 +243,15 @@ function XpProgressBar({ stats }: { stats: UserStatsRow }) {
           <div className="relative flex size-12 shrink-0 items-center justify-center">
             <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 opacity-20" />
             <div className="flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-orange-500/20">
-              <span className="text-sm font-bold text-white tabular-nums">
-                {level}
-              </span>
+              <span className="text-sm font-bold text-white tabular-nums">{level}</span>
             </div>
           </div>
 
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex items-baseline justify-between">
               <div className="flex items-baseline gap-2">
-                <span className="text-base font-semibold text-foreground">
-                  Level {level}
-                </span>
-                {!maxLevel && (
-                  <span className="text-xs text-muted-foreground">
-                    → {nextLevel}
-                  </span>
-                )}
+                <span className="text-base font-semibold text-foreground">Level {level}</span>
+                {!maxLevel && <span className="text-xs text-muted-foreground">→ {nextLevel}</span>}
               </div>
               <span className="text-xs tabular-nums text-foreground/70">
                 {maxLevel ? (
@@ -310,8 +296,7 @@ function XpProgressBar({ stats }: { stats: UserStatsRow }) {
 
 function StreakCounter({ streak }: { streak: number }) {
   const multiplier = getStreakMultiplier(streak);
-  const multiplierLabel =
-    multiplier === 2.0 ? "x2.0" : multiplier === 1.5 ? "x1.5" : "x1.0";
+  const multiplierLabel = multiplier === 2.0 ? "x2.0" : multiplier === 1.5 ? "x1.5" : "x1.0";
 
   return (
     <Card>
@@ -327,9 +312,7 @@ function StreakCounter({ streak }: { streak: number }) {
             <span className="text-xs text-muted-foreground">day streak</span>
           </div>
           <div className="flex items-center gap-1">
-            <Badge variant={multiplier > 1 ? "default" : "secondary"}>
-              {multiplierLabel} XP
-            </Badge>
+            <Badge variant={multiplier > 1 ? "default" : "secondary"}>{multiplierLabel} XP</Badge>
           </div>
         </div>
       </CardContent>
@@ -462,11 +445,7 @@ function TodaysTasks({ tasks }: { tasks: TaskItem[] }) {
 // Latest Achievements
 // ---------------------------------------------------------------------------
 
-function LatestAchievements({
-  achievements,
-}: {
-  achievements: AchievementWithStatus[];
-}) {
+function LatestAchievements({ achievements }: { achievements: AchievementWithStatus[] }) {
   if (achievements.length === 0) {
     return (
       <Card>
@@ -554,16 +533,19 @@ export default function DashboardPage() {
     setError(null);
 
     try {
-      const [stats, tasksResult, plansResult, achievements] =
-        await Promise.all([
-          getOrCreateUserStats(user.id),
-          getTasks(),
-          getPlans(),
-          getAchievements(user.id),
-        ]);
+      const [stats, tasksResult, plansResult, achievements] = await Promise.all([
+        getOrCreateUserStats(user.id),
+        getTasks(),
+        getPlans(),
+        getAchievements(user.id),
+      ]);
 
       const tasks = (tasksResult.data ?? []) as TaskItem[];
-      const plansData = (plansResult.data ?? []) as Array<{ id: string; title: string; items?: Array<{ completed: boolean }> }>;
+      const plansData = (plansResult.data ?? []) as Array<{
+        id: string;
+        title: string;
+        items?: Array<{ completed: boolean }>;
+      }>;
 
       // Compute plan progress client-side
       const plans: PlanItem[] = plansData.map((p) => {
@@ -629,9 +611,7 @@ export default function DashboardPage() {
 
   // Compute plan stats
   const plansCompleted = plans.filter((p) => p.progress >= 100).length;
-  const plansInProgress = plans.filter(
-    (p) => p.progress > 0 && p.progress < 100,
-  ).length;
+  const plansInProgress = plans.filter((p) => p.progress > 0 && p.progress < 100).length;
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-6 py-6">
