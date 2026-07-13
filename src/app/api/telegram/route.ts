@@ -10,8 +10,7 @@ const TG_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 let _admin: SupabaseClient | null = null;
 function getAdmin(): SupabaseClient {
   if (!_admin) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    _admin = createClient<any>(
+    _admin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY || "missing",
       { auth: { autoRefreshToken: false, persistSession: false } },

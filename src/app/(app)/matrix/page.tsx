@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { LayoutGrid, Sparkles, Eye, EyeOff } from "lucide-react";
+import { LayoutGrid, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ShowCompletedToggle } from "@/components/ui/show-completed-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getTasks, updateTask } from "@/lib/actions/tasks";
 import { Task, TaskPriority } from "@/types/task";
@@ -175,15 +176,7 @@ export default function MatrixPage() {
             <Sparkles className="size-3.5" />
             Auto-distribute
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowCompleted((v) => !v)}
-            className="gap-1.5"
-          >
-            {showCompleted ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-            {showCompleted ? "Hide completed" : "Show completed"}
-          </Button>
+          <ShowCompletedToggle show={showCompleted} onToggle={() => setShowCompleted((v) => !v)} />
         </div>
         {showDistributeInfo && (
           <p className="text-sm text-muted-foreground rounded-lg border border-border bg-muted/30 p-3">

@@ -383,7 +383,7 @@ export default function TasksPage() {
           setTasks((prev) =>
             prev.map((t) =>
               t.id === firstBacklog.id
-                ? { ...t, status: restoredStatus, previous_status: null as unknown as undefined }
+                ? { ...t, status: restoredStatus, previous_status: undefined }
                 : t,
             ),
           );

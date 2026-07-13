@@ -13,11 +13,12 @@ import {
   type CollisionDetection,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import { ClipboardList, Plus, Check, X, Eye, EyeOff, Inbox } from "lucide-react";
+import { ClipboardList, Plus, Check, X, Inbox } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ShowCompletedToggle } from "@/components/ui/show-completed-toggle";
 import { getTasks, createTask, updateTask } from "@/lib/actions/tasks";
 import {
   getKanbanColumns,
@@ -484,15 +485,7 @@ export default function KanbanPage() {
               </span>
             )}
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowCompleted((v) => !v)}
-            className="gap-1.5"
-          >
-            {showCompleted ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-            {showCompleted ? "Hide completed" : "Show completed"}
-          </Button>
+          <ShowCompletedToggle show={showCompleted} onToggle={() => setShowCompleted((v) => !v)} />
         </div>
       </div>
 

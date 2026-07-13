@@ -1,3 +1,5 @@
+"use server";
+
 import { z } from "zod/v4";
 import { createClient } from "@/lib/supabase/server";
 import { TaskPriority } from "@/types/task";
