@@ -21,7 +21,88 @@ DeepSeek вводит **двойной тариф** в «горячее врем
 - ✅ **13:00–9:00 МСК — обычный тариф.** Агенты, explore- swarm, делегирование.
 - 🎯 **Идеальное окно для тяжёлых сессий**: 13:00–4:00 МСК (вечер/ночь).
 
-## Последние изменения (сессия 2026-07-13)
+## Последние изменения (сессия 2026-07-13, часть 2 — системный аудит + рефакторинг)
+
+### Системный аудит
+
+- ✅ **LSP**: typescript активен (eslint, yaml-ls установлены)
+- ✅ **Инструменты**: Lefthook ✅, TypeScript ✅, Gitleaks ✅, ESLint ✅, Prettier ✅
+- ✅ **Кодовый аудит**: oracle + 4 explore-агента. 3 CRITICAL, 7 HIGH, 13 MEDIUM, 5 LOW.
+
+### CRITICAL fixes (волна 1)
+
+- ✅ **updateProfile auth hole**: `createClient()` → `requireUser()` + ownership check `user.id !== userId`
+- ✅ **`.parse()` → `.safeParse()`**: 9 вызовов в kanban-columns, focus, engine, seed — больше не крашат 500
+- ✅ **revalidatePath**: `/kanban` для updateTask/bulkUpdateTaskStatuses, `/profile` для linkTelegramChat
+- ✅ **ESLint**: `coverage/` в globalIgnores
+- ✅ **Prettier**: 28 файлов отформатированы
+- ✅ **Dead code**: `wasCompletionAwarded` удалён
+
+### HIGH рефакторинг (волна 2)
+
+- ✅ **Zod unification**: `zod` → `zod/v4` в 4 файлах (types/task, plan, wellbeing, actions/plans)
+- ✅ **Shared configs**: `config/task-display.ts` (PRIORITY_CONFIG + STATUS_CONFIG), `components/ui/animated-number.tsx`
+- ✅ **withAuth() wrapper**: `src/lib/auth/withAuth.ts` — убрано 35 дубликатов `requireUser() + if (!user)`
+- ✅ **Return shapes стандартизированы**: auth, kanban-columns, delete-функции
+- ✅ **Silent catches**: `focus-widget` (error state), `mood-chart` (empty state вместо null)
+
+### LOW cleanup
+
+- ✅ `as unknown as undefined` → `undefined` (tasks/page.tsx)
+- ✅ `createClient<any>` → `createClient` (telegram/route.ts)
+- ✅ `ShowCompletedToggle` — вынесен в общий компонент (kanban + matrix)
+
+### Багфикс деплоя
+
+- ✅ **`"use server"` на `engine.ts`** — без него `server.ts` тёк в клиентский бандл, ломая билд
+- ❌ `middleware.ts` удалён — `proxy.ts` уже делает auth guard
+
+### Коммиты сессии
+
+```
+32b1e8f fix: restore use server on engine.ts + clean up LOW issues
+9a7e0f8 refactor: withAuth() wrapper + standardized return shapes
+46df758 feat: middleware + shared configs + Zod unification
+ed509a7 fix: CRITICAL auth hole + .parse()→.safeParse() + Prettier
+```
+
+### Метрики
+
+| Метрика           | Значение                                                             |
+| ----------------- | -------------------------------------------------------------------- |
+| Коммитов          | 4                                                                    |
+| fix:feat:refactor | 2:1:1                                                                |
+| Гейты             | vitest 285/285 ✅, tsc ✅, eslint 0/0 ✅, prettier ✅, next build ✅ |
+| Файлов изменено   | ~80                                                                  |
+
+### Осталось на будущее (из аудита)
+
+**MEDIUM:**
+
+- ⬜ N+1 → batch: `bulkUpdateTaskStatuses` (цикл → RPC), `seedRoadmap` (цикл → batch insert)
+- ⬜ Non-transactional `conversions.ts` — обернуть INSERT+DELETE в RPC
+- ⬜ Achievement XP divergence — сделать БД единым источником
+- ⬜ Extract shared utils: `dateUtils.ts`, `positionUtils.ts`
+- ⬜ Rate limiting для Telegram webhook
+- ⬜ Knip unused exports
+
+**LOW:**
+
+- ⬜ `revalidatePath("layout")` → `"page"` где не нужен layout (10+ файлов)
+- ⬜ Split oversized files: `tasks/page.tsx` (846), `profile/page.tsx` (667), `dashboard/page.tsx` (623)
+- ⬜ Extract `DeleteTaskDialog` (дублируется в task-card + tasks page)
+- ⬜ Dark mode SVG: `wellbeing-heart.tsx` хардкод hex-цветов
+- ⬜ Миграция 00015 на стейджинг (`supabase db push`)
+
+### Рекомендация на следующую сессию
+
+1. 🔴 **Дизайн-аудит** — `design-consultant` + `visual-qa`
+2. 🔴 **Дизайн-система** — унифицировать UI-компоненты
+3. 🟡 N+1 batch operations + non-transactional conversions
+4. 🟡 Knip + codegraph init
+5. ⬜ K2 — Кастомные теги
+
+## Последние изменения (сессия 2026-07-13, часть 1)
 
 ### Инструменты разработки — аудит и установка (#1–9)
 
