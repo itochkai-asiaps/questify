@@ -83,25 +83,7 @@ const STATUS_FILTER_OPTIONS = [
   { value: TaskStatus.Missed, label: "Missed" },
 ] as const;
 
-const PRIORITY_CONFIG: Record<
-  string,
-  { label: string; variant: "destructive" | "secondary" | "outline" | "ghost" }
-> = {
-  p1: { label: "P1", variant: "destructive" },
-  p2: { label: "P2", variant: "secondary" },
-  p3: { label: "P3", variant: "outline" },
-  p4: { label: "P4", variant: "ghost" },
-};
-
-const STATUS_CONFIG: Record<
-  string,
-  { label: string; variant: "default" | "secondary" | "outline" }
-> = {
-  backlog: { label: "Backlog", variant: "outline" },
-  todo: { label: "Todo", variant: "secondary" },
-  in_progress: { label: "In Progress", variant: "default" },
-  done: { label: "Done", variant: "outline" },
-};
+import { PRIORITY_CONFIG, STATUS_CONFIG } from "@/config/task-display";
 
 type LoadingState = "idle" | "loading" | "loaded" | "error";
 

@@ -29,10 +29,22 @@ export function FocusWidget({ tasks }: FocusWidgetProps) {
   const [loading, setLoading] = useState(true);
   const [setting, setSetting] = useState(false);
 
+  const [error, setError] = useState<string | null>(null);
+
   const fetchFocus = useCallback(async () => {
-    const result = await getFocusTask();
-    if (result.data) setFocusTaskState(result.data);
-    setLoading(false);
+    try {
+      const result = await getFocusTask();
+      if (result.error) {
+        setError(result.error);
+      } else if (result.data) {
+        setFocusTaskState(result.data);
+      }
+    } catch (e) {
+      console.error("FocusWidget: failed to fetch focus task", e);
+      setError("Failed to load focus task");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -76,6 +88,22 @@ export function FocusWidget({ tasks }: FocusWidgetProps) {
     .slice(0, 5);
 
   if (loading) {
+    if (error) {
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+              <Target className="size-4 text-primary" />
+              Focus
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">{error}</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
     return (
       <Card>
         <CardHeader>

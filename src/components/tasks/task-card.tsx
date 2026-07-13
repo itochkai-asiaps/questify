@@ -20,26 +20,7 @@ import {
 import { deleteTask } from "@/lib/actions/tasks";
 import { cn } from "@/lib/utils";
 import type { Task } from "@/types/task";
-
-const PRIORITY_CONFIG: Record<
-  string,
-  { label: string; variant: "destructive" | "secondary" | "outline" | "ghost" }
-> = {
-  p1: { label: "P1", variant: "destructive" },
-  p2: { label: "P2", variant: "secondary" },
-  p3: { label: "P3", variant: "outline" },
-  p4: { label: "P4", variant: "ghost" },
-};
-
-const STATUS_CONFIG: Record<
-  string,
-  { label: string; variant: "default" | "secondary" | "outline" }
-> = {
-  todo: { label: "Todo", variant: "secondary" },
-  in_progress: { label: "In Progress", variant: "default" },
-  done: { label: "Done", variant: "outline" },
-  missed: { label: "Missed", variant: "outline" },
-};
+import { PRIORITY_CONFIG, STATUS_CONFIG } from "@/config/task-display";
 
 function isOverdue(dueDate: string | null | undefined, status: string): boolean {
   if (!dueDate || status === "done" || status === "missed") return false;

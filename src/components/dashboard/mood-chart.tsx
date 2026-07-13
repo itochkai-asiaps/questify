@@ -41,7 +41,20 @@ export function MoodChart() {
   }
 
   if (history.length === 0) {
-    return null; // Don't show chart if no data yet
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            Mood · Last 7 Days
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="py-4 text-center text-sm text-muted-foreground">
+            No mood data yet. Log your first mood check-in!
+          </p>
+        </CardContent>
+      </Card>
+    );
   }
 
   // Build 7-day array with daily averages (multiple entries → average per day)

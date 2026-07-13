@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { animate, motion, useMotionValue, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Star,
   Trophy,
@@ -61,24 +61,7 @@ type PlanItem = {
   progress: number;
 };
 
-// ---------------------------------------------------------------------------
-// Animated Number
-// ---------------------------------------------------------------------------
-
-function AnimatedNumber({ value }: { value: number }) {
-  const motionValue = useMotionValue(0);
-  const rounded = useTransform(motionValue, (v) => Math.round(v));
-
-  useEffect(() => {
-    const controls = animate(motionValue, value, {
-      duration: 1.2,
-      ease: "easeOut",
-    });
-    return controls.stop;
-  }, [value, motionValue]);
-
-  return <motion.span>{rounded}</motion.span>;
-}
+import { AnimatedNumber } from "@/components/ui/animated-number";
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------

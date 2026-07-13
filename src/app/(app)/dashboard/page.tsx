@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { animate, motion, useMotionValue, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Flame,
   Trophy,
@@ -68,47 +68,8 @@ type DashboardData = {
   achievements: AchievementWithStatus[];
 };
 
-// ---------------------------------------------------------------------------
-// Animated Number
-// ---------------------------------------------------------------------------
-
-function AnimatedNumber({ value }: { value: number }) {
-  const motionValue = useMotionValue(0);
-  const rounded = useTransform(motionValue, (v) => Math.round(v));
-
-  useEffect(() => {
-    const controls = animate(motionValue, value, {
-      duration: 1.2,
-      ease: "easeOut",
-    });
-    return controls.stop;
-  }, [value, motionValue]);
-
-  return <motion.span>{rounded}</motion.span>;
-}
-
-// ---------------------------------------------------------------------------
-// Priority Badge Config
-// ---------------------------------------------------------------------------
-
-const priorityConfig: Record<
-  string,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
-> = {
-  p1: { label: "P1", variant: "destructive" },
-  p2: { label: "P2", variant: "default" },
-  p3: { label: "P3", variant: "secondary" },
-  p4: { label: "P4", variant: "outline" },
-};
-
-const statusConfig: Record<
-  string,
-  { label: string; variant: "default" | "secondary" | "outline" }
-> = {
-  todo: { label: "Todo", variant: "outline" },
-  in_progress: { label: "In Progress", variant: "default" },
-  done: { label: "Done", variant: "secondary" },
-};
+import { AnimatedNumber } from "@/components/ui/animated-number";
+import { PRIORITY_CONFIG, STATUS_CONFIG } from "@/config/task-display";
 
 // ---------------------------------------------------------------------------
 // Loading Skeletons
@@ -401,8 +362,8 @@ function TodaysTasks({ tasks }: { tasks: TaskItem[] }) {
       </CardHeader>
       <CardContent className="space-y-2">
         {displayTasks.map((task, i) => {
-          const priority = priorityConfig[task.priority] ?? priorityConfig.p3;
-          const status = statusConfig[task.status] ?? statusConfig.todo;
+          const priority = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG.p3;
+          const status = STATUS_CONFIG[task.status] ?? STATUS_CONFIG.todo;
 
           return (
             <motion.div

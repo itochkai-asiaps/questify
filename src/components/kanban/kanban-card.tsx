@@ -9,16 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Task, TaskPriority } from "@/types/task";
-
-const PRIORITY_CONFIG: Record<
-  TaskPriority,
-  { label: string; variant: "destructive" | "default" | "secondary" | "outline" }
-> = {
-  [TaskPriority.P1]: { label: "P1", variant: "destructive" },
-  [TaskPriority.P2]: { label: "P2", variant: "default" },
-  [TaskPriority.P3]: { label: "P3", variant: "secondary" },
-  [TaskPriority.P4]: { label: "P4", variant: "outline" },
-};
+import { PRIORITY_CONFIG } from "@/config/task-display";
 
 interface KanbanCardProps {
   task: Task;
