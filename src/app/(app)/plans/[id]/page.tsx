@@ -55,6 +55,7 @@ export default function PlanDetailPage() {
 
   // Add item form
   const [newItemTitle, setNewItemTitle] = useState("");
+  const [newItemEstimated, setNewItemEstimated] = useState("");
   const [isAddingItem, setIsAddingItem] = useState(false);
 
   // Toggling items (track loading item IDs)
@@ -141,17 +142,21 @@ export default function PlanDetailPage() {
       setIsAddingItem(true);
       const formData = new FormData();
       formData.set("title", newItemTitle.trim());
+      if (newItemEstimated) {
+        formData.set("estimated_minutes", newItemEstimated);
+      }
 
       const result = await addPlanItem(planId, formData);
       if (result.error) {
         setError(result.error);
       } else {
         setNewItemTitle("");
+        setNewItemEstimated("");
         loadPlan();
       }
       setIsAddingItem(false);
     },
-    [newItemTitle, planId, loadPlan],
+    [newItemTitle, newItemEstimated, planId, loadPlan],
   );
 
   // Save inline title edit
@@ -390,6 +395,17 @@ export default function PlanDetailPage() {
           value={newItemTitle}
           onChange={(e) => setNewItemTitle(e.target.value)}
           disabled={isAddingItem}
+          className="flex-1"
+        />
+        <Input
+          type="number"
+          min="1"
+          placeholder="min"
+          value={newItemEstimated}
+          onChange={(e) => setNewItemEstimated(e.target.value)}
+          disabled={isAddingItem}
+          className="w-16 text-center"
+          aria-label="Estimated minutes"
         />
         <Button
           type="submit"

@@ -13,6 +13,7 @@ import { XP_REWARDS } from "@/lib/gamification/levels";
 
 const addPlanItemSchema = z.object({
   title: z.string().min(1, "Title is required").max(500),
+  estimated_minutes: z.number().int().nonnegative().optional(),
 });
 
 type PlanProgress = {
@@ -84,6 +85,7 @@ export async function createPlan(
       plan_id: plan.id,
       title: item.title,
       position: index,
+      estimated_minutes: item.estimated_minutes ?? null,
     }));
 
     const { error: itemsError } = await supabase
@@ -236,6 +238,9 @@ export async function addPlanItem(
 
   const rawData = {
     title: formData.get("title") as string,
+    estimated_minutes: formData.get("estimated_minutes")
+      ? Number(formData.get("estimated_minutes"))
+      : undefined,
   };
 
   const parsed = addPlanItemSchema.safeParse(rawData);
@@ -244,7 +249,7 @@ export async function addPlanItem(
     return { error: firstError };
   }
 
-  const { title } = parsed.data;
+  const { title, estimated_minutes } = parsed.data;
 
   // Get max position for this plan
   const { data: maxPosResult } = await supabase
@@ -264,6 +269,7 @@ export async function addPlanItem(
       plan_id: planId,
       title,
       position,
+      estimated_minutes: estimated_minutes ?? null,
     })
     .select()
     .single();
@@ -290,7 +296,7 @@ export async function togglePlanItem(
   // Get current completed state
   const { data: current, error: fetchError } = await supabase
     .from("plan_items")
-    .select("completed, plan_id")
+    .select("completed, plan_id, estimated_minutes, actual_minutes")
     .eq("id", itemId)
     .single();
 
@@ -311,6 +317,19 @@ export async function togglePlanItem(
 
   // Award XP when item transitions from incomplete → complete
   if (!current.completed) {
+    // K1: Auto-capture actual_minutes on completion
+    const finalActual =
+      current?.actual_minutes ??
+      current?.estimated_minutes ??
+      null;
+
+    if (finalActual !== null) {
+      await supabase
+        .from("plan_items")
+        .update({ actual_minutes: finalActual })
+        .eq("id", itemId);
+    }
+
     try {
       await awardXp(user.id, XP_REWARDS.planStep);
 

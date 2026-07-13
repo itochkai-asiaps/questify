@@ -28,6 +28,9 @@ export async function createTask(
     priority: (formData.get("priority") as string) ?? undefined,
     due_date: (formData.get("due_date") as string) || undefined,
     tags: JSON.parse((formData.get("tags") as string) || "[]"),
+    estimated_minutes: formData.get("estimated_minutes")
+      ? Number(formData.get("estimated_minutes"))
+      : undefined,
   };
 
   const parsed = CreateTaskInputSchema.safeParse(rawData);
@@ -36,7 +39,7 @@ export async function createTask(
     return { error: firstError };
   }
 
-  const { title, description, priority, due_date, tags } = parsed.data;
+  const { title, description, priority, due_date, tags, estimated_minutes } = parsed.data;
   const xp_reward = XP_REWARDS[priority] ?? 15;
   const status = (formData.get("status") as string) === "backlog" ? "backlog" : "todo";
   const kanbanColumnId = (formData.get("kanban_column_id") as string) || null;
@@ -50,6 +53,7 @@ export async function createTask(
     xp_reward,
     user_id: user.id,
     status,
+    estimated_minutes: estimated_minutes ?? null,
   };
   if (kanbanColumnId) insertData.kanban_column_id = kanbanColumnId;
 
@@ -78,10 +82,10 @@ export async function updateTask(
     return { error: "Not authenticated" };
   }
 
-  // Fetch current task to detect status transition to "done"
+  // Fetch current task to detect status transition to "done" or "missed"
   const { data: currentTask } = await supabase
     .from("tasks")
-    .select("status, priority")
+    .select("status, priority, estimated_minutes, actual_minutes")
     .eq("id", taskId)
     .eq("user_id", user.id)
     .single();
@@ -105,6 +109,10 @@ export async function updateTask(
   if (position !== null) rawData.position = Number(position);
   const sort_order = formData.get("sort_order");
   if (sort_order !== null) rawData.sort_order = Number(sort_order);
+  const estimated_minutes = formData.get("estimated_minutes");
+  if (estimated_minutes !== null) rawData.estimated_minutes = estimated_minutes === "" ? null : Number(estimated_minutes);
+  const actual_minutes = formData.get("actual_minutes");
+  if (actual_minutes !== null) rawData.actual_minutes = actual_minutes === "" ? null : Number(actual_minutes);
 
   const parsed = UpdateTaskInputSchema.safeParse(rawData);
   if (!parsed.success) {
@@ -147,11 +155,14 @@ export async function updateTask(
     return { error: error.message };
   }
 
-  // Award XP if task was just marked as done
+  // Detect completion: transition to done OR missed
   const wasJustCompleted =
-    currentTask?.status !== "done" && parsed.data.status === TaskStatus.Done;
+    currentTask?.status !== "done" && currentTask?.status !== "missed" &&
+    (parsed.data.status === TaskStatus.Done || parsed.data.status === TaskStatus.Missed);
+
+  // Award XP only for actual completion (done), not for missed
   let wasCompletionAwarded = false;
-  if (wasJustCompleted && !wasCompletionAwarded) {
+  if (wasJustCompleted && parsed.data.status === TaskStatus.Done && !wasCompletionAwarded) {
     wasCompletionAwarded = true;
     const taskPriority = (currentTask?.priority ?? "p3") as TaskPriority;
     try {
@@ -160,6 +171,28 @@ export async function updateTask(
     } catch (e) {
       console.error("completeTask failed:", e);
       // Gamification failure should not block the task update
+    }
+  }
+
+  // K1: Auto-capture actual_minutes on completion (done or missed)
+  // If actual_minutes not explicitly set, fall back to estimated_minutes
+  if (wasJustCompleted) {
+    const finalActual =
+      updateData.actual_minutes ??
+      currentTask?.actual_minutes ??
+      currentTask?.estimated_minutes ??
+      null;
+
+    if (finalActual !== null) {
+      const { error: actualError } = await supabase
+        .from("tasks")
+        .update({ actual_minutes: finalActual })
+        .eq("id", taskId)
+        .eq("user_id", user.id);
+
+      if (actualError) {
+        console.error("Failed to set actual_minutes:", actualError.message);
+      }
     }
   }
 

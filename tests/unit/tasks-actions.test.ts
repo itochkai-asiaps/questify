@@ -207,6 +207,33 @@ describe("createTask", () => {
     const result = await createTask(fd);
     expect(result.error).toBe("DB error");
   });
+
+  // --- K1: Time Estimation ---
+
+  it("creates task with estimated_minutes (S1)", async () => {
+    const createdTask = { id: "t1", title: "Task", estimated_minutes: 30 };
+    mockSupabase.single.mockResolvedValue({ data: createdTask, error: null });
+
+    const fd = mockFormData({
+      title: "Task",
+      priority: "p3",
+      estimated_minutes: "30",
+    });
+
+    await createTask(fd);
+    const insertCall = mockSupabase.insert.mock.calls[0][0] as Record<string, unknown>;
+    expect(insertCall.estimated_minutes).toBe(30);
+  });
+
+  it("creates task without estimated_minutes — stores null (S4)", async () => {
+    const createdTask = { id: "t1", title: "Task" };
+    mockSupabase.single.mockResolvedValue({ data: createdTask, error: null });
+
+    const fd = mockFormData({ title: "Task", priority: "p3" });
+    await createTask(fd);
+    const insertCall = mockSupabase.insert.mock.calls[0][0] as Record<string, unknown>;
+    expect(insertCall.estimated_minutes).toBeNull();
+  });
 });
 
 // ===========================================================================
@@ -381,6 +408,74 @@ describe("updateTask", () => {
     const fd = mockFormData({ status: "todo" });
     const result = await updateTask(taskId, fd);
     expect(result.error).toBe("Not authenticated");
+  });
+
+  // --- K1: Time Estimation — completion auto-capture ---
+
+  it("auto-captures actual_minutes on completion → done (S2)", async () => {
+    mockSupabase.single
+      .mockResolvedValueOnce({
+        data: { status: "todo", priority: "p3", estimated_minutes: 45, actual_minutes: null },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: { id: taskId, status: "done" },
+        error: null,
+      });
+
+    const fd = mockFormData({ status: "done" });
+    const result = await updateTask(taskId, fd);
+
+    expect(result.error).toBeUndefined();
+    expect(mockCompleteTask).toHaveBeenCalledWith("test-user-id", "p3");
+    expect(mockCheckAndAward).toHaveBeenCalledWith("test-user-id");
+
+    const updateCalls = mockSupabase.update.mock.calls;
+    expect(updateCalls.length).toBeGreaterThanOrEqual(2);
+    const actualUpdateCall = updateCalls[1][0] as Record<string, unknown>;
+    expect(actualUpdateCall.actual_minutes).toBe(45);
+  });
+
+  it("auto-captures actual_minutes on completion → missed (S3) — no XP", async () => {
+    mockSupabase.single
+      .mockResolvedValueOnce({
+        data: { status: "todo", priority: "p3", estimated_minutes: 60, actual_minutes: null },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: { id: taskId, status: "missed" },
+        error: null,
+      });
+
+    const fd = mockFormData({ status: "missed" });
+    const result = await updateTask(taskId, fd);
+
+    expect(result.error).toBeUndefined();
+    expect(mockCompleteTask).not.toHaveBeenCalled();
+    expect(mockCheckAndAward).not.toHaveBeenCalled();
+
+    const updateCalls = mockSupabase.update.mock.calls;
+    expect(updateCalls.length).toBeGreaterThanOrEqual(2);
+    const actualUpdateCall = updateCalls[1][0] as Record<string, unknown>;
+    expect(actualUpdateCall.actual_minutes).toBe(60);
+  });
+
+  it("does not auto-capture actual_minutes when already completed", async () => {
+    mockSupabase.single
+      .mockResolvedValueOnce({
+        data: { status: "done", priority: "p3", estimated_minutes: 30, actual_minutes: 30 },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: { id: taskId, status: "done" },
+        error: null,
+      });
+
+    const fd = mockFormData({ status: "done" });
+    await updateTask(taskId, fd);
+
+    // Only one update call (no actual_minutes auto-update on already-done)
+    expect(mockSupabase.update.mock.calls.length).toBe(1);
   });
 });
 

@@ -5,6 +5,7 @@ export enum TaskStatus {
   Todo = "todo",
   InProgress = "in_progress",
   Done = "done",
+  Missed = "missed",
 }
 
 export enum TaskPriority {
@@ -28,6 +29,8 @@ export const TaskSchema = z.object({
   position: z.number().int().nonnegative().default(0),
   sort_order: z.number().int().nonnegative().default(0),
   xp_reward: z.number().int().nonnegative().default(0),
+  estimated_minutes: z.number().int().nonnegative().nullable().optional(),
+  actual_minutes: z.number().int().nonnegative().nullable().optional(),
   created_at: z.string().datetime({ offset: true }),
   updated_at: z.string().datetime({ offset: true }),
   deleted_at: z.string().datetime({ offset: true }).nullable().optional(),
@@ -39,6 +42,7 @@ export const CreateTaskInputSchema = z.object({
   priority: z.nativeEnum(TaskPriority).default(TaskPriority.P3),
   due_date: z.string().datetime({ offset: true }).optional(),
   tags: z.array(z.string()).default([]),
+  estimated_minutes: z.number().int().nonnegative().optional(),
 });
 
 export const UpdateTaskInputSchema = z.object({
@@ -52,6 +56,8 @@ export const UpdateTaskInputSchema = z.object({
   kanban_column_id: z.string().uuid().nullable().optional(),
   position: z.number().int().nonnegative().optional(),
   sort_order: z.number().int().nonnegative().optional(),
+  estimated_minutes: z.number().int().nonnegative().nullable().optional(),
+  actual_minutes: z.number().int().nonnegative().nullable().optional(),
 });
 
 export type Task = z.infer<typeof TaskSchema>;

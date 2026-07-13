@@ -29,6 +29,7 @@ const STATUS_OPTIONS = [
   { value: TaskStatus.Todo, label: "Todo" },
   { value: TaskStatus.InProgress, label: "In Progress" },
   { value: TaskStatus.Done, label: "Done" },
+  { value: TaskStatus.Missed, label: "Missed" },
 ] as const;
 
 interface TaskFormState {
@@ -66,6 +67,9 @@ export default function TaskForm({ task, onSuccess }: TaskFormProps) {
   );
   const [tagsStr, setTagsStr] = useState<string>(
     task?.tags?.join(", ") ?? "",
+  );
+  const [estimatedMinutes, setEstimatedMinutes] = useState<string>(
+    task?.estimated_minutes?.toString() ?? "",
   );
 
   const actionFn = useCallback(
@@ -194,6 +198,20 @@ export default function TaskForm({ task, onSuccess }: TaskFormProps) {
           type="date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
+        />
+      </div>
+
+      {/* Estimated Time */}
+      <div className="space-y-2">
+        <Label htmlFor="estId">Estimated Time (min)</Label>
+        <Input
+          id="estId"
+          name="estimated_minutes"
+          type="number"
+          min="1"
+          placeholder="e.g. 30"
+          value={estimatedMinutes}
+          onChange={(e) => setEstimatedMinutes(e.target.value)}
         />
       </div>
 

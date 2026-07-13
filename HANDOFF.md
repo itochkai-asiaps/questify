@@ -5,6 +5,57 @@
 - **Staging**: коммит → немедленный push. Без вопроса. Без подтверждения. Всегда.
 - **Master (прод)**: коммит и push — **только с явного подтверждения пользователя**. Спросить перед любым действием с master.
 
+## 💸 DeepSeek API — пиковые часы (с 15 июля 2026)
+
+DeepSeek вводит **двойной тариф** в «горячее время» Китая. Все OMO-агенты работают через DeepSeek → агенты в пике стоят ×2.
+
+| Пик | UTC | Москва (UTC+3) |
+|-----|-----|-----------------|
+| Утро (Китай) | 1:00–4:00 AM | 4:00–7:00 |
+| День (Китай) | 6:00–10:00 AM | 9:00–13:00 |
+
+**Рекомендация на сессию:**
+- ⚠️ **9:00–13:00 МСК — двойной тариф.** В это время: ручные правки, рефакторинг, тесты, UI. Избегать тяжёлых агентов (oracle, plan, hyperplan).
+- ✅ **13:00–9:00 МСК — обычный тариф.** Агенты, explore- swarm, делегирование.
+- 🎯 **Идеальное окно для тяжёлых сессий**: 13:00–4:00 МСК (вечер/ночь).
+
+## Последние изменения (сессия 2026-07-13)
+
+### K1 — Оценка времени + missed статус
+- ✅ **Миграция 00015**: `estimated_minutes` + `actual_minutes` на tasks, plan_items, plans, ideas + CHECK `tasks.status` расширен до `'missed'`
+- ✅ **Enum**: `TaskStatus.Missed = "missed"`
+- ✅ **Zod**: поля времени во всех схемах (TaskSchema, CreateTaskInputSchema, UpdateTaskInputSchema, PlanItemSchema, PlanSchema, createIdeaSchema, addPlanItemSchema)
+- ✅ **Actions**: `createTask` — estimated; `updateTask` — auto-capture actual_minutes при done|missed (fallback = estimated); XP только для done
+- ✅ **Actions**: `createPlan`/`addPlanItem` — estimated; `togglePlanItem` — auto-capture actual
+- ✅ **Actions**: `createIdea` — estimated
+- ✅ **UI**: `task-form.tsx` — estimated_minutes input + missed в статусах
+- ✅ **UI**: `plan-form.tsx` + `plans/[id]/page.tsx` — estimated_minutes на шагах
+- ✅ **Тесты**: 285/285 ✅ (S1-S6: create с estimated, complete→done, complete→missed, auto-capture)
+
+### Процесс
+- ✅ **HANDOFF**: DeepSeek peak hours (двойной тариф с 15 июля)
+
+### Коммиты сессии
+```
+(будут после коммита)
+```
+
+### Метрики
+
+| Метрика | Значение |
+|---|---|
+| Коммитов | 1 (планируется) |
+| fix:feat | 0:1 (feat: K1) |
+| Гейты | vitest 285/285 ✅, tsc --noEmit ✅ |
+| Файлов изменено | 11 (миграция, 2 types, 3 actions, 3 UI, 1 test, 1 HANDOFF) |
+
+### Рекомендация на следующую сессию
+1. 🔴 **Установить LSP** (TypeScript) — сессия 2026-07-13 прошла без него
+2. 🔴 **Аудит сегодняшних изменений** через tsc + eslint после установки LSP
+3. 🟡 **Manual QA**: создать задачу с estimated_minutes, отметить done → проверить actual_minutes в БД; missed → без XP
+4. 🟡 **Применить миграцию 00015** на стейджинг (`supabase db push`)
+5. ⬜ **K2 — Кастомные теги** или **Ручное QA по тест-плану**
+
 ## Последние изменения (сессия 2026-07-12)
 
 ### Багфиксы (8 шт.)
@@ -400,6 +451,7 @@ bf7ecca fix: wellbeing 24h window, plans hide completed, separator doubling
 | 0012 | with_check_rls | ✅ | ⏳ (merge 2026-07-12) |
 | 0013 | add_previous_status | ✅ | ⏳ (merge 2026-07-12) |
 | 0014 | get_dashboard_data_rpc | ✅ | ⏳ (merge 2026-07-12) |
+| 0015 | time_estimation (K1) + missed status | ⬜ | ⬜ |
 
 ## Планы и требования
 - `.omo/plans/roadmap.md`

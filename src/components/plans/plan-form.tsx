@@ -21,6 +21,7 @@ const PLAN_COLORS = [
 
 interface PlanItem {
   title: string;
+  estimated_minutes?: number;
 }
 
 interface PlanFormProps {
@@ -49,7 +50,7 @@ export function PlanForm({ mode, planId, defaultValues }: PlanFormProps) {
   const [error, setError] = useState<string | null>(null);
 
   const addItem = useCallback(() => {
-    setItems((prev) => [...prev, { title: "" }]);
+    setItems((prev) => [...prev, { title: "", estimated_minutes: undefined }]);
   }, []);
 
   const removeItem = useCallback((index: number) => {
@@ -57,7 +58,16 @@ export function PlanForm({ mode, planId, defaultValues }: PlanFormProps) {
   }, []);
 
   const updateItem = useCallback((index: number, title: string) => {
-    setItems((prev) => prev.map((item, i) => (i === index ? { title } : item)));
+    setItems((prev) => prev.map((item, i) => (i === index ? { ...item, title } : item)));
+  }, []);
+
+  const updateItemEstimated = useCallback((index: number, value: string) => {
+    const num = value === "" ? undefined : parseInt(value, 10);
+    setItems((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, estimated_minutes: num && num > 0 ? num : undefined } : item,
+      ),
+    );
   }, []);
 
   const handleSubmit = useCallback(
@@ -78,7 +88,14 @@ export function PlanForm({ mode, planId, defaultValues }: PlanFormProps) {
       if (mode === "create") {
         formData.set(
           "items",
-          JSON.stringify(items.filter((i) => i.title.trim())),
+          JSON.stringify(
+            items
+              .filter((i) => i.title.trim())
+              .map((i) => ({
+                title: i.title.trim(),
+                estimated_minutes: i.estimated_minutes ?? undefined,
+              })),
+          ),
         );
         result = await createPlan(formData);
       } else {
@@ -175,6 +192,16 @@ export function PlanForm({ mode, planId, defaultValues }: PlanFormProps) {
                   placeholder={`Step ${index + 1}`}
                   value={item.title}
                   onChange={(e) => updateItem(index, e.target.value)}
+                  className="flex-1"
+                />
+                <Input
+                  type="number"
+                  min="1"
+                  placeholder="min"
+                  value={item.estimated_minutes?.toString() ?? ""}
+                  onChange={(e) => updateItemEstimated(index, e.target.value)}
+                  className="w-16 text-center"
+                  aria-label={`Estimated minutes for step ${index + 1}`}
                 />
                 <Button
                   type="button"

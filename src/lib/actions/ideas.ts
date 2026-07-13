@@ -11,6 +11,7 @@ const createIdeaSchema = z.object({
   description: z.string().max(5000).optional(),
   source: z.enum(["web", "telegram"]).default("web"),
   type: z.enum(["idea", "problem"]).default("idea"),
+  estimated_minutes: z.number().int().nonnegative().optional(),
 });
 
 export async function createIdea(
@@ -27,6 +28,9 @@ export async function createIdea(
     description: (formData.get("description") as string) || undefined,
     source: (formData.get("source") as string) || "web",
     type: (formData.get("type") as string) || "idea",
+    estimated_minutes: formData.get("estimated_minutes")
+      ? Number(formData.get("estimated_minutes"))
+      : undefined,
   };
 
   const parsed = createIdeaSchema.safeParse(rawData);
@@ -35,7 +39,7 @@ export async function createIdea(
     return { error: firstError };
   }
 
-  const { title, description, source, type } = parsed.data;
+  const { title, description, source, type, estimated_minutes } = parsed.data;
 
   const { data, error } = await supabase
     .from("ideas")
@@ -45,6 +49,7 @@ export async function createIdea(
       description: description || null,
       source,
       type,
+      estimated_minutes: estimated_minutes ?? null,
     })
     .select()
     .single();
