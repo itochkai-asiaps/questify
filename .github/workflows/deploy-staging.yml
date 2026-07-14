@@ -17,13 +17,32 @@ jobs:
 
       - run: npm install
 
+      - name: Install PostgreSQL 17 client (psql)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq curl ca-certificates
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+            -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+          . /etc/os-release
+          printf '%s\n' \
+            'Types: deb' \
+            'URIs: https://apt.postgresql.org/pub/repos/apt' \
+            "Suites: ${VERSION_CODENAME}-pgdg" \
+            'Components: main' \
+            "Architectures: $(dpkg --print-architecture)" \
+            'Signed-By: /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc' \
+          | sudo tee /etc/apt/sources.list.d/pgdg.sources > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+
       - name: Push DB migrations (staging)
         continue-on-error: true  # Don't block deploy on Supabase transient errors (migrations are idempotent)
         env:
           SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
         run: |
           set -e
-          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-17
           # Retry helper — Supabase occasionally returns 500
           retry_psql() {
             for i in 1 2 3; do
@@ -59,7 +78,7 @@ jobs:
         env:
           SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-17
           LATEST=$(PGPASSWORD="${SUPABASE_DB_PASSWORD}" psql \
             -h aws-1-ap-southeast-2.pooler.supabase.com -p 6543 \
             -U "postgres.irmihumjlbckwygtnvfi" -d postgres -tA \

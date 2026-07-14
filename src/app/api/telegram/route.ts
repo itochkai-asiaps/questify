@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Save idea ──
-    const result = await createIdeaFromTelegram(link.user_id, text);
+    const result = await createIdeaFromTelegram(link.user_id, text, getAdmin());
 
     if (result.error) {
       await sendMessage(chatId, "❌ Failed: " + result.error);

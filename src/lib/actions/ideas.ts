@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod/v4";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { createClient } from "@/lib/supabase/server";
 import { withAuth } from "@/lib/auth/withAuth";
 
@@ -130,6 +132,7 @@ const createIdeaFromTelegramInputSchema = z.object({
 export async function createIdeaFromTelegram(
   userId: string,
   text: string,
+  adminClient?: SupabaseClient,
 ): Promise<{ data?: unknown; error?: string }> {
   const parsed = createIdeaFromTelegramInputSchema.safeParse({ userId, text });
   if (!parsed.success) {
@@ -137,7 +140,7 @@ export async function createIdeaFromTelegram(
     return { error: firstError };
   }
 
-  const supabase = await createClient();
+  const supabase = adminClient ?? (await createClient());
 
   // Detect type from prefix: problem:/пр:/проблема: (case-insensitive)
   const problemPrefix = /^(problem|пр|проблема)\s*:\s*/i;
@@ -179,8 +182,11 @@ export async function createIdeaFromTelegram(
  * Simple approach: store mapping in user_metadata or a separate table.
  * For MVP, we use a hardcoded mapping. Phase 2: proper auth linking.
  */
-export async function getUserIdByTelegramChatId(chatId: number): Promise<string | null> {
-  const supabase = await createClient();
+export async function getUserIdByTelegramChatId(
+  chatId: number,
+  adminClient?: SupabaseClient,
+): Promise<string | null> {
+  const supabase = adminClient ?? (await createClient());
 
   // For MVP: check profiles with telegram_chat_id in raw_user_meta_data
   // We'll use a simpler approach — read from a telegram_chats table
