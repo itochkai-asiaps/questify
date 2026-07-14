@@ -55,16 +55,26 @@ c502764 chore: revert staging backup to weekly schedule after pg_dump 17 verific
 
 - ✅ Telegram fix: QA пройден (вебхук → идея, без RLS)
 - ✅ Backup fix: pg_dump 17.10 verified (279KB dump)
-- ❌ S3 upload staging: Access Denied (Yandex-креды, отдельно)
+- ✅ S3 upload staging: права на бакет выданы, бэкап работает
 - ✅ Cron откачен на weekly (`0 4 * * 0`)
-- ⬜ Push в master (подтверждение пользователя)
-- ⬜ Разобраться с Yandex S3 Access Denied на staging
+- ✅ Push в master: `ed00e07..c502764` (17 коммитов, 100 файлов)
+- ✅ Деплой на прод: `v0.2.0-b29/00015`, вебхук зарегистрирован, бот ожил
+
+### Коммиты (полный список)
+
+```
+0581193 revert: staging backup paths — S3 issue is credential-level, not path-level
+40c8a69 docs: HANDOFF — session 2026-07-14 complete (Telegram RLS fix + pg_dump 17 + master push)
+c502764 chore: revert staging backup to weekly schedule after pg_dump 17 verification
+219d0c0 fix: Telegram RLS bypass + pg_dump 17 for backups
+```
 
 ### Результат
 
-- ✅ **Мастер запушен** `ed00e07..c502764` (fast-forward, 100 файлов, +5156/-2829)
-- ✅ **Деплой на прод**: запущен через `deploy.yml`, ожидает approval gate в GitHub Environments
-- ⬜ **S3 staging**: проверить `YANDEX_ACCESS_KEY_ID`/`YANDEX_SECRET_ACCESS_KEY` в GitHub Secrets — права на `s3://questify-backups/staging/`
+- ✅ **Мастер запушен** — 17 коммитов из staging (рефакторинг, K1, тулинг, Telegram fix, pg_dump 17)
+- ✅ **Деплой на прод** — approval gate отработал, `v0.2.0-b29/00015`
+- ✅ **Telegram prod** — вебхук `@questify_test_2_bot` → `v869487.hosted-by-vdsina.com/api/telegram`
+- ✅ **S3 staging** — сервисный аккаунт Yandex получил права, бэкап прошёл (pg_dump 17.10, 279 KB)
 
 ## 🔥 Текущая сессия (2026-07-13, часть 3 — дизайн-аудит)
 
@@ -727,22 +737,22 @@ bf7ecca fix: wellbeing 24h window, plans hide completed, separator doubling
 
 ## Миграции
 
-| #    | Название                             | Staging | Prod                  |
-| ---- | ------------------------------------ | ------- | --------------------- |
-| 0002 | RPC + ачивки                         | ✅      | ✅                    |
-| 0003 | type колонка ideas                   | ✅      | ✅                    |
-| 0004 | kanban_columns                       | ✅      | ✅                    |
-| 0005 | fix tasks_completed                  | ✅      | ✅                    |
-| 0006 | backlog_status                       | ✅      | ⏳ (merge 2026-07-12) |
-| 0007 | wellbeing_entries                    | ✅      | ⏳ (merge 2026-07-12) |
-| 0008 | focus_tasks                          | ✅      | ⏳ (merge 2026-07-12) |
-| 0009 | mood_score_0_100                     | ✅      | ⏳ (merge 2026-07-12) |
-| 0010 | normalize_task_ordering              | ✅      | ⏳ (merge 2026-07-12) |
-| 0011 | telegram_chats_rls                   | ✅      | ⏳ (merge 2026-07-12) |
-| 0012 | with_check_rls                       | ✅      | ⏳ (merge 2026-07-12) |
-| 0013 | add_previous_status                  | ✅      | ⏳ (merge 2026-07-12) |
-| 0014 | get_dashboard_data_rpc               | ✅      | ⏳ (merge 2026-07-12) |
-| 0015 | time_estimation (K1) + missed status | ✅      | ⬜                    |
+| #    | Название                             | Staging | Prod |
+| ---- | ------------------------------------ | ------- | ---- |
+| 0002 | RPC + ачивки                         | ✅      | ✅   |
+| 0003 | type колонка ideas                   | ✅      | ✅   |
+| 0004 | kanban_columns                       | ✅      | ✅   |
+| 0005 | fix tasks_completed                  | ✅      | ✅   |
+| 0006 | backlog_status                       | ✅      | ✅   |
+| 0007 | wellbeing_entries                    | ✅      | ✅   |
+| 0008 | focus_tasks                          | ✅      | ✅   |
+| 0009 | mood_score_0_100                     | ✅      | ✅   |
+| 0010 | normalize_task_ordering              | ✅      | ✅   |
+| 0011 | telegram_chats_rls                   | ✅      | ✅   |
+| 0012 | with_check_rls                       | ✅      | ✅   |
+| 0013 | add_previous_status                  | ✅      | ✅   |
+| 0014 | get_dashboard_data_rpc               | ✅      | ✅   |
+| 0015 | time_estimation (K1) + missed status | ✅      | ✅   |
 
 ## Планы и требования
 
