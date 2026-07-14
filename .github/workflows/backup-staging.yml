@@ -70,7 +70,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.YANDEX_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.YANDEX_SECRET_ACCESS_KEY }}
         run: |
-          aws s3 cp "$BACKUP_FILE" "s3://questify-backups/staging/$BACKUP_FILE" \
+          aws s3 cp "$BACKUP_FILE" "s3://questify-backups/$BACKUP_FILE" \
             --endpoint-url https://storage.yandexcloud.net \
             --region ru-central1
 
@@ -79,22 +79,24 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.YANDEX_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.YANDEX_SECRET_ACCESS_KEY }}
         run: |
-          FILE_COUNT=$(aws s3 ls "s3://questify-backups/staging/" \
+          FILE_COUNT=$(aws s3 ls "s3://questify-backups/" \
             --endpoint-url https://storage.yandexcloud.net \
             --region ru-central1 \
+            | grep "questify-staging-" \
             | wc -l)
-          echo "Files in staging/: $FILE_COUNT"
+          echo "Staging backup files: $FILE_COUNT"
           if [ "$FILE_COUNT" -lt 2 ]; then
-            echo "⚠️  Fewer than 2 backups — skipping cleanup (possible outage)"
+            echo "⚠️  Fewer than 2 staging backups — skipping cleanup (possible outage)"
             exit 0
           fi
-          aws s3 ls "s3://questify-backups/staging/" \
+          aws s3 ls "s3://questify-backups/" \
             --endpoint-url https://storage.yandexcloud.net \
             --region ru-central1 \
+          | grep "questify-staging-" \
           | awk -v cutoff="$(date -d '30 days ago' +%Y-%m-%d)" '$1 < cutoff {print $4}' \
           | while read f; do
-              echo "Deleting: staging/$f"
-              aws s3 rm "s3://questify-backups/staging/$f" \
+              echo "Deleting: $f"
+              aws s3 rm "s3://questify-backups/$f" \
                 --endpoint-url https://storage.yandexcloud.net \
                 --region ru-central1
             done
