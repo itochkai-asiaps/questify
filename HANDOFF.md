@@ -22,6 +22,50 @@ DeepSeek вводит **двойной тариф** в «горячее врем
 - ✅ **13:00–9:00 МСК — обычный тариф.** Агенты, explore- swarm, делегирование.
 - 🎯 **Идеальное окно для тяжёлых сессий**: 13:00–4:00 МСК (вечер/ночь).
 
+## 🔥 Текущая сессия (2026-07-14 — багфикс: Telegram + RLS + бэкапы)
+
+### Диагноз и фиксы
+
+**1. Telegram-бот (prod) + RLS ideas (staging) — ОДНА ПРИЧИНА**
+
+Коммит `260d167` (8 июля) вынес создание идей из вебхука в `createIdeaFromTelegram()`, которая использовала `createClient()` — anon-key клиент с cookie-аутентификацией. Telegram-вебхук (server-to-server POST) не имеет браузерной сессии → `auth.uid() = null` → RLS отклоняет INSERT в `ideas`.
+
+**Фикс**: `createIdeaFromTelegram` + `getUserIdByTelegramChatId` принимают опциональный `adminClient?: SupabaseClient`. `route.ts` пробрасывает `getAdmin()` → service_role → RLS bypass.
+
+**QA**: ✅ Симулированный вебхук создал идею `814e39e8` с `source: telegram`, без RLS-ошибок.
+
+**2. Бэкапы (pg_dump 16.14 vs PG 17.6)**
+
+`ubuntu-latest` в GitHub Actions поставляет `postgresql-client-16`. Supabase — PG 17.6. pg_dump отказывается дампить сервер новее себя.
+
+**Фикс**: установка `postgresql-client-17` через официальный PGDG apt-репозиторий во всех 4 workflow-файлах.
+
+**QA**: ✅ `pg_dump (PostgreSQL) 17.10` — dump 279 KB с первой попытки. ❌ S3 upload — `Access Denied` (Yandex-креды для staging-бакета, предсуществующая проблема, не связана с pg_dump).
+
+**⚠️ GitHub Actions запускает scheduled workflows только с default-ветки (master)**, поэтому hourly cron на staging не срабатывал. Запущен вручную через `workflow_dispatch` API.
+
+### Коммиты
+
+```
+c502764 chore: revert staging backup to weekly schedule after pg_dump 17 verification
+219d0c0 fix: Telegram RLS bypass + pg_dump 17 for backups
+```
+
+### Статус
+
+- ✅ Telegram fix: QA пройден (вебхук → идея, без RLS)
+- ✅ Backup fix: pg_dump 17.10 verified (279KB dump)
+- ❌ S3 upload staging: Access Denied (Yandex-креды, отдельно)
+- ✅ Cron откачен на weekly (`0 4 * * 0`)
+- ⬜ Push в master (подтверждение пользователя)
+- ⬜ Разобраться с Yandex S3 Access Denied на staging
+
+### Результат
+
+- ✅ **Мастер запушен** `ed00e07..c502764` (fast-forward, 100 файлов, +5156/-2829)
+- ✅ **Деплой на прод**: запущен через `deploy.yml`, ожидает approval gate в GitHub Environments
+- ⬜ **S3 staging**: проверить `YANDEX_ACCESS_KEY_ID`/`YANDEX_SECRET_ACCESS_KEY` в GitHub Secrets — права на `s3://questify-backups/staging/`
+
 ## 🔥 Текущая сессия (2026-07-13, часть 3 — дизайн-аудит)
 
 ### ⏱ Производительность страниц (dark theme, `waitUntil: load`)
