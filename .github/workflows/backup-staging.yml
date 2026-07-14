@@ -2,7 +2,7 @@ name: Weekly Staging DB Backup
 
 on:
   schedule:
-    - cron: "0 * * * *" # hourly for testing
+    - cron: "0 4 * * 0" # every Sunday at 04:00 UTC
   workflow_dispatch: # manual trigger
 
 jobs:
