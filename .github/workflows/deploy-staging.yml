@@ -131,6 +131,40 @@ jobs:
             echo "=== Staging deploy complete ==="
             pm2 status
 
+      - name: Smoke test
+        if: always()
+        run: |
+          echo "::group::Smoke tests"
+          sleep 5  # PM2 restart
+
+          echo "1. Health check"
+          STATUS=$(curl -fsS -o /dev/null -w "%{http_code}" https://v881545.hosted-by-vdsina.com/api/telegram)
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Health check failed (HTTP $STATUS)"
+            exit 1
+          fi
+          echo "   Health: HTTP $STATUS"
+
+          echo "2. API response"
+          BODY=$(curl -fsS https://v881545.hosted-by-vdsina.com/api/telegram)
+          if ! echo "$BODY" | grep -q '"ok"'; then
+            echo "::error::API response unexpected: $BODY"
+            exit 1
+          fi
+          echo "   Response: $BODY"
+
+          echo "3. Version"
+          VER=$(curl -fsS https://v881545.hosted-by-vdsina.com | grep -oP 'S v[\d.]+-b\d+/\d+')
+          if [ -z "$VER" ]; then
+            echo "::warning::Version tag not found in HTML"
+          else
+            echo "   $VER"
+          fi
+
+          echo "4. pg_dump"
+          pg_dump --version
+          echo "::endgroup::"
+
       - name: Lighthouse CI
         if: always()
         continue-on-error: true
